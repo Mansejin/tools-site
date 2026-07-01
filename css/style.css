@@ -441,6 +441,39 @@ h1 {
   line-height: 1.8;
 }
 
+.ad-banner {
+  margin-top: 28px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-height: 90px;
+}
+
+.ad-banner .adsbygoogle {
+  display: block;
+  min-height: 60px;
+}
+
+.footer-ad {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  text-align: center;
+  min-height: 90px;
+  overflow: hidden;
+}
+
+.footer-ad .adsbygoogle {
+  display: block;
+  min-height: 90px;
+}
+
 .toast {
   position: fixed;
   bottom: 28px;
