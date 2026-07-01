@@ -604,6 +604,75 @@ body.bug-modal-open {
   min-height: 96px;
 }
 
+.bug-field-hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.bug-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bug-file-btn {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+}
+
+.bug-file-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.bug-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+}
+
+.bug-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.bug-file-size {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.bug-file-remove {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bug-file-remove:hover {
+  color: var(--blue-hover);
+}
+
 .bug-form-actions {
   display: flex;
   justify-content: flex-end;

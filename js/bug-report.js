@@ -2,6 +2,10 @@
   const lang = document.documentElement.lang.startsWith("en") ? "en" : "ko";
   const dataPath = document.body.dataset.tools || "data/tools.json";
 
+  const MAX_TOTAL_BYTES = 5 * 1024 * 1024;
+  const MAX_FILES = 3;
+  const ALLOWED_EXT = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".txt", ".log", ".json"];
+
   const UI = {
     ko: {
       title: "문의하기",
@@ -16,12 +20,19 @@
       message: "상세 내용",
       messagePlaceholder: "어떤 문제가 있었는지, 재현 방법 등을 적어주세요",
       email: "답장 받을 이메일 (선택)",
+      attachment: "첨부 파일 (선택)",
+      attachmentHint: "스크린샷·로그 · 최대 3개 · 합계 5MB · png/jpg/webp/gif/txt/log/json",
+      chooseFiles: "파일 선택",
+      removeFile: "제거",
       submit: "전송",
       cancel: "취소",
       sending: "보내는 중…",
       success: "접수되었습니다. 확인 후 답변드릴게요.",
       error: "전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
       required: "내용을 입력해주세요",
+      fileType: "허용되지 않는 파일 형식입니다",
+      fileTooLarge: "첨부 파일 합계는 5MB 이하여야 합니다",
+      fileTooMany: "첨부 파일은 최대 3개까지 가능합니다",
     },
     en: {
       title: "Contact support",
@@ -36,12 +47,19 @@
       message: "Details",
       messagePlaceholder: "Describe the problem and how to reproduce it",
       email: "Your email for reply (optional)",
+      attachment: "Attachments (optional)",
+      attachmentHint: "Screenshots, logs · up to 3 files · 5MB total · png/jpg/webp/gif/txt/log/json",
+      chooseFiles: "Choose files",
+      removeFile: "Remove",
       submit: "Send",
       cancel: "Cancel",
       sending: "Sending…",
       success: "Received. We'll get back to you soon.",
       error: "Could not send. Please try again later.",
       required: "Please enter a description",
+      fileType: "File type not allowed",
+      fileTooLarge: "Total attachment size must be 5MB or less",
+      fileTooMany: "You can attach up to 3 files",
     },
   };
 
@@ -66,6 +84,9 @@
   let productEl;
   let categoryEl;
   let submitBtn;
+  let fileInputEl;
+  let fileListEl;
+  let selectedFiles = [];
 
   function escapeHtml(value) {
     return String(value)
@@ -86,7 +107,7 @@
         <button type="button" class="bug-modal-close" data-bug-close aria-label="${escapeHtml(t.cancel)}">×</button>
         <h2 id="bugModalTitle">${escapeHtml(t.title)}</h2>
         <p class="bug-modal-sub">${escapeHtml(t.subtitle)}</p>
-        <form id="bugForm" class="bug-form">
+        <form id="bugForm" class="bug-form" enctype="multipart/form-data">
           <label class="bug-field">
             <span>${escapeHtml(t.category)}</span>
             <select name="category" id="bugCategory" required>
@@ -103,6 +124,13 @@
             <span>${escapeHtml(t.message)}</span>
             <textarea name="message" rows="4" required placeholder="${escapeHtml(t.messagePlaceholder)}"></textarea>
           </label>
+          <div class="bug-field">
+            <span>${escapeHtml(t.attachment)}</span>
+            <p class="bug-field-hint">${escapeHtml(t.attachmentHint)}</p>
+            <input type="file" id="bugFileInput" class="bug-file-input" multiple accept=".png,.jpg,.jpeg,.webp,.gif,.txt,.log,.json,image/png,image/jpeg,image/webp,image/gif,text/plain,application/json">
+            <button type="button" class="btn btn-secondary bug-file-btn" id="bugChooseFiles">${escapeHtml(t.chooseFiles)}</button>
+            <ul class="bug-file-list" id="bugFileList" hidden></ul>
+          </div>
           <label class="bug-field">
             <span>${escapeHtml(t.email)}</span>
             <input type="email" name="reply_email" autocomplete="email">
@@ -119,9 +147,13 @@
     productEl = modalEl.querySelector("#bugProduct");
     categoryEl = modalEl.querySelector("#bugCategory");
     submitBtn = modalEl.querySelector("#bugSubmit");
+    fileInputEl = modalEl.querySelector("#bugFileInput");
+    fileListEl = modalEl.querySelector("#bugFileList");
 
     categoryEl.addEventListener("change", updateProductOptions);
     formEl.addEventListener("submit", handleSubmit);
+    modalEl.querySelector("#bugChooseFiles").addEventListener("click", () => fileInputEl.click());
+    fileInputEl.addEventListener("change", handleFilePick);
 
     modalEl.querySelectorAll("[data-bug-close]").forEach((el) => {
       el.addEventListener("click", closeModal);
@@ -150,6 +182,87 @@
     return [...TOYS[lang], other];
   }
 
+  function fileExtension(name) {
+    const dot = name.lastIndexOf(".");
+    return dot >= 0 ? name.slice(dot).toLowerCase() : "";
+  }
+
+  function isAllowedFile(file) {
+    return ALLOWED_EXT.includes(fileExtension(file.name));
+  }
+
+  function totalFileBytes(files) {
+    return files.reduce((sum, file) => sum + file.size, 0);
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function renderFileList() {
+    if (!selectedFiles.length) {
+      fileListEl.hidden = true;
+      fileListEl.innerHTML = "";
+      return;
+    }
+
+    fileListEl.hidden = false;
+    fileListEl.innerHTML = selectedFiles
+      .map(
+        (file, index) =>
+          `<li class="bug-file-item">
+            <span class="bug-file-name">${escapeHtml(file.name)}</span>
+            <span class="bug-file-size">${escapeHtml(formatFileSize(file.size))}</span>
+            <button type="button" class="bug-file-remove" data-index="${index}">${escapeHtml(t.removeFile)}</button>
+          </li>`
+      )
+      .join("");
+
+    fileListEl.querySelectorAll(".bug-file-remove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedFiles.splice(Number(btn.dataset.index), 1);
+        renderFileList();
+      });
+    });
+  }
+
+  function resetFiles() {
+    selectedFiles = [];
+    if (fileInputEl) fileInputEl.value = "";
+    renderFileList();
+  }
+
+  function handleFilePick() {
+    const picked = [...fileInputEl.files];
+    fileInputEl.value = "";
+
+    if (!picked.length) return;
+
+    const merged = [...selectedFiles];
+    for (const file of picked) {
+      if (!isAllowedFile(file)) {
+        showToast(t.fileType);
+        return;
+      }
+      merged.push(file);
+    }
+
+    if (merged.length > MAX_FILES) {
+      showToast(t.fileTooMany);
+      return;
+    }
+
+    if (totalFileBytes(merged) > MAX_TOTAL_BYTES) {
+      showToast(t.fileTooLarge);
+      return;
+    }
+
+    selectedFiles = merged;
+    renderFileList();
+  }
+
   function updateProductOptions() {
     const options = productOptionsForCategory(categoryEl.value);
     productEl.innerHTML = options
@@ -161,6 +274,7 @@
     if (!modalEl) buildModal();
     updateProductOptions();
     formEl.reset();
+    resetFiles();
     modalEl.hidden = false;
     document.body.classList.add("bug-modal-open");
     modalEl.querySelector("textarea").focus();
@@ -200,6 +314,16 @@
       return;
     }
 
+    if (selectedFiles.length > MAX_FILES) {
+      showToast(t.fileTooMany);
+      return;
+    }
+
+    if (totalFileBytes(selectedFiles) > MAX_TOTAL_BYTES) {
+      showToast(t.fileTooLarge);
+      return;
+    }
+
     const category = categoryEl.value;
     const product = productEl.value;
     const replyEmail = formEl.reply_email.value.trim();
@@ -215,6 +339,9 @@
     body.append("page", location.href);
     body.append("language", lang);
     if (replyEmail) body.append("_replyto", replyEmail);
+    for (const file of selectedFiles) {
+      body.append("attachment", file, file.name);
+    }
 
     submitBtn.disabled = true;
     submitBtn.textContent = t.sending;
