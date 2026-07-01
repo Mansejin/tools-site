@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>탈모 확률 계산기 🧑‍🦲 · 장난감</title>
+  <meta name="description" content="과학적 알고리즘으로 정밀 분석합니다 (진짜임)">
+  <meta property="og:url" content="https://mansejin.com/toys/hair/">
+  <meta property="og:title" content="탈모 확률 계산기 🧑‍🦲">
+  <meta property="og:description" content="과학적 알고리즘으로 정밀 분석합니다 (진짜임)">
+  <link rel="canonical" href="https://mansejin.com/toys/hair/">
+  <link rel="stylesheet" href="../css/toys.css">
+</head>
+<body>
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+  <div class="site-top no-capture">
+    <a class="site-top-link" href="../">← 장난감</a>
+    <a class="site-top-link" href="../../">도구함</a>
+  </div>
+  <div id="shareZone" class="share-zone">
+    <header id="appHeader">
+      <div class="emoji-hero" id="headerEmoji">🧑‍🦲📉</div>
+      <h1 id="headerTitle">탈모 확률 계산기</h1>
+      <p class="subtitle" id="headerSubtitle">과학적 알고리즘으로 정밀 분석합니다 (진짜임)</p>
+    </header>
+    <main class="card" id="panelHair">
+    <p class="section-label">대상자 정보</p>
+    <div class="form-field">
+      <label for="hairName">이름</label>
+      <input type="text" id="hairName" value="" maxlength="20" placeholder="이름 입력 (선택)">
+    </div>
+
+    <div class="form-field">
+      <label for="hairAge">나이 <span id="hairAgeVal">27세</span></label>
+      <input type="range" id="hairAge" min="1" max="80" value="27">
+    </div>
+
+    <div class="form-field">
+      <label for="hairStress">스트레스 <span id="hairStressVal">보통</span></label>
+      <input type="range" id="hairStress" min="0" max="100" value="50">
+    </div>
+
+    <div class="form-field">
+      <label for="hairCoffee">하루 커피 <span id="hairCoffeeVal">2잔</span></label>
+      <input type="range" id="hairCoffee" min="0" max="10" value="2">
+    </div>
+
+    <div class="form-field">
+      <label for="hairSleep">수면 시간 <span id="hairSleepVal">6시간</span></label>
+      <input type="range" id="hairSleep" min="0" max="12" value="6">
+    </div>
+
+    <div class="form-field">
+      <label for="hairGenetics">가족 탈모 유전력 <span id="hairGeneticsVal">없음</span></label>
+      <input type="range" id="hairGenetics" min="0" max="100" value="0">
+    </div>
+
+    <div class="hair-result-box" id="hairResultBox">
+      <span class="placeholder">아래 버튼을 눌러 과학적으로 분석하세요</span>
+    </div>
+
+    <div class="progress-bar-wrap" id="hairProgressWrap">
+      <div class="progress-bar-fill" id="hairProgressFill"></div>
+    </div>
+    <p class="hair-scan" id="hairScan"></p>
+
+    <div class="btn-group no-capture">
+      <button type="button" class="btn btn-primary" id="hairCalcBtn">🔬 탈모 확률 분석하기</button>
+      <button type="button" class="btn btn-secondary" id="hairCopyBtn" style="display:none">📋 결과 복사하기</button>
+      <button type="button" class="btn btn-share" id="hairShareBtn">📸 캡처해서 공유하기</button>
+    </div>
+
+    <div id="hairAdmin" class="hair-admin no-capture" hidden>
+      <p class="section-label">🔒 확정 탈모 명단 (비공개)</p>
+      <ul class="hair-vip-list" id="hairVipList"></ul>
+      <div class="hair-admin-add">
+        <input type="text" id="hairVipInput" maxlength="20" placeholder="이름 추가">
+        <button type="button" id="hairVipAddBtn">추가</button>
+      </div>
+    </div>
+  </main>
+    <footer id="appFooter">
+      <p id="footerLine1">※ 본 서비스는 탈모 예측의 정확성을 보장하지 않습니다</p>
+      <p id="footerLine2">머리 숱 많은 것이 최고의 해법입니다</p>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="../js/hair.js"></script>
+  <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>콜 할까 말까? 🃏 · 장난감</title>
+  <meta name="description" content="홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)">
+  <meta property="og:url" content="https://mansejin.com/toys/poker/">
+  <meta property="og:title" content="콜 할까 말까? 🃏">
+  <meta property="og:description" content="홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)">
+  <link rel="canonical" href="https://mansejin.com/toys/poker/">
+  <link rel="stylesheet" href="../css/toys.css">
+</head>
+<body>
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+  <div class="site-top no-capture">
+    <a class="site-top-link" href="../">← 장난감</a>
+    <a class="site-top-link" href="../../">도구함</a>
+  </div>
+  <div id="shareZone" class="share-zone">
+    <header id="appHeader">
+      <div class="emoji-hero" id="headerEmoji">🃏🤔</div>
+      <h1 id="headerTitle">콜 할까 말까?</h1>
+      <p class="subtitle" id="headerSubtitle">홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)</p>
+    </header>
+    <main class="card" id="panelPoker">
+    <div id="pokerQuiz">
+      <div class="poker-timer" id="pokerTimer">
+        <div class="poker-timer-display" id="pokerTimerNum">30</div>
+        <div class="poker-timer-bar-wrap">
+          <div class="poker-timer-bar" id="pokerTimerBar"></div>
+        </div>
+        <p class="poker-timer-label">⏱️ 당신의 턴 — 30초 안에 결정하세요!</p>
+      </div>
+      <div class="quiz-progress">
+        <span id="pokerStepLabel">질문 1 / 5</span>
+        <div class="quiz-dots" id="pokerDots"></div>
+      </div>
+      <div class="quiz-question-box" id="pokerQuestion"></div>
+      <div class="yn-btns no-capture">
+        <button type="button" class="yn-btn yes" id="pokerYes">예 😰</button>
+        <button type="button" class="yn-btn no" id="pokerNo">아니오 😎</button>
+      </div>
+    </div>
+
+    <div id="pokerResult" style="display:none">
+      <div class="poker-result-box">
+        <div class="poker-verdict" id="pokerVerdict"></div>
+        <p class="poker-reason" id="pokerReason"></p>
+        <p class="poker-score" id="pokerScore"></p>
+      </div>
+      <div class="btn-group no-capture">
+        <button type="button" class="btn btn-secondary" id="pokerCopyBtn">📋 결과 복사하기</button>
+        <button type="button" class="btn btn-share" id="pokerShareBtn">📸 캡처해서 공유하기</button>
+        <button type="button" class="btn btn-primary" id="pokerRetryBtn">🔄 다시 판단하기</button>
+      </div>
+    </div>
+  </main>
+    <footer id="appFooter">
+      <p id="footerLine1">※ 본 서비스는 패배에 대한 책임을 지지 않습니다</p>
+      <p id="footerLine2">폴드가 최고의 핸드일 때가 있습니다</p>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="../js/poker.js"></script>
+  <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
+</body>
+</html>

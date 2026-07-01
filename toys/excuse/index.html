@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>지각 핑계 생성기 🏃‍♂️ · 장난감</title>
+  <meta name="description" content="오늘 지각했어? 클릭 한 번으로 그럴듯한 핑계를 만들어드려요!">
+  <meta property="og:url" content="https://mansejin.com/toys/excuse/">
+  <meta property="og:title" content="지각 핑계 생성기 🏃‍♂️">
+  <meta property="og:description" content="오늘 지각했어? 클릭 한 번으로 그럴듯한 핑계를 만들어드려요!">
+  <link rel="canonical" href="https://mansejin.com/toys/excuse/">
+  <link rel="stylesheet" href="../css/toys.css">
+</head>
+<body>
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+  <div class="site-top no-capture">
+    <a class="site-top-link" href="../">← 장난감</a>
+    <a class="site-top-link" href="../../">도구함</a>
+  </div>
+  <div id="shareZone" class="share-zone">
+    <header id="appHeader">
+      <div class="emoji-hero" id="headerEmoji">🏃‍♂️💨</div>
+      <h1 id="headerTitle">지각 핑계 생성기</h1>
+      <p class="subtitle" id="headerSubtitle">오늘도 늦었어? 괜찮아, 핑계는 내가 만들어줄게</p>
+    </header>
+    <main class="card" id="panelExcuse">
+    <p class="section-label">어떤 상황이에요?</p>
+    <div class="tabs-row" id="situationTabs">
+      <button type="button" class="tab situation-tab active" data-situation="work">💼 회사 지각</button>
+      <button type="button" class="tab situation-tab" data-situation="meeting">📊 중요한 미팅</button>
+      <button type="button" class="tab situation-tab" data-situation="friend">🍻 친구 약속</button>
+    </div>
+
+    <p class="section-label">핑계 스타일</p>
+    <div class="tabs-row category-tabs" id="tabs">
+      <button type="button" class="tab active" data-cat="all">🎲 전체</button>
+      <button type="button" class="tab" data-cat="traffic">🚗 교통</button>
+      <button type="button" class="tab" data-cat="health">🤒 건강</button>
+      <button type="button" class="tab" data-cat="life">🏠 일상</button>
+      <button type="button" class="tab" data-cat="tech">📱 기술</button>
+      <button type="button" class="tab" data-cat="absurd">🤡 어이없는</button>
+    </div>
+
+    <div class="excuse-box" id="excuseBox" role="button" tabindex="0" aria-label="핑계 복사">
+      <span class="placeholder">아래 버튼을 눌러 핑계를 생성하세요!</span>
+    </div>
+
+    <div class="btn-group no-capture">
+      <button type="button" class="btn btn-primary" id="generateBtn">✨ 핑계 생성하기</button>
+      <button type="button" class="btn btn-secondary" id="copyBtn" style="display:none">📋 복사하기</button>
+      <button type="button" class="btn btn-share" id="shareBtn">📸 캡처해서 공유하기</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num" id="countNum">0</div>
+        <div class="stat-label">생성한 핑계</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="totalExcuses">0</div>
+        <div class="stat-label">총 핑계 수</div>
+      </div>
+    </div>
+  </main>
+    <footer id="appFooter">
+      <p id="footerLine1">※ 본 서비스는 핑계의 진실성을 보장하지 않습니다 😇</p>
+      <p id="footerLine2">지각하지 않는 것이 최고의 핑계입니다</p>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="../js/excuse.js"></script>
+  <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
+</body>
+</html>
