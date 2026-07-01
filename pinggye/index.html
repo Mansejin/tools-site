@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <title>만세진 도구함 🏃‍♂️</title>
+  <meta name="description" content="지각 핑계 생성기 · 탈모 확률 계산기 · 콜 할까 말까?">
+
+  <!-- 카카오톡 / SNS 공유용 -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mansejin.com/pinggye/">
+  <meta property="og:title" content="지각 핑계 생성기 🏃‍♂️">
+  <meta property="og:description" content="오늘 지각했어? 클릭 한 번으로 그럴듯한 핑계를 만들어드려요!">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:site_name" content="만세진 핑계 생성기">
+  <link rel="canonical" href="https://mansejin.com/pinggye/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="지각 핑계 생성기 🏃‍♂️">
+  <meta name="twitter:description" content="오늘 지각했어? 클릭 한 번으로 그럴듯한 핑계를 만들어드려요!">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f14;
+      --card: #1a1a24;
+      --accent: #ff6b4a;
+      --accent2: #ffd166;
+      --text: #f0f0f5;
+      --muted: #8888a0;
+      --radius: 20px;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      min-height: 100%;
+      min-height: 100dvh;
+      background: var(--bg);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      background: transparent;
+      color: var(--text);
+      min-height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 120% 80% at 20% 0%, rgba(255,107,74,.18) 0%, transparent 55%),
+        radial-gradient(ellipse 120% 80% at 80% 100%, rgba(255,209,102,.12) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 50% at 50% 50%, rgba(100,180,255,.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .emoji-hero {
+      font-size: 56px;
+      line-height: 1;
+      margin-bottom: 12px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      border: 1px solid rgba(255,255,255,.06);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .section-label + .tabs-row { margin-bottom: 20px; }
+
+    .tabs-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: calc(33% - 6px);
+      min-height: 44px;
+      padding: 12px 8px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .tab.active {
+      background: rgba(255,107,74,.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .situation-tab.active {
+      background: rgba(100,180,255,.15);
+      border-color: #64b4ff;
+      color: #64b4ff;
+    }
+
+    .category-tabs .tab {
+      min-width: calc(50% - 4px);
+    }
+
+    .excuse-box {
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 24px 20px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      font-weight: 500;
+      border: 1px dashed rgba(255,255,255,.1);
+      transition: opacity .3s;
+      word-break: keep-all;
+      touch-action: manipulation;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .excuse-box.has-excuse {
+      flex-direction: column;
+    }
+
+    .excuse-box.has-excuse::after {
+      content: '탭하면 복사';
+      display: block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 12px;
+      font-weight: 400;
+    }
+
+    .excuse-box.fade { opacity: 0; }
+
+    .excuse-box .placeholder {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 52px;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform .15s, opacity .15s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ff8f6b);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(255,107,74,.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .btn-share {
+      background: linear-gradient(135deg, #fee500, #f5d800);
+      color: #3c1e1e;
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2a2a38;
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      z-index: 100;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .file-warning {
+      display: none;
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,209,102,.12);
+      border: 1px solid rgba(255,209,102,.3);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--accent2);
+    }
+
+    .file-warning.show { display: block; }
+
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .app-nav {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,.04);
+      padding: 6px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .app-nav-btn {
+      flex: 1;
+      min-width: 0;
+      min-height: 44px;
+      padding: 10px 4px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .2s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+
+    .app-nav-btn.active {
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .form-field {
+      margin-bottom: 18px;
+    }
+
+    .form-field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-field label span {
+      color: var(--accent2);
+      font-size: 0.8rem;
+    }
+
+    .form-field input[type="range"] {
+      width: 100%;
+      height: 6px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .form-field input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .hair-result-box {
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 24px 20px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px dashed rgba(255,255,255,.1);
+      transition: opacity .3s;
+    }
+
+    .hair-result-box.fade { opacity: 0; }
+
+    .hair-result-box .placeholder {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .hair-percent {
+      font-size: 3.2rem;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, #ff6b4a, #ffd166);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hair-verdict {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .hair-scan {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,.06);
+      border-radius: 99px;
+      margin-top: 16px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar-wrap.show { display: block; }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width .08s linear;
+    }
+
+    .quiz-progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .quiz-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .quiz-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      transition: background .2s, transform .2s;
+    }
+
+    .quiz-dot.done { background: var(--accent2); }
+    .quiz-dot.current { background: var(--accent); transform: scale(1.25); }
+
+    .quiz-question-box {
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 28px 20px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      font-weight: 600;
+      border: 1px dashed rgba(255,255,255,.1);
+      word-break: keep-all;
+      margin-bottom: 16px;
+    }
+
+    .yn-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .yn-btn {
+      flex: 1;
+      min-height: 56px;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .yn-btn:active { transform: scale(.97); }
+
+    .yn-btn.yes:hover, .yn-btn.yes:active {
+      background: rgba(255,107,74,.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .yn-btn.no:hover, .yn-btn.no:active {
+      background: rgba(100,220,130,.15);
+      border-color: #64dc82;
+      color: #64dc82;
+    }
+
+    .poker-result-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .poker-verdict {
+      font-size: 2.8rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1px;
+    }
+
+    .poker-verdict.call {
+      color: #64dc82;
+      text-shadow: 0 0 40px rgba(100,220,130,.35);
+    }
+
+    .poker-verdict.fold {
+      color: #ff6b4a;
+      text-shadow: 0 0 40px rgba(255,107,74,.35);
+    }
+
+    .poker-reason {
+      margin-top: 14px;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: var(--muted);
+      word-break: keep-all;
+    }
+
+    .poker-score {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .poker-timer {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .poker-timer-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .poker-timer-display {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent2);
+      transition: color .2s, transform .2s;
+    }
+
+    .poker-timer.urgent .poker-timer-display {
+      color: var(--accent);
+      animation: timer-pulse .5s ease-in-out infinite;
+    }
+
+    .poker-timer.critical .poker-timer-display {
+      color: #ff3b3b;
+      animation: timer-shake .3s ease-in-out infinite;
+    }
+
+    @keyframes timer-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    @keyframes timer-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .poker-timer-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,.08);
+      border-radius: 99px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .poker-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-radius: 99px;
+      transition: width .9s linear, background .3s;
+    }
+
+    .poker-timer.urgent .poker-timer-bar {
+      background: linear-gradient(90deg, #ffd166, #ff6b4a);
+    }
+
+    .poker-timer.critical .poker-timer-bar {
+      background: #ff3b3b;
+    }
+
+    .share-zone {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hair-admin {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed rgba(255,107,74,.25);
+    }
+
+    .hair-admin[hidden] { display: none !important; }
+
+    .hair-vip-list {
+      list-style: none;
+      margin-bottom: 12px;
+    }
+
+    .hair-vip-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: rgba(255,107,74,.08);
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .hair-vip-del {
+      border: none;
+      background: rgba(255,255,255,.08);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .hair-admin-add {
+      display: flex;
+      gap: 8px;
+    }
+
+    .hair-admin-add input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    .hair-admin-add button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+
+  <nav class="app-nav" id="appNav">
+    <button type="button" class="app-nav-btn active" data-app="excuse">🏃 핑계</button>
+    <button type="button" class="app-nav-btn" data-app="hair">🧑‍🦲 탈모</button>
+    <button type="button" class="app-nav-btn" data-app="poker">🃏 콜말콜</button>
+  </nav>
+
+  <div id="shareZone" class="share-zone">
+  <header id="appHeader">
+    <div class="emoji-hero" id="headerEmoji">🏃‍♂️💨</div>
+    <h1 id="headerTitle">지각 핑계 생성기</h1>
+    <p class="subtitle" id="headerSubtitle">오늘도 늦었어? 괜찮아, 핑계는 내가 만들어줄게</p>
+  </header>
+
+  <main class="card panel active" id="panelExcuse">
+    <p class="section-label">어떤 상황이에요?</p>
+    <div class="tabs-row" id="situationTabs">
+      <button type="button" class="tab situation-tab active" data-situation="work">💼 회사 지각</button>
+      <button type="button" class="tab situation-tab" data-situation="meeting">📊 중요한 미팅</button>
+      <button type="button" class="tab situation-tab" data-situation="friend">🍻 친구 약속</button>
+    </div>
+
+    <p class="section-label">핑계 스타일</p>
+    <div class="tabs-row category-tabs" id="tabs">
+      <button type="button" class="tab active" data-cat="all">🎲 전체</button>
+      <button type="button" class="tab" data-cat="traffic">🚗 교통</button>
+      <button type="button" class="tab" data-cat="health">🤒 건강</button>
+      <button type="button" class="tab" data-cat="life">🏠 일상</button>
+      <button type="button" class="tab" data-cat="tech">📱 기술</button>
+      <button type="button" class="tab" data-cat="absurd">🤡 어이없는</button>
+    </div>
+
+    <div class="excuse-box" id="excuseBox" role="button" tabindex="0" aria-label="핑계 복사">
+      <span class="placeholder">아래 버튼을 눌러 핑계를 생성하세요!</span>
+    </div>
+
+    <div class="btn-group no-capture">
+      <button type="button" class="btn btn-primary" id="generateBtn">✨ 핑계 생성하기</button>
+      <button type="button" class="btn btn-secondary" id="copyBtn" style="display:none">📋 복사하기</button>
+      <button type="button" class="btn btn-share" id="shareBtn">📸 캡처해서 공유하기</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num" id="countNum">0</div>
+        <div class="stat-label">생성한 핑계</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="totalExcuses">0</div>
+        <div class="stat-label">총 핑계 수</div>
+      </div>
+    </div>
+  </main>
+
+  <main class="card panel" id="panelHair">
+    <p class="section-label">대상자 정보</p>
+    <div class="form-field">
+      <label for="hairName">이름</label>
+      <input type="text" id="hairName" value="" maxlength="20" placeholder="이름 입력 (선택)">
+    </div>
+
+    <div class="form-field">
+      <label for="hairAge">나이 <span id="hairAgeVal">27세</span></label>
+      <input type="range" id="hairAge" min="1" max="80" value="27">
+    </div>
+
+    <div class="form-field">
+      <label for="hairStress">스트레스 <span id="hairStressVal">보통</span></label>
+      <input type="range" id="hairStress" min="0" max="100" value="50">
+    </div>
+
+    <div class="form-field">
+      <label for="hairCoffee">하루 커피 <span id="hairCoffeeVal">2잔</span></label>
+      <input type="range" id="hairCoffee" min="0" max="10" value="2">
+    </div>
+
+    <div class="form-field">
+      <label for="hairSleep">수면 시간 <span id="hairSleepVal">6시간</span></label>
+      <input type="range" id="hairSleep" min="0" max="12" value="6">
+    </div>
+
+    <div class="form-field">
+      <label for="hairGenetics">가족 탈모 유전력 <span id="hairGeneticsVal">없음</span></label>
+      <input type="range" id="hairGenetics" min="0" max="100" value="0">
+    </div>
+
+    <div class="hair-result-box" id="hairResultBox">
+      <span class="placeholder">아래 버튼을 눌러 과학적으로 분석하세요</span>
+    </div>
+
+    <div class="progress-bar-wrap" id="hairProgressWrap">
+      <div class="progress-bar-fill" id="hairProgressFill"></div>
+    </div>
+    <p class="hair-scan" id="hairScan"></p>
+
+    <div class="btn-group no-capture">
+      <button type="button" class="btn btn-primary" id="hairCalcBtn">🔬 탈모 확률 분석하기</button>
+      <button type="button" class="btn btn-secondary" id="hairCopyBtn" style="display:none">📋 결과 복사하기</button>
+      <button type="button" class="btn btn-share" id="hairShareBtn">📸 캡처해서 공유하기</button>
+    </div>
+
+    <div id="hairAdmin" class="hair-admin no-capture" hidden>
+      <p class="section-label">🔒 확정 탈모 명단 (비공개)</p>
+      <ul class="hair-vip-list" id="hairVipList"></ul>
+      <div class="hair-admin-add">
+        <input type="text" id="hairVipInput" maxlength="20" placeholder="이름 추가">
+        <button type="button" id="hairVipAddBtn">추가</button>
+      </div>
+    </div>
+  </main>
+
+  <main class="card panel" id="panelPoker">
+    <div id="pokerQuiz">
+      <div class="poker-timer" id="pokerTimer">
+        <div class="poker-timer-display" id="pokerTimerNum">30</div>
+        <div class="poker-timer-bar-wrap">
+          <div class="poker-timer-bar" id="pokerTimerBar"></div>
+        </div>
+        <p class="poker-timer-label">⏱️ 당신의 턴 — 30초 안에 결정하세요!</p>
+      </div>
+      <div class="quiz-progress">
+        <span id="pokerStepLabel">질문 1 / 5</span>
+        <div class="quiz-dots" id="pokerDots"></div>
+      </div>
+      <div class="quiz-question-box" id="pokerQuestion"></div>
+      <div class="yn-btns no-capture">
+        <button type="button" class="yn-btn yes" id="pokerYes">예 😰</button>
+        <button type="button" class="yn-btn no" id="pokerNo">아니오 😎</button>
+      </div>
+    </div>
+
+    <div id="pokerResult" style="display:none">
+      <div class="poker-result-box">
+        <div class="poker-verdict" id="pokerVerdict"></div>
+        <p class="poker-reason" id="pokerReason"></p>
+        <p class="poker-score" id="pokerScore"></p>
+      </div>
+      <div class="btn-group no-capture">
+        <button type="button" class="btn btn-secondary" id="pokerCopyBtn">📋 결과 복사하기</button>
+        <button type="button" class="btn btn-share" id="pokerShareBtn">📸 캡처해서 공유하기</button>
+        <button type="button" class="btn btn-primary" id="pokerRetryBtn">🔄 다시 판단하기</button>
+      </div>
+    </div>
+  </main>
+
+  <footer id="appFooter">
+    <p id="footerLine1">※ 본 서비스는 핑계의 진실성을 보장하지 않습니다 😇</p>
+    <p id="footerLine2">지각하지 않는 것이 최고의 핑계입니다</p>
+  </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <noscript>
+    <style>.card { display:none } body::after { content:'JavaScript가 필요합니다. 사파리·크롬 브라우저에서 열어주세요.'; display:block; text-align:center; padding:40px 20px; color:#f0f0f5; }</style>
+  </noscript>
+
+  <script>
+    (function () {
+    'use strict';
+
+    if (location.protocol === 'file:') {
+      document.getElementById('fileWarning').classList.add('show');
+    }
+
+    const panelMap = { excuse: 'panelExcuse', hair: 'panelHair', poker: 'panelPoker' };
+
+    const appMeta = {
+      excuse: {
+        emoji: '🏃‍♂️💨',
+        title: '지각 핑계 생성기',
+        subtitle: '오늘도 늦었어? 괜찮아, 핑계는 내가 만들어줄게',
+        footer1: '※ 본 서비스는 핑계의 진실성을 보장하지 않습니다 😇',
+        footer2: '지각하지 않는 것이 최고의 핑계입니다',
+      },
+      hair: {
+        emoji: '🧑‍🦲📉',
+        title: '탈모 확률 계산기',
+        subtitle: '과학적 알고리즘으로 정밀 분석합니다 (진짜임)',
+        footer1: '※ 본 서비스는 탈모 예측의 정확성을 보장하지 않습니다',
+        footer2: '머리 숱 많은 것이 최고의 해법입니다',
+      },
+      poker: {
+        emoji: '🃏🤔',
+        title: '콜 할까 말까?',
+        subtitle: '홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)',
+        footer1: '※ 본 서비스는 패배에 대한 책임을 지지 않습니다',
+        footer2: '폴드가 최고의 핸드일 때가 있습니다',
+      },
+    };
+
+    let currentApp = 'excuse';
+    let onAppSwitch = null;
+
+    function switchApp(app) {
+      if (!appMeta[app]) return;
+      const from = currentApp;
+      currentApp = app;
+      document.querySelectorAll('.app-nav-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.app === app);
+      });
+      document.querySelectorAll('.panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.id === panelMap[app]);
+      });
+      const meta = appMeta[app];
+      document.getElementById('headerEmoji').textContent = meta.emoji;
+      document.getElementById('headerTitle').textContent = meta.title;
+      document.getElementById('headerSubtitle').textContent = meta.subtitle;
+      document.getElementById('footerLine1').textContent = meta.footer1;
+      document.getElementById('footerLine2').textContent = meta.footer2;
+      if (onAppSwitch) onAppSwitch(from, app);
+    }
+
+    document.getElementById('appNav').addEventListener('click', (e) => {
+      const btn = e.target.closest('.app-nav-btn');
+      if (btn) switchApp(btn.dataset.app);
+    });
+
+    const params = new URLSearchParams(location.search);
+    const appParam = params.get('app');
+    if (appParam && appMeta[appParam]) switchApp(appParam);
+
+    const situations = {
+      work: {
+        copy: (e) => `죄송합니다, ${e} 🙏`,
+        excuses: {
+          traffic: [
+            "출근길 지하철 신호 장애로 20분 동안 역에 갇혔습니다",
+            "버스가 고장 나서 다른 버스를 기다리느라 늦었습니다",
+            "출근 시간대 고속도로 추돌사고로 정체가 심했습니다",
+            "지하철 환승역에서 사람이 너무 많아 다음 열차를 탔습니다",
+            "도로 공사 우회로 인해 예상보다 30분 더 걸렸습니다",
+            "카카오T가 연속 취소되어 재배차까지 20분 걸렸습니다",
+            "지하철 안에서 승객이 쓰러져 응급 대응하느라 늦었습니다",
+            "출근길 버스가 노선을 잘못 타 반대 방향으로 갔습니다",
+            "폭우로 지하철 운행이 지연되었습니다",
+            "출근길에 교통사고가 나서 우회하느라 늦었습니다",
+          ],
+          health: [
+            "아침에 갑자기 복통이 심해서 병원에 다녀왔습니다",
+            "열이 나서 약국에 들렀다가 출근했습니다",
+            "알람을 껐는데 다시 잠들어 1시간 늦게 일어났습니다",
+            "갑자기 어지러워서 잠시 쉬었다가 출근했습니다",
+            "알레르기 반응이 와서 약을 먹고 기다렸습니다",
+            "이갈이로 밤새 잠을 못 자 아침에 늦게 일어났습니다",
+            "감기 기운이 심해 약을 먹고 늦게 출발했습니다",
+            "허리를 삐끗해서 물리치료 받고 출근했습니다",
+          ],
+          life: [
+            "출근 준비 중 엘리베이터가 고장 나 계단으로 내려갔습니다",
+            "사원증을 두고 와서 집에 다시 갔습니다",
+            "정장에 커피를 쏟아 갈아입느라 늦었습니다",
+            "집 앞 상수도 공사로 출입이 막혀 있었습니다",
+            "택배 기사님이 와서 필수 서류를 직접 받았습니다",
+            "반려동물이 아파서 동물병원에 다녀왔습니다",
+            "아침에 정전이 돼서 준비를 못 했습니다",
+          ],
+          tech: [
+            "휴대폰 알람이 업데이트 후 작동하지 않았습니다",
+            "출근 기록 앱 오류로 재설치하느라 늦었습니다",
+            "스마트워치 알람 동기화 오류로 늦게 일어났습니다",
+            "회사 VPN 연결 문제로 재설치하느라 늦었습니다",
+            "노트북 충전기를 두고 와서 집에 다시 갔습니다",
+            "카톡 단톡방 알림이 꺼져 출근 시간 변경을 못 봤습니다",
+          ],
+          absurd: [
+            "꿈에서 이미 출근 완료해서 여유롭게 왔습니다",
+            "지구 자전이 느려져 시간이 늦어진 것 같습니다",
+            "엘리베이터에서 상사를 만나 30분 수다를 떨었습니다",
+            "출근길 고양이가 길을 막고 앉아 있었습니다",
+            "오늘 운세가 '지각운'이었습니다",
+          ],
+        },
+      },
+      meeting: {
+        copy: (e) => `정말 죄송합니다. ${e} 곧 도착하겠습니다.`,
+        excuses: {
+          traffic: [
+            "미팅 장소로 가는 길에 지하철이 20분간 정차했습니다",
+            "택시가 고속도로 사고로 우회하느라 크게 늦었습니다",
+            "미팅 장소 근처에서 행사로 도로가 전면 통제되었습니다",
+            "지하철 환승 중 열차가 고장 나 다음 열차를 탔습니다",
+            "네비게이션이 잘못 안내해 완전히 다른 곳으로 갔습니다",
+            "미팅 장소 주차장이 만차라 주차하느라 늦었습니다",
+            "KTX가 지연 운행이라 환승을 놓쳤습니다",
+            "출발 직전 교통사고로 도로가 막혔습니다",
+          ],
+          health: [
+            "미팅 직전 갑자기 복통이 와 화장실에 오래 있었습니다",
+            "급한 전화 통화로 출발이 늦어졌습니다",
+            "갑자기 어지러워서 잠시 쉬었다가 출발했습니다",
+            "알레르기 반응이 와 약을 먹고 기다렸습니다",
+            "목소리가 나가서 약국에 들렀다 왔습니다",
+            "커피를 너무 마셔 심장이 두근거려 쉬다 왔습니다",
+          ],
+          life: [
+            "미팅 자료를 프린트하느라 늦었습니다",
+            "노트북 충전기를 두고 와서 집에 다시 갔습니다",
+            "정장에 음료를 쏟아 갈아입느라 늦었습니다",
+            "명함을 두고 와서 집에 다시 갔습니다",
+            "미팅 전 급한 업무 전화가 20분 걸렸습니다",
+            "Wi-Fi가 안 돼 자료를 다시 받느라 늦었습니다",
+          ],
+          tech: [
+            "화상회의 링크 오류로 IT팀에 문의하느라 늦었습니다",
+            "노트북이 갑자기 꺼져 재부팅하느라 늦었습니다",
+            "프레젠테이션 파일이 손상되어 복구하느라 늦었습니다",
+            "클라우드 서버 장애로 자료를 못 받아 늦었습니다",
+            "OTP 앱 오류로 회사 시스템 로그인이 안 됐습니다",
+            "이어폰 배터리가 없어서 급히 구매하느라 늦었습니다",
+          ],
+          absurd: [
+            "미팅 전 너무 긴장해서 화장실을 5번 갔습니다",
+            "거울 앞에서 연습하다가 시간을 놓쳤습니다",
+            "미팅 상대방을 길에서 봤는데 인사하느라 늦었습니다",
+            "엘리베이터에서 미팅 상대를 만나 수다를 떨었습니다",
+            "행운의 펜ny를 주워 은행에 갔습니다",
+          ],
+        },
+      },
+      friend: {
+        copy: (e) => `야 미안 ㅠㅠ ${e} 좀만 기다려~`,
+        excuses: {
+          traffic: [
+            "버스가 안 와서 택시 탔는데 택시도 안 잡혀 ㅠㅠ",
+            "지하철에서 사람한테 발 밟혀서 싸우느라 한 역 놓침",
+            "길 막혀서 네비 믿고 갔는데 완전 반대편으로 감 ㅋㅋ",
+            "자전거 타이어 펑크 나서 수리하느라 늦음",
+            "버스 기사님이 노선 잘못 타서 산골 갔다 옴",
+            "카카오T 기사님이 길 모르셔서 20분 돌아감",
+            "지하철 문 안 열려서 다음 역까지 갔다 옴",
+          ],
+          health: [
+            "어제 술 마셔서 알람 못 들었어 미안 ㅠ",
+            "갑자기 배 아파서 화장실에 갇혔음",
+            "머리 아파서 약 먹고 누워있다가 깜빡함",
+            "알람 10개 껐는데 다시 잠들어버림",
+            "어제 밤에 벌레 물려서 밤새 못 잤어",
+            "커피 너무 마셔서 심장 뛰어서 쉬다 옴",
+          ],
+          life: [
+            "옷 고르다가 30분 날림 미안",
+            "화장하다가 시간 가는 줄 몰랐어",
+            "집 나왔는데 지갑 두고 와서 다시 감",
+            "고양이가 문 앞에 누워서 못 나감 ㅋㅋ",
+            "엄마한테 전화 와서 30분 통화함",
+            "택배 와서 받느라 늦음 (안 받으면 다시 감)",
+            "옷에 커피 쏟아서 갈아입느라 늦음",
+            "거울 보다가 내가 너무 예뻐서 멈춤",
+          ],
+          tech: [
+            "폰 알람 안 울림 업데이트 때문인 듯",
+            "카톡 보다가 약속 시간 착각함",
+            "네이버 지도가 바다로 안내함 진짜로",
+            "배터리 없어서 연락 못 했어 미안",
+            "인스타 보다가 시간 순삭됨",
+          ],
+          absurd: [
+            "길에서 고양이한테 발길이 막혔음",
+            "로또 1등 확인하느라 늦음 (꽝이었음)",
+            "UFO 봤는데 진짜임",
+            "평행우주의 나랑 싸우느라 늦음",
+            "꿈에서 이미 만났는데 현실이랑 헷갈림",
+            "버스에서 옆 사람이 인생 상담 40분 해줌",
+            "오늘 운세 지각운이라 어쩔 수 없었음",
+            "데자뷰 와서 같은 길 3번 돌음",
+          ],
+        },
+      },
+    };
+
+    let currentSituation = 'work';
+    let currentCat = 'all';
+    let currentExcuse = '';
+    let count = 0;
+    let lastExcuse = '';
+
+    const excuseBox = document.getElementById('excuseBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+    const totalEl = document.getElementById('totalExcuses');
+
+    function countExcuses(situation) {
+      return Object.values(situations[situation].excuses).flat().length;
+    }
+
+    function updateTotal() {
+      totalEl.textContent = countExcuses(currentSituation);
+    }
+    updateTotal();
+
+    function bindTap(el, handler) {
+      let touched = false;
+      el.addEventListener('touchend', function (e) {
+        touched = true;
+        e.preventDefault();
+        handler(e);
+        setTimeout(() => { touched = false; }, 400);
+      }, { passive: false });
+      el.addEventListener('click', function (e) {
+        if (touched) return;
+        handler(e);
+      });
+    }
+
+    function selectSituation(tab) {
+      document.querySelectorAll('.situation-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentSituation = tab.dataset.situation;
+      lastExcuse = '';
+      updateTotal();
+    }
+
+    function selectCategory(tab) {
+      document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentCat = tab.dataset.cat;
+      lastExcuse = '';
+    }
+
+    document.getElementById('situationTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.situation-tab');
+      if (tab) selectSituation(tab);
+    });
+
+    document.getElementById('tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (tab && !tab.classList.contains('situation-tab')) selectCategory(tab);
+    });
+
+    function getPool() {
+      const pool = situations[currentSituation].excuses;
+      if (currentCat === 'all') return Object.values(pool).flat();
+      return pool[currentCat] || Object.values(pool).flat();
+    }
+
+    function generate() {
+      const pool = getPool();
+      let excuse;
+      do {
+        excuse = pool[Math.floor(Math.random() * pool.length)];
+      } while (excuse === lastExcuse && pool.length > 1);
+
+      lastExcuse = excuse;
+      currentExcuse = excuse;
+      count++;
+      document.getElementById('countNum').textContent = count;
+
+      excuseBox.classList.add('fade');
+      setTimeout(() => {
+        excuseBox.textContent = excuse;
+        excuseBox.classList.remove('fade');
+        excuseBox.classList.add('has-excuse');
+        copyBtn.style.display = 'block';
+      }, 200);
+    }
+
+    function getCopyText() {
+      if (!currentExcuse) return '';
+      return situations[currentSituation].copy(currentExcuse);
+    }
+
+    function copyToClipboard(text) {
+      if (!text) return false;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+      }
+      return Promise.resolve(fallbackCopy(text));
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;box-shadow:none;background:transparent;font-size:16px;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    let sharing = false;
+    let html2canvasReady = null;
+
+    function loadHtml2Canvas() {
+      if (window.html2canvas) return Promise.resolve(window.html2canvas);
+      if (html2canvasReady) return html2canvasReady;
+      html2canvasReady = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = () => resolve(window.html2canvas);
+        s.onerror = () => reject(new Error('html2canvas load failed'));
+        document.head.appendChild(s);
+      });
+      return html2canvasReady;
+    }
+
+    function getShareUrl() {
+      if (location.protocol === 'file:') return '';
+      const base = location.origin + location.pathname;
+      return currentApp === 'excuse' ? base : base + '?app=' + currentApp;
+    }
+
+    function downloadBlob(blob, filename) {
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function captureAndShare(title, fallbackText) {
+      if (sharing) return;
+      sharing = true;
+      showToast('📸 화면 캡처 중...');
+
+      try {
+        const html2canvas = await loadHtml2Canvas();
+        const zone = document.getElementById('shareZone');
+        const canvas = await html2canvas(zone, {
+          backgroundColor: '#0f0f14',
+          scale: Math.min(window.devicePixelRatio || 2, 3),
+          useCORS: true,
+          logging: false,
+          onclone: (doc, clone) => {
+            const z = clone.getElementById('shareZone');
+            if (z) {
+              z.style.padding = '24px 20px';
+              z.style.backgroundColor = '#0f0f14';
+              z.style.backgroundImage =
+                'radial-gradient(ellipse 120% 80% at 20% 0%, rgba(255,107,74,.18) 0%, transparent 55%),' +
+                'radial-gradient(ellipse 120% 80% at 80% 100%, rgba(255,209,102,.12) 0%, transparent 55%)';
+            }
+            clone.querySelectorAll('.no-capture').forEach((el) => {
+              el.style.display = 'none';
+            });
+          },
+        });
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+        if (!blob) throw new Error('blob failed');
+
+        const file = new File([blob], 'mansejin-share.png', { type: 'image/png' });
+        const shareUrl = getShareUrl();
+        const shareText = shareUrl ? fallbackText + '\n' + shareUrl : fallbackText;
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ title, files: [file] });
+            showToast('📤 공유 완료!');
+            sharing = false;
+            return;
+          } catch (e) {
+            if (e.name === 'AbortError') {
+              sharing = false;
+              return;
+            }
+          }
+        }
+
+        downloadBlob(blob, 'mansejin-share.png');
+        if (shareText) await copyToClipboard(shareText);
+        showToast('📥 이미지 저장됨! 갤러리에서 붙여넣기 하세요');
+      } catch {
+        const shareUrl = getShareUrl();
+        const shareText = shareUrl ? fallbackText + '\n' + shareUrl : fallbackText;
+        copyToClipboard(shareText).then((ok) => {
+          showToast(ok ? '📋 캡처 실패 — 텍스트 복사됨' : '📋 캡처 실패');
+        });
+      }
+      sharing = false;
+    }
+
+    function copyExcuse() {
+      const text = getCopyText();
+      if (!text) return;
+      copyToClipboard(text).then((ok) => {
+        showToast(ok ? '📋 복사 완료! 카톡에 붙여넣기 하세요' : '📋 길게 눌러서 복사해 주세요');
+      });
+    }
+
+    function share() {
+      const text = currentExcuse
+        ? `나 오늘 지각했는데 핑계 이거 쓸래 ㅋㅋ\n"${currentExcuse}"`
+        : '지각했을 때 쓸 핑계 만들어주는 사이트 발견 ㅋㅋ';
+      captureAndShare('지각 핑계 생성기 🏃‍♂️', text);
+    }
+
+    bindTap(document.getElementById('generateBtn'), generate);
+    bindTap(document.getElementById('copyBtn'), copyExcuse);
+    bindTap(document.getElementById('shareBtn'), share);
+    bindTap(excuseBox, copyExcuse);
+
+    // ── 탈모 확률 계산기 ──
+    const hairAge = document.getElementById('hairAge');
+    const hairStress = document.getElementById('hairStress');
+    const hairCoffee = document.getElementById('hairCoffee');
+    const hairSleep = document.getElementById('hairSleep');
+    const hairGenetics = document.getElementById('hairGenetics');
+    const hairResultBox = document.getElementById('hairResultBox');
+    const hairProgressWrap = document.getElementById('hairProgressWrap');
+    const hairProgressFill = document.getElementById('hairProgressFill');
+    const hairScan = document.getElementById('hairScan');
+    const hairCopyBtn = document.getElementById('hairCopyBtn');
+    let hairResultText = '';
+
+    const HAIR_VIP_KEY = '_m_hv';
+    const HAIR_ADMIN_KEY = '_m_ha';
+    const DEFAULT_VIP = ['강성민', '심성우', '송준오'];
+    const VIP_VERDICTS = [
+      '이미 탈모로 판명났습니다. 재검사 불필요.',
+      '공인 탈모로 데이터베이스에 등록되어 있습니다.',
+      '과학이 포기한 케이스입니다.',
+      '머리카락은 이미 역사가 되었습니다.',
+    ];
+
+    function normHairName(s) {
+      return s.trim().replace(/\s/g, '');
+    }
+
+    function getVipList() {
+      try {
+        const raw = localStorage.getItem(HAIR_VIP_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      saveVipList(DEFAULT_VIP);
+      return DEFAULT_VIP.slice();
+    }
+
+    function saveVipList(list) {
+      localStorage.setItem(HAIR_VIP_KEY, JSON.stringify(list));
+    }
+
+    function isVipName(name) {
+      const n = normHairName(name);
+      if (!n || n === '당신') return false;
+      return getVipList().some((x) => normHairName(x) === n);
+    }
+
+    function renderVipAdmin() {
+      const ul = document.getElementById('hairVipList');
+      const list = getVipList();
+      ul.innerHTML = list.map((name, i) =>
+        `<li class="hair-vip-item"><span>${name}</span><button type="button" class="hair-vip-del" data-idx="${i}">삭제</button></li>`
+      ).join('');
+    }
+
+    function showHairAdmin() {
+      sessionStorage.setItem(HAIR_ADMIN_KEY, '1');
+      const el = document.getElementById('hairAdmin');
+      el.hidden = false;
+      renderVipAdmin();
+    }
+
+    if (params.get('admin') === 'hair' || sessionStorage.getItem(HAIR_ADMIN_KEY)) {
+      showHairAdmin();
+    }
+
+    let emojiTaps = 0;
+    let emojiTapTimer = null;
+    document.getElementById('headerEmoji').addEventListener('click', () => {
+      if (currentApp !== 'hair') return;
+      emojiTaps++;
+      clearTimeout(emojiTapTimer);
+      emojiTapTimer = setTimeout(() => { emojiTaps = 0; }, 2000);
+      if (emojiTaps >= 5) {
+        emojiTaps = 0;
+        showHairAdmin();
+        showToast('🔒 관리 패널 열림');
+      }
+    });
+
+    document.getElementById('hairVipList').addEventListener('click', (e) => {
+      const btn = e.target.closest('.hair-vip-del');
+      if (!btn) return;
+      const list = getVipList();
+      list.splice(+btn.dataset.idx, 1);
+      saveVipList(list);
+      renderVipAdmin();
+    });
+
+    document.getElementById('hairVipAddBtn').addEventListener('click', () => {
+      const input = document.getElementById('hairVipInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const list = getVipList();
+      if (!list.some((x) => normHairName(x) === normHairName(name))) {
+        list.push(name);
+        saveVipList(list);
+      }
+      input.value = '';
+      renderVipAdmin();
+    });
+
+    const stressLabels = ['없음', '약간', '보통', '심함', '지옥'];
+    const geneticsLabels = ['없음', '살짝', '보통', '강함', '치명적'];
+
+    function updateHairLabels() {
+      document.getElementById('hairAgeVal').textContent = hairAge.value + '세';
+      const s = +hairStress.value;
+      document.getElementById('hairStressVal').textContent = stressLabels[Math.min(4, Math.floor(s / 25))];
+      document.getElementById('hairCoffeeVal').textContent = hairCoffee.value + '잔';
+      document.getElementById('hairSleepVal').textContent = hairSleep.value + '시간';
+      const g = +hairGenetics.value;
+      document.getElementById('hairGeneticsVal').textContent = geneticsLabels[Math.min(4, Math.floor(g / 25))];
+    }
+
+    [hairAge, hairStress, hairCoffee, hairSleep, hairGenetics].forEach((el) => {
+      el.addEventListener('input', updateHairLabels);
+    });
+    updateHairLabels();
+
+    const scanSteps = [
+      '모낭 밀도 스캔 중...',
+      'DHT 호르몬 수치 분석 중...',
+      '정수리 위성 사진 로딩 중...',
+      '두피 DNA 시퀀싱 중...',
+      '탈모 유전자 17번 염색체 확인 중...',
+      '최종 결과 산출 중...',
+    ];
+
+    const verdicts = [
+      '이마 라인이 후퇴할 준비를 마쳤습니다',
+      '미래의 당신이 대머리를 쓰고 계십니다',
+      '샴푸 광고 모델은 포기하세요',
+      '모자 업계에 희소식입니다',
+      '정수리에 바람이 통할 예정입니다',
+      '탈모 샴푸 주식 매수를 권장합니다',
+      '머리카락 한 올 한 올이 이별 통보 중입니다',
+      '미용실에서 "숱이 좀..." 소리 들을 각입니다',
+    ];
+
+    function getHairPercent() {
+      return Math.floor(Math.random() * 101);
+    }
+
+    function getHairVerdict(percent) {
+      const safe = [
+        '머리 숱 걱정은 안 하셔도 됩니다',
+        '아직 풍성합니다. 자신감 가지세요',
+        '탈모 샴푸 볼 필요 없습니다',
+      ];
+      const mid = [
+        '가끔 거울 보면서 확인하세요',
+        '씻을 때 빠지는 거 신경 쓰이시죠',
+        '모자 하나 장만해 두세요',
+      ];
+      if (percent <= 30) return safe[Math.floor(Math.random() * safe.length)];
+      if (percent <= 70) return mid[Math.floor(Math.random() * mid.length)];
+      return verdicts[Math.floor(Math.random() * verdicts.length)];
+    }
+
+    function calcHair() {
+      const name = document.getElementById('hairName').value.trim() || '당신';
+      const isVip = isVipName(name);
+      const btn = document.getElementById('hairCalcBtn');
+      btn.disabled = true;
+      hairCopyBtn.style.display = 'none';
+      hairProgressWrap.classList.add('show');
+      hairProgressFill.style.width = '0%';
+      hairResultBox.classList.add('fade');
+      hairResultBox.innerHTML = '<span class="placeholder">분석 중...</span>';
+
+      let step = 0;
+      hairScan.textContent = scanSteps[0];
+
+      const scanInterval = setInterval(() => {
+        step++;
+        if (step < scanSteps.length) hairScan.textContent = scanSteps[step];
+      }, 400);
+
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress = Math.min(99, progress + Math.random() * 12 + 3);
+        hairProgressFill.style.width = progress + '%';
+      }, 120);
+
+      setTimeout(() => {
+        clearInterval(scanInterval);
+        clearInterval(progressInterval);
+        const percent = isVip ? 100 : getHairPercent();
+        const verdict = isVip
+          ? VIP_VERDICTS[Math.floor(Math.random() * VIP_VERDICTS.length)]
+          : getHairVerdict(percent);
+        hairProgressFill.style.width = percent + '%';
+        hairScan.textContent = isVip ? '✅ 확정 탈모 (재검사 불필요)' : '✅ 분석 완료 (오차범위 ±0.01%)';
+
+        hairResultText = `${name}님 탈모 확률: ${percent}%\n${verdict}\n\n탈모 확률 계산기 👇`;
+        hairResultBox.innerHTML = `<div class="hair-percent">${percent}%</div><div class="hair-verdict"><strong>${name}</strong>님의 탈모 확률: <strong>${percent}%</strong><br><span style="color:var(--muted);font-size:0.85rem">${verdict}</span></div>`;
+        hairResultBox.classList.remove('fade');
+        hairCopyBtn.style.display = 'block';
+        btn.disabled = false;
+      }, 2800);
+    }
+
+    function copyHairResult() {
+      if (!hairResultText) return;
+      const url = location.protocol === 'file:' ? '' : location.origin + location.pathname + '?app=hair';
+      const text = url ? hairResultText + '\n' + url : hairResultText;
+      copyToClipboard(text).then((ok) => {
+        showToast(ok ? '📋 복사 완료!' : '📋 길게 눌러서 복사해 주세요');
+      });
+    }
+
+    function shareHair() {
+      const name = document.getElementById('hairName').value.trim() || '당신';
+      const text = hairResultText
+        ? hairResultText
+        : `${name}님 탈모 확률 측정해봤는데 ㅋㅋㅋ 너도 해봐`;
+      captureAndShare('탈모 확률 계산기 🧑‍🦲', text);
+    }
+
+    bindTap(document.getElementById('hairCalcBtn'), calcHair);
+    bindTap(hairCopyBtn, copyHairResult);
+    bindTap(document.getElementById('hairShareBtn'), shareHair);
+
+    // ── 콜 할까 말까? ──
+    const POKER_TIME = 30;
+    const POKER_Q_COUNT = 5;
+
+    const pokerQuestionPool = [
+      '지금 배고프십니까?',
+      '오늘 양말 색이 마음에 듭니까?',
+      '상대방 얼굴이 유명인 닮았습니까?',
+      '화장실 가고 싶은 느낌이 듭니까?',
+      '방금 카톡 알림 왔습니까?',
+      '오늘 점심 뭐 먹었는지 기억 안 납니까?',
+      '상대가 방금 하품한 것 같습니까?',
+      '지금 에어컨 바람이 너무 세지 않습니까?',
+      '오늘 운세 확인하고 오셨습니까?',
+      '팟 사이즈가 치킨 한 마리 값 이상 같습니까?',
+      '상대 프로필 사진이 오래된 것 같습니까?',
+      '지금 손에 땀이 납니까?',
+      '실내인데 비행기 소리가 들리는 것 같습니까?',
+      '오늘 커피 3잔 이상 마셨습니까?',
+      '상대 닉네임이 무섭습니까?',
+      '지금 고양이 영상이 보고 싶습니까?',
+      '책상(또는 방)이 지저분합니까?',
+      '상대가 이모티콘을 썼습니까?',
+      '오늘 세수하셨습니까?',
+      '누가 옆에서 쳐다보는 것 같습니까?',
+      '상대 프로필에 카드 문양이 있습니까?',
+      '콜하면 저녁 약속에 늦을 것 같습니까?',
+      '지금 머릿속에 노래가 맴돕니까?',
+      '오늘 머리 감았습니까?',
+      '상대가 존댓말을 씁니까?',
+      '지금 누워서 하고 있습니까?',
+      '방금 재채기 했습니까?',
+      '오늘 로또 사셨습니까?',
+      '상대방 이름이 어렵습니까?',
+      '지금 이 앱 쓰는 게 들킬 것 같습니까?',
+    ];
+
+    const callReasons = [
+      '직감이 "콜"이라고 합니다 (직감이 원숭이)',
+      '안 하면 평생 "그때 콜할걸" 할 겁니다',
+      '상대도 사실 떨고 있을 겁니다. probably',
+      '우주가 콜하라고 속삭이고 있습니다',
+      '핑계는 준비됐고, 용기만 있으면 됩니다',
+      '오늘 점심 맛있게 먹었으니 운이 좋습니다',
+      '양말 색이 오늘의 행운을 뒷받침합니다',
+    ];
+
+    const foldReasons = [
+      '배고프면 판단력이 떨어집니다. 일단 폴드',
+      '화장실 급하면 무조건 폴드입니다 (미국 프로도 인정)',
+      '이 앱까지 켰다는 건 이미 마음이 기울었다는 뜻',
+      '고양이 영상이 보고 싶을 때는 폴드가 정답',
+      '시간 초과 = 패닉 폴드. 논란의 여지가 없습니다',
+      '상대 닉네임이 무서우면 접는 게 상식입니다',
+      '누워서 치면 폴드가 물리적으로 맞습니다',
+    ];
+
+    const timeUpReasons = [
+      '생각할 시간도 없었습니다. 패닉 폴드!',
+      '딜러가 이미 카드를 태우려 합니다. 폴드!',
+      '30초 안에 못 정하면 그게 답입니다',
+    ];
+
+    let pokerStep = 0;
+    let pokerYesCount = 0;
+    let pokerResultText = '';
+    let activePokerQuestions = [];
+    let pokerTimeLeft = POKER_TIME;
+    let pokerTimerId = null;
+    let pokerTimedOut = false;
+
+    const pokerQuiz = document.getElementById('pokerQuiz');
+    const pokerResult = document.getElementById('pokerResult');
+    const pokerQuestion = document.getElementById('pokerQuestion');
+    const pokerDots = document.getElementById('pokerDots');
+    const pokerStepLabel = document.getElementById('pokerStepLabel');
+    const pokerTimerEl = document.getElementById('pokerTimer');
+    const pokerTimerNum = document.getElementById('pokerTimerNum');
+    const pokerTimerBar = document.getElementById('pokerTimerBar');
+
+    function pickPokerQuestions() {
+      const shuffled = pokerQuestionPool.slice().sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, POKER_Q_COUNT);
+    }
+
+    function updateTimerUI() {
+      pokerTimerNum.textContent = pokerTimeLeft;
+      pokerTimerBar.style.width = (pokerTimeLeft / POKER_TIME * 100) + '%';
+      pokerTimerEl.classList.toggle('urgent', pokerTimeLeft <= 10 && pokerTimeLeft > 5);
+      pokerTimerEl.classList.toggle('critical', pokerTimeLeft <= 5);
+    }
+
+    function stopPokerTimer() {
+      if (pokerTimerId) {
+        clearInterval(pokerTimerId);
+        pokerTimerId = null;
+      }
+    }
+
+    function startPokerTimer() {
+      stopPokerTimer();
+      pokerTimerId = setInterval(() => {
+        pokerTimeLeft--;
+        updateTimerUI();
+        if (pokerTimeLeft <= 0) {
+          stopPokerTimer();
+          onPokerTimeUp();
+        }
+      }, 1000);
+    }
+
+    function onPokerTimeUp() {
+      if (pokerResult.style.display !== 'none') return;
+      pokerTimedOut = true;
+      showToast('⏰ 시간 초과! 패닉 판정!');
+      showPokerVerdict();
+    }
+
+    function renderPokerDots() {
+      pokerDots.innerHTML = activePokerQuestions.map((_, i) => {
+        let cls = 'quiz-dot';
+        if (i < pokerStep) cls += ' done';
+        else if (i === pokerStep) cls += ' current';
+        return `<span class="${cls}"></span>`;
+      }).join('');
+    }
+
+    function showPokerQuestion() {
+      pokerQuiz.style.display = 'block';
+      pokerResult.style.display = 'none';
+      pokerQuestion.textContent = activePokerQuestions[pokerStep];
+      pokerStepLabel.textContent = `질문 ${pokerStep + 1} / ${POKER_Q_COUNT}`;
+      renderPokerDots();
+    }
+
+    function answerPoker(yes) {
+      if (pokerResult.style.display !== 'none') return;
+      if (yes) pokerYesCount++;
+      pokerStep++;
+      if (pokerStep < activePokerQuestions.length) {
+        showPokerQuestion();
+        return;
+      }
+      showPokerVerdict();
+    }
+
+    function showPokerVerdict() {
+      stopPokerTimer();
+
+      let fold;
+      let reason;
+
+      if (pokerTimedOut) {
+        fold = true;
+        reason = timeUpReasons[Math.floor(Math.random() * timeUpReasons.length)];
+      } else {
+        fold = pokerYesCount >= 3;
+        const reasons = fold ? foldReasons : callReasons;
+        reason = reasons[Math.floor(Math.random() * reasons.length)];
+      }
+
+      const verdict = fold ? 'FOLD 🙅' : 'CALL ✅';
+      const verdictEl = document.getElementById('pokerVerdict');
+      const cls = fold ? 'fold' : 'call';
+
+      verdictEl.textContent = verdict;
+      verdictEl.className = 'poker-verdict ' + cls;
+      document.getElementById('pokerReason').textContent = reason;
+      document.getElementById('pokerScore').textContent =
+        pokerTimedOut
+          ? `시간 초과 · 예 ${pokerYesCount}개 · 폴드 권장`
+          : `예 ${pokerYesCount}개 / ${POKER_Q_COUNT} · ${fold ? '폴드 권장' : '콜 권장'}`;
+
+      pokerResultText = `[콜 할까 말까?]\n결과: ${verdict}\n${reason}\n(예 ${pokerYesCount}/${POKER_Q_COUNT})`;
+
+      pokerQuiz.style.display = 'none';
+      pokerResult.style.display = 'block';
+    }
+
+    function resetPoker() {
+      stopPokerTimer();
+      pokerStep = 0;
+      pokerYesCount = 0;
+      pokerTimedOut = false;
+      pokerResultText = '';
+      pokerTimeLeft = POKER_TIME;
+      activePokerQuestions = pickPokerQuestions();
+      updateTimerUI();
+      pokerTimerEl.classList.remove('urgent', 'critical');
+      showPokerQuestion();
+      if (currentApp === 'poker') startPokerTimer();
+    }
+
+    function copyPokerResult() {
+      if (!pokerResultText) return;
+      const url = location.protocol === 'file:' ? '' : location.origin + location.pathname + '?app=poker';
+      const text = url ? pokerResultText + '\n' + url : pokerResultText;
+      copyToClipboard(text).then((ok) => {
+        showToast(ok ? '📋 복사 완료! 톡방에 붙여넣기 하세요' : '📋 길게 눌러서 복사해 주세요');
+      });
+    }
+
+    function sharePoker() {
+      const text = pokerResultText || '홀덤 톡방용 콜/폴드 결정기 발견 ㅋㅋ';
+      captureAndShare('콜 할까 말까? 🃏', text);
+    }
+
+    onAppSwitch = (from, to) => {
+      if (from === 'poker') stopPokerTimer();
+      if (to === 'poker' && pokerResult.style.display === 'none') startPokerTimer();
+    };
+
+    resetPoker();
+    bindTap(document.getElementById('pokerYes'), () => answerPoker(true));
+    bindTap(document.getElementById('pokerNo'), () => answerPoker(false));
+    bindTap(document.getElementById('pokerRetryBtn'), resetPoker);
+    bindTap(document.getElementById('pokerCopyBtn'), copyPokerResult);
+    bindTap(document.getElementById('pokerShareBtn'), sharePoker);
+
+    // URL에 핑계가 있으면 표시 (공유 링크용)
+    const shared = params.get('e');
+    if (shared) {
+      try {
+        currentExcuse = decodeURIComponent(shared);
+        excuseBox.textContent = currentExcuse;
+        excuseBox.classList.add('has-excuse');
+        copyBtn.style.display = 'block';
+      } catch {}
+    }
+
+    })();
+  </script>
+</body>
+</html>
