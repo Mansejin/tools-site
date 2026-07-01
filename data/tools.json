@@ -7,8 +7,8 @@
       "en": "Save clipboard images as JPG in File Explorer"
     },
     "description": {
-      "ko": "Win+Shift+S로 캡처한 이미지를 탐색기 폴더에서 Ctrl+Shift+V 한 번으로 JPG 파일로 저장합니다. Ctrl+V는 건드리지 않아 일반 붙여넣기에 영향이 없습니다.",
-      "en": "Capture with Win+Shift+S, then press Ctrl+Shift+V in any Explorer folder to save a JPG. Ctrl+V is never intercepted, so normal paste still works everywhere."
+      "ko": "Win+Shift+S로 캡처한 이미지를 탐색기 폴더에서 Ctrl+Shift+V 한 번으로 JPG 파일로 저장합니다. Ctrl+Shift+V는 탐색기에서 클립보드에 이미지가 있을 때만 동작하며, 브라우저·에디터 등 다른 앱에서는 그대로 사용됩니다. Ctrl+V는 건드리지 않습니다.",
+      "en": "Capture with Win+Shift+S, then press Ctrl+Shift+V in an Explorer folder to save a JPG. Ctrl+Shift+V only activates in Explorer when the clipboard holds an image — browsers and other apps keep their normal shortcuts. Ctrl+V is never intercepted."
     },
     "tags": {
       "ko": ["Windows", "Python", "클립보드", "유틸"],
