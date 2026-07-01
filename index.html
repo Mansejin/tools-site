@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>만세진 도구함 · tools</title>
+  <meta name="description" content="만세진이 만든 잔잔바리 Windows·웹 도구 모음">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tools.mansejin.com">
+  <meta property="og:title" content="만세진 도구함">
+  <meta property="og:description" content="잔잔바리 유틸 모음 — 클립보드 JPG 저장 등">
+  <meta property="og:locale" content="ko_KR">
+  <link rel="canonical" href="https://tools.mansejin.com">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="back-link" href="https://pinggye.mansejin.com">← 핑계 생성기</a>
+        <a class="github-link" href="https://github.com/Mansejin" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+      <p class="hero-emoji">🧰</p>
+      <h1>만세진 도구함</h1>
+      <p class="subtitle">잔잔바리지만 쓸모 있는 것들</p>
+    </header>
+
+    <div class="filters" id="filters" hidden></div>
+
+    <main class="tool-grid" id="toolGrid" aria-live="polite">
+      <p class="loading">불러오는 중…</p>
+    </main>
+
+    <footer class="site-footer">
+      <p>도구 추가는 <code>data/tools.json</code> 수정 후 push</p>
+      <p><a href="https://pinggye.mansejin.com">pinggye.mansejin.com</a> · <a href="https://tools.mansejin.com">tools.mansejin.com</a></p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="js/main.js"></script>
+</body>
+</html>

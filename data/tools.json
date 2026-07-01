@@ -1,0 +1,14 @@
+[
+  {
+    "id": "clipboard-paste-jpg",
+    "name": "clipboard-paste-jpg",
+    "tagline": "탐색기에 클립보드 이미지를 JPG로 저장",
+    "description": "Win+Shift+S로 캡처한 이미지를 탐색기 폴더에서 Ctrl+Shift+V 한 번으로 JPG 파일로 저장합니다. Ctrl+V는 건드리지 않아 일반 붙여넣기에 영향이 없습니다.",
+    "tags": ["Windows", "Python", "클립보드", "유틸"],
+    "github": "https://github.com/Mansejin/clipboard-paste-jpg",
+    "install": "git clone https://github.com/Mansejin/clipboard-paste-jpg.git\ncd clipboard-paste-jpg\npowershell -ExecutionPolicy Bypass -File .\\install_startup.ps1",
+    "shortcut": "Ctrl+Shift+V",
+    "platform": "Windows 10/11",
+    "status": "stable"
+  }
+]
