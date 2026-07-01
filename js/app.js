@@ -18,8 +18,6 @@ const UI = {
     copyInstall: "설치 명령 복사",
     copied: "복사됨",
     copyFailed: "복사 실패",
-    showDetails: "자세히 보기",
-    hideDetails: "접기",
   },
   en: {
     all: "All",
@@ -32,8 +30,6 @@ const UI = {
     copyInstall: "Copy install command",
     copied: "Copied",
     copyFailed: "Copy failed",
-    showDetails: "Show details",
-    hideDetails: "Hide",
   },
 };
 
@@ -139,6 +135,10 @@ function renderTools() {
     });
   });
 
+  grid.querySelectorAll(".tool-details-body").forEach((body) => {
+    body.addEventListener("click", (event) => event.stopPropagation());
+  });
+
   grid.querySelectorAll("[data-copy]").forEach((btn) => {
     btn.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -172,15 +172,16 @@ function renderCard(tool) {
     .join("");
 
   return `<article class="tool-card" id="${escapeHtml(tool.id)}">
-    <div class="tool-card-header">
-      <h2>${escapeHtml(tool.name)}</h2>
-      <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
-    </div>
-    <p class="tagline">${escapeHtml(pickLocalized(tool.tagline))}</p>
     <details class="tool-details" data-tool-id="${escapeHtml(tool.id)}">
-      <summary class="details-toggle">
-        <span class="show-label">${escapeHtml(t.showDetails)}</span>
-        <span class="hide-label">${escapeHtml(t.hideDetails)}</span>
+      <summary class="tool-summary">
+        <div class="tool-summary-text">
+          <div class="tool-card-header">
+            <h2>${escapeHtml(tool.name)}</h2>
+            <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
+          </div>
+          <p class="tagline">${escapeHtml(pickLocalized(tool.tagline))}</p>
+        </div>
+        <span class="tool-chevron" aria-hidden="true"></span>
       </summary>
       <div class="tool-details-body">
         <p class="description">${escapeHtml(pickLocalized(tool.description))}</p>
