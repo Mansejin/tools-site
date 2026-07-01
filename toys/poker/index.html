@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script src="../../js/theme-init.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>콜 할까 말까? 🃏 · 장난감</title>
   <meta name="description" content="홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)">
@@ -18,7 +20,10 @@
   </div>
   <div class="site-top no-capture">
     <a class="site-top-link" href="../">← 장난감</a>
-    <a class="site-top-link" href="../../">도구함</a>
+    <div class="site-top-actions">
+      <a class="site-top-link" href="../../">도구함</a>
+      <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">🌙</button>
+    </div>
   </div>
   <div id="shareZone" class="share-zone">
     <header id="appHeader">
@@ -66,6 +71,7 @@
   </div>
   <div class="toast" id="toast"></div>
   <script src="../js/poker.js"></script>
+  <script src="../../js/theme.js"></script>
   <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
 </body>
 </html>

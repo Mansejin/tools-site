@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script src="../../js/theme-init.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>탈모 확률 계산기 🧑‍🦲 · 장난감</title>
   <meta name="description" content="과학적 알고리즘으로 정밀 분석합니다 (진짜임)">
@@ -18,7 +20,10 @@
   </div>
   <div class="site-top no-capture">
     <a class="site-top-link" href="../">← 장난감</a>
-    <a class="site-top-link" href="../../">도구함</a>
+    <div class="site-top-actions">
+      <a class="site-top-link" href="../../">도구함</a>
+      <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">🌙</button>
+    </div>
   </div>
   <div id="shareZone" class="share-zone">
     <header id="appHeader">
@@ -89,6 +94,7 @@
   </div>
   <div class="toast" id="toast"></div>
   <script src="../js/hair.js"></script>
+  <script src="../../js/theme.js"></script>
   <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
 </body>
 </html>

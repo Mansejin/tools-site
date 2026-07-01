@@ -7,6 +7,7 @@
 }
 
 :root {
+  color-scheme: light;
   --bg: #f2f4f6;
   --card: #ffffff;
   --text: #191f28;
@@ -20,10 +21,30 @@
   --orange: #f59f00;
   --orange-bg: #fff8e6;
   --border: #e5e8eb;
+  --surface-hover: #fafbfc;
   --radius-lg: 20px;
   --radius-md: 12px;
   --radius-sm: 8px;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --card: #161b22;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+  --blue: #58a6ff;
+  --blue-hover: #79b8ff;
+  --blue-light: rgba(56, 139, 253, 0.15);
+  --green: #3fb950;
+  --green-bg: rgba(63, 185, 80, 0.15);
+  --orange: #d29922;
+  --orange-bg: rgba(210, 153, 34, 0.15);
+  --border: #30363d;
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 html {
@@ -85,7 +106,28 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-size: 1.0625rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-tertiary);
 }
 
 .lang-link {
@@ -119,7 +161,7 @@ h1 {
   padding: 14px 16px;
   border-radius: var(--radius-md);
   background: var(--orange-bg);
-  color: #b45309;
+  color: var(--orange);
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.55;
@@ -143,7 +185,7 @@ h1 {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -202,7 +244,7 @@ h1 {
 }
 
 .tool-summary:hover {
-  background: #fafbfc;
+  background: var(--surface-hover);
 }
 
 .tool-summary-main {
@@ -687,6 +729,10 @@ body.bug-modal-open {
   margin-top: 4px;
 }
 
+[data-theme="dark"] .filter-btn {
+  box-shadow: none;
+}
+
 .toast {
   position: fixed;
   bottom: 28px;
@@ -702,6 +748,11 @@ body.bug-modal-open {
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   z-index: 100;
+}
+
+[data-theme="dark"] .toast {
+  background: rgba(22, 27, 34, 0.96);
+  border: 1px solid var(--border);
 }
 
 .toast.show {
