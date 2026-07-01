@@ -13,6 +13,8 @@ const UI = {
     empty: "해당 태그의 도구가 없습니다.",
     error: "도구 목록을 불러오지 못했습니다.",
     install: "설치",
+    installAdvanced: "개발자용 설치",
+    download: "다운로드",
     platform: "플랫폼",
     shortcut: "단축키",
     copyInstall: "설치 명령 복사",
@@ -28,6 +30,8 @@ const UI = {
     empty: "No tools match this tag.",
     error: "Could not load the tool list.",
     install: "Install",
+    installAdvanced: "Developer install",
+    download: "Download",
     platform: "Platform",
     shortcut: "Shortcut",
     copyInstall: "Copy install command",
@@ -159,19 +163,29 @@ function renderCard(tool) {
     .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
     .join("");
 
-  const install = tool.install
+  const installText = tool.install ? pickLocalized(tool.install) : "";
+  const installAdvancedText = tool.installAdvanced ? pickLocalized(tool.installAdvanced) : "";
+
+  const install = installText
     ? `<div class="install-block">
         <div class="install-label">${escapeHtml(t.install)}</div>
-        <pre>${escapeHtml(tool.install)}</pre>
+        <pre>${escapeHtml(installText)}</pre>
       </div>`
     : "";
 
+  const installAdvanced = installAdvancedText
+    ? `<details class="install-advanced">
+        <summary>${escapeHtml(t.installAdvanced)}</summary>
+        <pre>${escapeHtml(installAdvancedText)}</pre>
+      </details>`
+    : "";
+
   const actions = [
-    tool.github
-      ? `<a class="btn btn-primary" href="${escapeHtml(tool.github)}" target="_blank" rel="noopener noreferrer">GitHub</a>`
+    tool.download
+      ? `<a class="btn btn-primary" href="${escapeHtml(tool.download)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.download)}</a>`
       : "",
-    tool.install
-      ? `<button type="button" class="btn btn-secondary" data-copy="${escapeHtml(tool.install)}">${escapeHtml(t.copyInstall)}</button>`
+    tool.github
+      ? `<a class="btn btn-secondary" href="${escapeHtml(tool.github)}" target="_blank" rel="noopener noreferrer">GitHub</a>`
       : "",
   ]
     .filter(Boolean)
@@ -197,6 +211,7 @@ function renderCard(tool) {
         </div>
         <div class="tags">${tags}</div>
         ${install}
+        ${installAdvanced}
         <div class="card-actions">${actions}</div>
       </div>
     </details>

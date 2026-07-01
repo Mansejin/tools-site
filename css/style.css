@@ -404,6 +404,35 @@ h1 {
   background: var(--border);
 }
 
+.install-advanced {
+  margin-bottom: 14px;
+}
+
+.install-advanced summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  list-style: none;
+}
+
+.install-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-advanced pre {
+  font-family: "SF Mono", Consolas, "Courier New", monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
 .site-footer {
   margin-top: 40px;
   text-align: center;

@@ -11,11 +11,19 @@
       "en": "Capture with Win+Shift+S, then press Ctrl+Shift+V in an Explorer folder to save a JPG. Ctrl+Shift+V only activates in Explorer when the clipboard holds an image — browsers and other apps keep their normal shortcuts. Ctrl+V is never intercepted."
     },
     "tags": {
-      "ko": ["Windows", "Python", "클립보드", "유틸"],
-      "en": ["Windows", "Python", "Clipboard", "Utility"]
+      "ko": ["Windows", "클립보드", "유틸"],
+      "en": ["Windows", "Clipboard", "Utility"]
     },
+    "download": "https://github.com/Mansejin/clipboard-paste-jpg/releases/latest/download/clipboard-paste-jpg-win64.zip",
     "github": "https://github.com/Mansejin/clipboard-paste-jpg",
-    "install": "git clone https://github.com/Mansejin/clipboard-paste-jpg.git\ncd clipboard-paste-jpg\npowershell -ExecutionPolicy Bypass -File .\\install_startup.ps1",
+    "install": {
+      "ko": "1. 위 \"다운로드\"에서 zip 받기\n2. 압축 풀기\n3. 설치.bat 더블클릭",
+      "en": "1. Click Download above\n2. Extract the zip\n3. Double-click install.bat"
+    },
+    "installAdvanced": {
+      "ko": "개발자용 (Python 필요):\ngit clone https://github.com/Mansejin/clipboard-paste-jpg.git\ncd clipboard-paste-jpg\npowershell -ExecutionPolicy Bypass -File .\\install_startup.ps1",
+      "en": "For developers (Python required):\ngit clone https://github.com/Mansejin/clipboard-paste-jpg.git\ncd clipboard-paste-jpg\npowershell -ExecutionPolicy Bypass -File .\\install_startup.ps1"
+    },
     "shortcut": "Ctrl+Shift+V",
     "platform": "Windows 10/11",
     "status": "stable"
