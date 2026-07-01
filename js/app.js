@@ -18,6 +18,9 @@ const UI = {
     copyInstall: "설치 명령 복사",
     copied: "복사됨",
     copyFailed: "복사 실패",
+    previewOffline:
+      "로컬 미리보기 — 더미 데이터입니다. json 변경을 보려면 preview.bat을 실행하세요.",
+    previewFallback: "json 로드 실패 — 더미 데이터로 표시 중입니다.",
   },
   en: {
     all: "All",
@@ -30,6 +33,9 @@ const UI = {
     copyInstall: "Copy install command",
     copied: "Copied",
     copyFailed: "Copy failed",
+    previewOffline:
+      "Local preview — using dummy data. Run preview.bat to load tools.json.",
+    previewFallback: "Could not load json — showing dummy data.",
   },
 };
 
@@ -197,18 +203,52 @@ function renderCard(tool) {
   </article>`;
 }
 
-async function init() {
-  grid.innerHTML = `<p class="loading">${escapeHtml(t.loading)}</p>`;
+function showPreviewBanner(message) {
+  const page = document.querySelector(".page");
+  if (!page || document.getElementById("previewBanner")) return;
+
+  const banner = document.createElement("div");
+  banner.id = "previewBanner";
+  banner.className = "preview-banner";
+  banner.textContent = message;
+  page.insertBefore(banner, page.firstChild);
+}
+
+function getFallbackTools(includeDummy) {
+  const items = typeof FALLBACK_TOOLS !== "undefined" ? [...FALLBACK_TOOLS] : [];
+  if (includeDummy && typeof PREVIEW_DUMMY_TOOL !== "undefined") {
+    items.push(PREVIEW_DUMMY_TOOL);
+  }
+  return items;
+}
+
+async function loadTools() {
+  if (location.protocol === "file:") {
+    showPreviewBanner(t.previewOffline);
+    return getFallbackTools(true);
+  }
 
   try {
     const response = await fetch(dataPath);
     if (!response.ok) throw new Error("load failed");
-    tools = await response.json();
-    renderFilters(collectTags(tools));
-    renderTools();
+    return await response.json();
   } catch {
-    grid.innerHTML = `<p class="error">${escapeHtml(t.error)}<br><code>data/tools.json</code></p>`;
+    showPreviewBanner(t.previewFallback);
+    return getFallbackTools(false);
   }
+}
+
+async function init() {
+  grid.innerHTML = `<p class="loading">${escapeHtml(t.loading)}</p>`;
+
+  tools = await loadTools();
+  if (!tools.length) {
+    grid.innerHTML = `<p class="error">${escapeHtml(t.error)}<br><code>data/tools.json</code></p>`;
+    return;
+  }
+
+  renderFilters(collectTags(tools));
+  renderTools();
 }
 
 init();

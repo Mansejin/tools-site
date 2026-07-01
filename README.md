@@ -42,12 +42,29 @@
 
 ## 로컬 미리보기
 
+### 방법 1 — `index.html` 더블클릭 (빠른 확인)
+
+`js/fallback-tools.js`에 박아 둔 **더미 데이터**로 바로 보입니다.  
+노란 배너가 뜨면 더미 모드입니다. `preview-dummy` 카드는 미리보기 전용입니다.
+
+### 방법 2 — `preview.bat` (json 실제 반영)
+
+```powershell
+.\preview.bat
+```
+
+브라우저에서 `data/tools.json`을 그대로 불러옵니다. 수정 후 **새로고침**하면 반영됩니다.
+
+### 방법 3 — 수동 서버
+
 ```powershell
 cd tools-site
 py -3 -m http.server 8080
 ```
 
-브라우저에서 http://localhost:8080
+http://localhost:8080
+
+> `tools.json`을 바꿨을 때 더미도 맞추려면 `js/fallback-tools.js`의 `FALLBACK_TOOLS`도 같이 수정하세요.
 
 ## GitHub Pages 배포
 

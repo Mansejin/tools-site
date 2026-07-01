@@ -104,6 +104,18 @@ h1 {
   margin-top: 6px;
 }
 
+.preview-banner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  background: rgba(255, 209, 102, 0.1);
+  color: var(--accent2);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
