@@ -18,6 +18,8 @@ const UI = {
     copyInstall: "설치 명령 복사",
     copied: "복사됨",
     copyFailed: "복사 실패",
+    showDetails: "자세히 보기",
+    hideDetails: "접기",
   },
   en: {
     all: "All",
@@ -30,6 +32,8 @@ const UI = {
     copyInstall: "Copy install command",
     copied: "Copied",
     copyFailed: "Copy failed",
+    showDetails: "Show details",
+    hideDetails: "Hide",
   },
 };
 
@@ -37,6 +41,7 @@ const t = UI[lang];
 
 let tools = [];
 let activeTag = "all";
+const expandedIds = new Set();
 
 function pickLocalized(value) {
   if (value == null) return "";
@@ -123,8 +128,22 @@ function renderTools() {
 
   grid.innerHTML = items.map(renderCard).join("");
 
+  grid.querySelectorAll(".tool-details").forEach((details) => {
+    if (expandedIds.has(details.dataset.toolId)) {
+      details.open = true;
+    }
+    details.addEventListener("toggle", () => {
+      const id = details.dataset.toolId;
+      if (details.open) expandedIds.add(id);
+      else expandedIds.delete(id);
+    });
+  });
+
   grid.querySelectorAll("[data-copy]").forEach((btn) => {
-    btn.addEventListener("click", () => copyText(btn.dataset.copy));
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      copyText(btn.dataset.copy);
+    });
   });
 }
 
@@ -154,18 +173,26 @@ function renderCard(tool) {
 
   return `<article class="tool-card" id="${escapeHtml(tool.id)}">
     <div class="tool-card-header">
-      <h2><a href="${escapeHtml(tool.github || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(tool.name)}</a></h2>
+      <h2>${escapeHtml(tool.name)}</h2>
       <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
     </div>
     <p class="tagline">${escapeHtml(pickLocalized(tool.tagline))}</p>
-    <p class="description">${escapeHtml(pickLocalized(tool.description))}</p>
-    <div class="meta">
-      ${tool.platform ? `<span>${escapeHtml(t.platform)}: <strong>${escapeHtml(tool.platform)}</strong></span>` : ""}
-      ${tool.shortcut ? `<span>${escapeHtml(t.shortcut)}: <strong>${escapeHtml(tool.shortcut)}</strong></span>` : ""}
-    </div>
-    <div class="tags">${tags}</div>
-    ${install}
-    <div class="card-actions">${actions}</div>
+    <details class="tool-details" data-tool-id="${escapeHtml(tool.id)}">
+      <summary class="details-toggle">
+        <span class="show-label">${escapeHtml(t.showDetails)}</span>
+        <span class="hide-label">${escapeHtml(t.hideDetails)}</span>
+      </summary>
+      <div class="tool-details-body">
+        <p class="description">${escapeHtml(pickLocalized(tool.description))}</p>
+        <div class="meta">
+          ${tool.platform ? `<span>${escapeHtml(t.platform)}: <strong>${escapeHtml(tool.platform)}</strong></span>` : ""}
+          ${tool.shortcut ? `<span>${escapeHtml(t.shortcut)}: <strong>${escapeHtml(tool.shortcut)}</strong></span>` : ""}
+        </div>
+        <div class="tags">${tags}</div>
+        ${install}
+        <div class="card-actions">${actions}</div>
+      </div>
+    </details>
   </article>`;
 }
 

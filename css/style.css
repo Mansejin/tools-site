@@ -147,30 +147,22 @@ h1 {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 22px 20px;
+  padding: 18px 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .tool-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .tool-card h2 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-}
-
-.tool-card h2 a {
-  color: var(--text);
-  text-decoration: none;
-}
-
-.tool-card h2 a:hover {
-  color: var(--accent);
+  letter-spacing: -0.2px;
 }
 
 .status {
@@ -194,10 +186,55 @@ h1 {
 }
 
 .tagline {
-  color: var(--accent2);
+  color: var(--muted);
   font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0;
+  word-break: keep-all;
+}
+
+.tool-details {
+  margin-top: 14px;
+}
+
+.details-toggle {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  color: var(--accent3);
+  user-select: none;
+}
+
+.details-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.details-toggle::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.tool-details[open] .details-toggle::before {
+  transform: rotate(90deg);
+}
+
+.tool-details:not([open]) .hide-label {
+  display: none;
+}
+
+.tool-details[open] .show-label {
+  display: none;
+}
+
+.tool-details-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .description {
