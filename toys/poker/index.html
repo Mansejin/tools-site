@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="color-scheme" content="light dark">
-  <script src="../../js/theme-init.js"></script>
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>콜 할까 말까? 🃏 · 장난감</title>
   <meta name="description" content="홀덤 톡방 전용 의사결정 도우미 (책임 안 짐)">
@@ -22,7 +28,12 @@
     <a class="site-top-link" href="../">← 장난감</a>
     <div class="site-top-actions">
       <a class="site-top-link" href="../../">도구함</a>
-      <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">🌙</button>
+      <label class="theme-switch">
+        <input type="checkbox" class="theme-switch-input" role="switch">
+        <span class="theme-switch-track">
+          <span class="theme-switch-thumb"></span>
+        </span>
+      </label>
     </div>
   </div>
   <div id="shareZone" class="share-zone">

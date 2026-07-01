@@ -1,33 +1,41 @@
 (function () {
   const STORAGE = "mansejin-theme";
-  const btn = document.getElementById("themeToggle");
-  const lang = document.documentElement.lang.startsWith("en") ? "en" : "ko";
-  const labels = {
-    ko: { light: "라이트 모드로 전환", dark: "다크 모드로 전환" },
-    en: { light: "Switch to light mode", dark: "Switch to dark mode" },
-  };
-  const t = labels[lang];
 
-  function isDark() {
-    return document.documentElement.dataset.theme === "dark";
+  function getTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
 
   function apply(theme) {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem(STORAGE, theme);
-    syncButton();
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem(STORAGE, theme);
+    } catch (_) {}
+    syncInputs(theme);
   }
 
-  function syncButton() {
-    if (!btn) return;
-    const dark = isDark();
-    btn.setAttribute("aria-pressed", dark ? "true" : "false");
-    btn.setAttribute("aria-label", dark ? t.light : t.dark);
-    btn.textContent = dark ? "☀️" : "🌙";
+  function syncInputs(theme) {
+    const dark = theme === "dark";
+    document.querySelectorAll(".theme-switch-input").forEach((input) => {
+      input.checked = dark;
+    });
   }
 
-  if (btn) {
-    btn.addEventListener("click", () => apply(isDark() ? "light" : "dark"));
-    syncButton();
+  function init() {
+    const lang = document.documentElement.lang.startsWith("en") ? "en" : "ko";
+    const label = lang === "en" ? "Dark mode" : "다크 모드";
+
+    document.querySelectorAll(".theme-switch-input").forEach((input) => {
+      input.setAttribute("aria-label", label);
+      syncInputs(getTheme());
+      input.addEventListener("change", () => {
+        apply(input.checked ? "dark" : "light");
+      });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
 })();

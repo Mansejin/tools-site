@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="color-scheme" content="light dark">
-  <script src="js/theme-init.js"></script>
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-adsense-account" content="ca-pub-3303755480199835">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3303755480199835" crossorigin="anonymous"></script>
@@ -38,7 +44,12 @@
       <div class="header-top">
         <a class="toys-link" href="toys/">🎲 장난감</a>
         <div class="header-actions">
-          <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false">🌙</button>
+          <label class="theme-switch">
+            <input type="checkbox" class="theme-switch-input" role="switch">
+            <span class="theme-switch-track">
+              <span class="theme-switch-thumb"></span>
+            </span>
+          </label>
           <a class="lang-link" href="en/" hreflang="en">English</a>
           <a class="github-link" href="https://github.com/Mansejin" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
