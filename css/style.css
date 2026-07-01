@@ -69,8 +69,17 @@ body {
 .back-link:hover,
 .github-link:hover,
 .lang-link:hover,
+.toys-link:hover,
 .site-footer a:hover {
   color: var(--blue);
+}
+
+.toys-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
 .header-actions {
@@ -509,25 +518,18 @@ h1 {
   flex: 1;
 }
 
-.hub-header {
-  text-align: center;
+.toys-subtitle {
+  color: var(--text-tertiary);
+  font-size: 0.9375rem;
 }
 
-.hub-header .header-top {
-  margin-bottom: 20px;
-}
-
-.hub-header .header-actions {
-  margin-left: auto;
-}
-
-.hub-grid {
+.toys-grid {
   display: grid;
   gap: 16px;
   margin-bottom: 32px;
 }
 
-.hub-card {
+.toys-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -541,39 +543,32 @@ h1 {
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.hub-card:hover {
+.toys-card:hover {
   transform: translateY(-2px);
-  border-color: var(--blue);
-  box-shadow: 0 4px 16px rgba(49, 130, 246, 0.12);
+  border-color: var(--orange);
+  box-shadow: 0 4px 16px rgba(245, 159, 0, 0.12);
 }
 
-.hub-card-emoji {
+.toys-card-emoji {
   font-size: 2rem;
   line-height: 1;
 }
 
-.hub-card-title {
+.toys-card-title {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.hub-card-desc {
+.toys-card-desc {
   font-size: 0.9375rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
 
-.hub-card-tags {
+.toys-card-note {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--orange);
   margin-top: 4px;
-}
-
-@media (min-width: 640px) {
-  .hub-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
 }
