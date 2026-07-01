@@ -180,14 +180,14 @@ function renderCard(tool) {
   return `<article class="tool-card" id="${escapeHtml(tool.id)}">
     <details class="tool-details" data-tool-id="${escapeHtml(tool.id)}">
       <summary class="tool-summary">
-        <div class="tool-summary-text">
-          <div class="tool-card-header">
-            <h2>${escapeHtml(tool.name)}</h2>
-            <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
-          </div>
+        <div class="tool-summary-main">
+          <h2>${escapeHtml(tool.name)}</h2>
           <p class="tagline">${escapeHtml(pickLocalized(tool.tagline))}</p>
         </div>
-        <span class="tool-chevron" aria-hidden="true"></span>
+        <div class="tool-summary-aside">
+          <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
+          <span class="tool-chevron" aria-hidden="true"></span>
+        </div>
       </summary>
       <div class="tool-details-body">
         <p class="description">${escapeHtml(pickLocalized(tool.description))}</p>
