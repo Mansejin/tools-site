@@ -226,7 +226,11 @@
         headers: { Accept: "application/json" },
       });
       const result = await response.json();
-      if (!response.ok || result.success !== "true") throw new Error("submit failed");
+      const ok =
+        response.ok &&
+        result &&
+        (result.success === true || result.success === "true");
+      if (!ok) throw new Error("submit failed");
       showToast(t.success);
       closeModal();
     } catch {
