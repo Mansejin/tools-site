@@ -2,8 +2,56 @@ const grid = document.getElementById("toolGrid");
 const filtersEl = document.getElementById("filters");
 const toast = document.getElementById("toast");
 
+const lang = document.documentElement.lang.startsWith("en") ? "en" : "ko";
+const dataPath = document.body.dataset.tools || "data/tools.json";
+const localeTag = lang === "en" ? "en" : "ko";
+
+const UI = {
+  ko: {
+    all: "전체",
+    loading: "불러오는 중…",
+    empty: "해당 태그의 도구가 없습니다.",
+    error: "도구 목록을 불러오지 못했습니다.",
+    install: "설치",
+    platform: "플랫폼",
+    shortcut: "단축키",
+    copyInstall: "설치 명령 복사",
+    copied: "복사됨",
+    copyFailed: "복사 실패",
+  },
+  en: {
+    all: "All",
+    loading: "Loading…",
+    empty: "No tools match this tag.",
+    error: "Could not load the tool list.",
+    install: "Install",
+    platform: "Platform",
+    shortcut: "Shortcut",
+    copyInstall: "Copy install command",
+    copied: "Copied",
+    copyFailed: "Copy failed",
+  },
+};
+
+const t = UI[lang];
+
 let tools = [];
 let activeTag = "all";
+
+function pickLocalized(value) {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  return value[lang] || value.en || value.ko || "";
+}
+
+function pickTags(tool) {
+  const tags = tool.tags;
+  if (Array.isArray(tags)) return tags;
+  if (tags && typeof tags === "object") {
+    return tags[lang] || tags.en || tags.ko || [];
+  }
+  return [];
+}
 
 function showToast(message) {
   toast.textContent = message;
@@ -14,10 +62,10 @@ function showToast(message) {
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
-    showToast("복사됨");
+    showToast(t.copied);
     return true;
   } catch {
-    showToast("복사 실패");
+    showToast(t.copyFailed);
     return false;
   }
 }
@@ -33,9 +81,9 @@ function escapeHtml(value) {
 function collectTags(items) {
   const tags = new Set();
   for (const tool of items) {
-    for (const tag of tool.tags || []) tags.add(tag);
+    for (const tag of pickTags(tool)) tags.add(tag);
   }
-  return [...tags].sort((a, b) => a.localeCompare(b, "ko"));
+  return [...tags].sort((a, b) => a.localeCompare(b, localeTag));
 }
 
 function renderFilters(tags) {
@@ -43,7 +91,7 @@ function renderFilters(tags) {
 
   filtersEl.hidden = false;
   filtersEl.innerHTML = [
-    `<button type="button" class="filter-btn active" data-tag="all">전체</button>`,
+    `<button type="button" class="filter-btn active" data-tag="all">${escapeHtml(t.all)}</button>`,
     ...tags.map(
       (tag) =>
         `<button type="button" class="filter-btn" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`
@@ -63,13 +111,13 @@ function renderFilters(tags) {
 
 function filteredTools() {
   if (activeTag === "all") return tools;
-  return tools.filter((tool) => (tool.tags || []).includes(activeTag));
+  return tools.filter((tool) => pickTags(tool).includes(activeTag));
 }
 
 function renderTools() {
   const items = filteredTools();
   if (!items.length) {
-    grid.innerHTML = '<p class="empty">해당 태그의 도구가 없습니다.</p>';
+    grid.innerHTML = `<p class="empty">${escapeHtml(t.empty)}</p>`;
     return;
   }
 
@@ -82,13 +130,13 @@ function renderTools() {
 
 function renderCard(tool) {
   const status = tool.status || "stable";
-  const tags = (tool.tags || [])
+  const tags = pickTags(tool)
     .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
     .join("");
 
   const install = tool.install
     ? `<div class="install-block">
-        <div class="install-label">설치</div>
+        <div class="install-label">${escapeHtml(t.install)}</div>
         <pre>${escapeHtml(tool.install)}</pre>
       </div>`
     : "";
@@ -98,7 +146,7 @@ function renderCard(tool) {
       ? `<a class="btn btn-primary" href="${escapeHtml(tool.github)}" target="_blank" rel="noopener noreferrer">GitHub</a>`
       : "",
     tool.install
-      ? `<button type="button" class="btn btn-secondary" data-copy="${escapeHtml(tool.install)}">설치 명령 복사</button>`
+      ? `<button type="button" class="btn btn-secondary" data-copy="${escapeHtml(tool.install)}">${escapeHtml(t.copyInstall)}</button>`
       : "",
   ]
     .filter(Boolean)
@@ -109,11 +157,11 @@ function renderCard(tool) {
       <h2><a href="${escapeHtml(tool.github || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(tool.name)}</a></h2>
       <span class="status status-${escapeHtml(status)}">${escapeHtml(status)}</span>
     </div>
-    <p class="tagline">${escapeHtml(tool.tagline || "")}</p>
-    <p class="description">${escapeHtml(tool.description || "")}</p>
+    <p class="tagline">${escapeHtml(pickLocalized(tool.tagline))}</p>
+    <p class="description">${escapeHtml(pickLocalized(tool.description))}</p>
     <div class="meta">
-      ${tool.platform ? `<span>플랫폼: <strong>${escapeHtml(tool.platform)}</strong></span>` : ""}
-      ${tool.shortcut ? `<span>단축키: <strong>${escapeHtml(tool.shortcut)}</strong></span>` : ""}
+      ${tool.platform ? `<span>${escapeHtml(t.platform)}: <strong>${escapeHtml(tool.platform)}</strong></span>` : ""}
+      ${tool.shortcut ? `<span>${escapeHtml(t.shortcut)}: <strong>${escapeHtml(tool.shortcut)}</strong></span>` : ""}
     </div>
     <div class="tags">${tags}</div>
     ${install}
@@ -122,15 +170,16 @@ function renderCard(tool) {
 }
 
 async function init() {
+  grid.innerHTML = `<p class="loading">${escapeHtml(t.loading)}</p>`;
+
   try {
-    const response = await fetch("data/tools.json");
+    const response = await fetch(dataPath);
     if (!response.ok) throw new Error("load failed");
     tools = await response.json();
     renderFilters(collectTags(tools));
     renderTools();
   } catch {
-    grid.innerHTML =
-      '<p class="error">도구 목록을 불러오지 못했습니다.<br><code>data/tools.json</code>을 확인하세요.</p>';
+    grid.innerHTML = `<p class="error">${escapeHtml(t.error)}<br><code>data/tools.json</code></p>`;
   }
 }
 

@@ -7,15 +7,24 @@
 
 ## 도구 추가 방법
 
-`data/tools.json`에 항목을 추가하고 push하면 됩니다.
+`data/tools.json`에 항목을 추가하고 push하면 됩니다. 한·영 텍스트는 같은 파일에 넣습니다.
 
 ```json
 {
   "id": "my-tool",
   "name": "my-tool",
-  "tagline": "한 줄 요약",
-  "description": "설명",
-  "tags": ["Windows", "Python"],
+  "tagline": {
+    "ko": "한 줄 요약",
+    "en": "One-line summary"
+  },
+  "description": {
+    "ko": "설명",
+    "en": "Description"
+  },
+  "tags": {
+    "ko": ["Windows", "유틸"],
+    "en": ["Windows", "Utility"]
+  },
   "github": "https://github.com/Mansejin/my-tool",
   "install": "git clone ...",
   "shortcut": "Ctrl+Shift+V",
@@ -23,6 +32,13 @@
   "status": "stable"
 }
 ```
+
+## 언어
+
+| 페이지 | URL |
+|--------|-----|
+| 한국어 | https://tools.mansejin.com |
+| English | https://tools.mansejin.com/en/ |
 
 ## 로컬 미리보기
 

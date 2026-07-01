@@ -64,6 +64,7 @@ body::before {
 
 .back-link,
 .github-link,
+.lang-link,
 .site-footer a {
   color: var(--muted);
   text-decoration: none;
@@ -71,8 +72,19 @@ body::before {
 
 .back-link:hover,
 .github-link:hover,
+.lang-link:hover,
 .site-footer a:hover {
   color: var(--accent3);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lang-link {
+  font-weight: 600;
 }
 
 .hero-emoji {
