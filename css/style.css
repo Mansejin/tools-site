@@ -673,6 +673,13 @@ body.bug-modal-open {
   color: var(--blue-hover);
 }
 
+.bug-submit-frame {
+  display: none;
+  width: 0;
+  height: 0;
+  border: 0;
+}
+
 .bug-form-actions {
   display: flex;
   justify-content: flex-end;

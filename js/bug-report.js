@@ -78,6 +78,9 @@
     ],
   };
 
+  const FORM_ENDPOINT = "https://formsubmit.co/sae3648@gmail.com";
+  const AJAX_ENDPOINT = "https://formsubmit.co/ajax/sae3648@gmail.com";
+
   let tools = [];
   let modalEl;
   let formEl;
@@ -87,6 +90,7 @@
   let fileInputEl;
   let fileListEl;
   let selectedFiles = [];
+  let submittingNative = false;
 
   function escapeHtml(value) {
     return String(value)
@@ -110,7 +114,7 @@
         <form id="bugForm" class="bug-form" enctype="multipart/form-data">
           <label class="bug-field">
             <span>${escapeHtml(t.category)}</span>
-            <select name="category" id="bugCategory" required>
+            <select id="bugCategory" required>
               <option value="site">${escapeHtml(t.catSite)}</option>
               <option value="tool">${escapeHtml(t.catTool)}</option>
               <option value="toy">${escapeHtml(t.catToy)}</option>
@@ -118,7 +122,7 @@
           </label>
           <label class="bug-field">
             <span id="bugProductLabel">${escapeHtml(t.product)}</span>
-            <select name="product" id="bugProduct" required></select>
+            <select id="bugProduct" required></select>
           </label>
           <label class="bug-field">
             <span>${escapeHtml(t.message)}</span>
@@ -305,8 +309,123 @@
     return opt ? opt.textContent : value;
   }
 
+  function ensureHidden(name, value) {
+    let el = formEl.querySelector(`input[type="hidden"][data-bug-hidden="${name}"]`);
+    if (!el) {
+      el = document.createElement("input");
+      el.type = "hidden";
+      el.dataset.bugHidden = name;
+      el.name = name;
+      formEl.appendChild(el);
+    }
+    el.value = value;
+    return el;
+  }
+
+  function clearDynamicFileInputs() {
+    formEl.querySelectorAll("[data-bug-file-input]").forEach((el) => el.remove());
+  }
+
+  function syncFilesToForm() {
+    clearDynamicFileInputs();
+    for (const file of selectedFiles) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.createElement("input");
+      input.type = "file";
+      input.name = "attachment";
+      input.dataset.bugFileInput = "1";
+      input.hidden = true;
+      input.files = dt.files;
+      formEl.appendChild(input);
+    }
+  }
+
+  function prepareHiddenFields(subject, category, product, replyEmail) {
+    ensureHidden("_subject", subject);
+    ensureHidden("_captcha", "false");
+    ensureHidden("_template", "table");
+    ensureHidden("category", categoryLabel(category));
+    ensureHidden("product", productLabel(product));
+    ensureHidden("page", location.href);
+    ensureHidden("language", lang);
+    const replyHidden = formEl.querySelector('[data-bug-hidden="_replyto"]');
+    if (replyEmail) {
+      ensureHidden("_replyto", replyEmail);
+    } else if (replyHidden) {
+      replyHidden.remove();
+    }
+  }
+
+  function resetFormTransport() {
+    formEl.removeAttribute("action");
+    formEl.removeAttribute("target");
+    clearDynamicFileInputs();
+  }
+
+  function getSubmitFrame() {
+    let iframe = document.getElementById("bugSubmitFrame");
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "bugSubmitFrame";
+      iframe.name = "bugSubmitFrame";
+      iframe.className = "bug-submit-frame";
+      iframe.title = "";
+      iframe.hidden = true;
+      document.body.appendChild(iframe);
+    }
+    return iframe;
+  }
+
+  function submitViaFormPost() {
+    return new Promise((resolve, reject) => {
+      const iframe = getSubmitFrame();
+      const timeout = setTimeout(() => {
+        iframe.onload = null;
+        reject(new Error("timeout"));
+      }, 45000);
+
+      iframe.onload = () => {
+        clearTimeout(timeout);
+        iframe.onload = null;
+        resolve();
+      };
+
+      formEl.action = FORM_ENDPOINT;
+      formEl.method = "POST";
+      formEl.target = "bugSubmitFrame";
+      formEl.submit();
+    });
+  }
+
+  async function submitViaAjax(subject, category, product, message, replyEmail) {
+    const body = new FormData();
+    body.append("_subject", subject);
+    body.append("_captcha", "false");
+    body.append("_template", "table");
+    body.append("category", categoryLabel(category));
+    body.append("product", productLabel(product));
+    body.append("message", message);
+    body.append("page", location.href);
+    body.append("language", lang);
+    if (replyEmail) body.append("_replyto", replyEmail);
+
+    const response = await fetch(AJAX_ENDPOINT, {
+      method: "POST",
+      body,
+      headers: { Accept: "application/json" },
+    });
+    const result = await response.json();
+    const ok =
+      response.ok &&
+      result &&
+      (result.success === true || result.success === "true");
+    if (!ok) throw new Error("submit failed");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
+    if (submittingNative) return;
 
     const message = formEl.message.value.trim();
     if (!message) {
@@ -329,40 +448,25 @@
     const replyEmail = formEl.reply_email.value.trim();
     const subject = `[mansejin] ${categoryLabel(category)} — ${productLabel(product)}`;
 
-    const body = new FormData();
-    body.append("_subject", subject);
-    body.append("_captcha", "false");
-    body.append("_template", "table");
-    body.append("category", categoryLabel(category));
-    body.append("product", productLabel(product));
-    body.append("message", message);
-    body.append("page", location.href);
-    body.append("language", lang);
-    if (replyEmail) body.append("_replyto", replyEmail);
-    for (const file of selectedFiles) {
-      body.append("attachment", file, file.name);
-    }
-
     submitBtn.disabled = true;
     submitBtn.textContent = t.sending;
 
     try {
-      const response = await fetch("https://formsubmit.co/ajax/sae3648@gmail.com", {
-        method: "POST",
-        body,
-        headers: { Accept: "application/json" },
-      });
-      const result = await response.json();
-      const ok =
-        response.ok &&
-        result &&
-        (result.success === true || result.success === "true");
-      if (!ok) throw new Error("submit failed");
+      if (selectedFiles.length > 0) {
+        submittingNative = true;
+        prepareHiddenFields(subject, category, product, replyEmail);
+        syncFilesToForm();
+        await submitViaFormPost();
+      } else {
+        await submitViaAjax(subject, category, product, message, replyEmail);
+      }
       showToast(t.success);
       closeModal();
     } catch {
       showToast(t.error);
     } finally {
+      resetFormTransport();
+      submittingNative = false;
       submitBtn.disabled = false;
       submitBtn.textContent = t.submit;
     }
