@@ -11,7 +11,7 @@
  */
 
 const CONTACT_TO = "sae3648@gmail.com";
-const CONTACT_SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_STRING";
+const CONTACT_SECRET = "mansejin-contact-a8f3k2fzvb48w9zvjxw341x";
 
 function doPost(e) {
   try {
