@@ -1,6 +1,8 @@
 (function () {
   const lang = document.documentElement.lang.startsWith("en") ? "en" : "ko";
   const dataPath = document.body.dataset.tools || "data/tools.json";
+  const contactEndpoint = (document.body.dataset.contactEndpoint || "").trim();
+  const contactSecret = (document.body.dataset.contactSecret || "").trim();
 
   const MAX_TOTAL_BYTES = 5 * 1024 * 1024;
   const MAX_FILES = 3;
@@ -27,8 +29,10 @@
       submit: "전송",
       cancel: "취소",
       sending: "보내는 중…",
+      uploading: "파일 준비 중…",
       success: "접수되었습니다. 확인 후 답변드릴게요.",
       error: "전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      notConfigured: "문의 전송이 아직 설정되지 않았습니다.",
       required: "내용을 입력해주세요",
       fileType: "허용되지 않는 파일 형식입니다",
       fileTooLarge: "첨부 파일 합계는 5MB 이하여야 합니다",
@@ -54,8 +58,10 @@
       submit: "Send",
       cancel: "Cancel",
       sending: "Sending…",
+      uploading: "Preparing files…",
       success: "Received. We'll get back to you soon.",
       error: "Could not send. Please try again later.",
+      notConfigured: "Contact delivery is not configured yet.",
       required: "Please enter a description",
       fileType: "File type not allowed",
       fileTooLarge: "Total attachment size must be 5MB or less",
@@ -78,9 +84,6 @@
     ],
   };
 
-  const FORM_ENDPOINT = "https://formsubmit.co/sae3648@gmail.com";
-  const AJAX_ENDPOINT = "https://formsubmit.co/ajax/sae3648@gmail.com";
-
   let tools = [];
   let modalEl;
   let formEl;
@@ -90,7 +93,6 @@
   let fileInputEl;
   let fileListEl;
   let selectedFiles = [];
-  let submittingNative = false;
 
   function escapeHtml(value) {
     return String(value)
@@ -111,7 +113,7 @@
         <button type="button" class="bug-modal-close" data-bug-close aria-label="${escapeHtml(t.cancel)}">×</button>
         <h2 id="bugModalTitle">${escapeHtml(t.title)}</h2>
         <p class="bug-modal-sub">${escapeHtml(t.subtitle)}</p>
-        <form id="bugForm" class="bug-form" enctype="multipart/form-data">
+        <form id="bugForm" class="bug-form">
           <label class="bug-field">
             <span>${escapeHtml(t.category)}</span>
             <select id="bugCategory" required>
@@ -137,7 +139,7 @@
           </div>
           <label class="bug-field">
             <span>${escapeHtml(t.email)}</span>
-            <input type="email" name="reply_email" autocomplete="email">
+            <input type="email" id="bugReplyEmail" autocomplete="email">
           </label>
           <div class="bug-form-actions">
             <button type="button" class="btn btn-secondary" data-bug-close>${escapeHtml(t.cancel)}</button>
@@ -309,96 +311,32 @@
     return opt ? opt.textContent : value;
   }
 
-  function ensureHidden(name, value) {
-    let el = formEl.querySelector(`input[type="hidden"][data-bug-hidden="${name}"]`);
-    if (!el) {
-      el = document.createElement("input");
-      el.type = "hidden";
-      el.dataset.bugHidden = name;
-      el.name = name;
-      formEl.appendChild(el);
-    }
-    el.value = value;
-    return el;
-  }
-
-  function clearDynamicFileInputs() {
-    formEl.querySelectorAll("[data-bug-file-input]").forEach((el) => el.remove());
-  }
-
-  function syncFilesToForm() {
-    clearDynamicFileInputs();
-    for (const file of selectedFiles) {
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      const input = document.createElement("input");
-      input.type = "file";
-      input.name = "attachment";
-      input.dataset.bugFileInput = "1";
-      input.hidden = true;
-      input.files = dt.files;
-      formEl.appendChild(input);
-    }
-  }
-
-  function prepareHiddenFields(subject, category, product, replyEmail) {
-    ensureHidden("_subject", subject);
-    ensureHidden("_captcha", "false");
-    ensureHidden("_template", "table");
-    ensureHidden("category", categoryLabel(category));
-    ensureHidden("product", productLabel(product));
-    ensureHidden("page", location.href);
-    ensureHidden("language", lang);
-    const replyHidden = formEl.querySelector('[data-bug-hidden="_replyto"]');
-    if (replyEmail) {
-      ensureHidden("_replyto", replyEmail);
-    } else if (replyHidden) {
-      replyHidden.remove();
-    }
-  }
-
-  function resetFormTransport() {
-    formEl.removeAttribute("action");
-    formEl.removeAttribute("target");
-    clearDynamicFileInputs();
-  }
-
-  function getSubmitFrame() {
-    let iframe = document.getElementById("bugSubmitFrame");
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.id = "bugSubmitFrame";
-      iframe.name = "bugSubmitFrame";
-      iframe.className = "bug-submit-frame";
-      iframe.title = "";
-      iframe.hidden = true;
-      document.body.appendChild(iframe);
-    }
-    return iframe;
-  }
-
-  function submitViaFormPost() {
+  function fileToBase64(file) {
     return new Promise((resolve, reject) => {
-      const iframe = getSubmitFrame();
-      const timeout = setTimeout(() => {
-        iframe.onload = null;
-        reject(new Error("timeout"));
-      }, 45000);
-
-      iframe.onload = () => {
-        clearTimeout(timeout);
-        iframe.onload = null;
-        resolve();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        const comma = result.indexOf(",");
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
       };
-
-      formEl.action = FORM_ENDPOINT;
-      formEl.method = "POST";
-      formEl.target = "bugSubmitFrame";
-      formEl.submit();
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
     });
   }
 
-  async function submitViaAjax(subject, category, product, message, replyEmail) {
+  async function encodeFiles(files) {
+    const encoded = [];
+    for (const file of files) {
+      encoded.push({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        data: await fileToBase64(file),
+      });
+    }
+    return encoded;
+  }
+
+  async function submitViaFormSubmit(subject, category, product, message, replyEmail) {
     const body = new FormData();
     body.append("_subject", subject);
     body.append("_captcha", "false");
@@ -410,7 +348,7 @@
     body.append("language", lang);
     if (replyEmail) body.append("_replyto", replyEmail);
 
-    const response = await fetch(AJAX_ENDPOINT, {
+    const response = await fetch("https://formsubmit.co/ajax/sae3648@gmail.com", {
       method: "POST",
       body,
       headers: { Accept: "application/json" },
@@ -423,9 +361,34 @@
     if (!ok) throw new Error("submit failed");
   }
 
+  async function submitContact(payload) {
+    const response = await fetch(contactEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+    });
+
+    let result = null;
+    try {
+      result = await response.json();
+    } catch {
+      result = null;
+    }
+
+    if (!response.ok || !result || !result.success) {
+      throw new Error(result && result.message ? result.message : "submit failed");
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
-    if (submittingNative) return;
+
+    if (!contactEndpoint || !contactSecret) {
+      if (selectedFiles.length) {
+        showToast(t.notConfigured);
+        return;
+      }
+    }
 
     const message = formEl.message.value.trim();
     if (!message) {
@@ -445,28 +408,36 @@
 
     const category = categoryEl.value;
     const product = productEl.value;
-    const replyEmail = formEl.reply_email.value.trim();
+    const replyEmail = formEl.querySelector("#bugReplyEmail").value.trim();
     const subject = `[mansejin] ${categoryLabel(category)} — ${productLabel(product)}`;
 
     submitBtn.disabled = true;
-    submitBtn.textContent = t.sending;
+    submitBtn.textContent = selectedFiles.length ? t.uploading : t.sending;
 
     try {
-      if (selectedFiles.length > 0) {
-        submittingNative = true;
-        prepareHiddenFields(subject, category, product, replyEmail);
-        syncFilesToForm();
-        await submitViaFormPost();
+      if (contactEndpoint && contactSecret) {
+        const payload = {
+          secret: contactSecret,
+          subject,
+          message,
+          category: categoryLabel(category),
+          product: productLabel(product),
+          page: location.href,
+          language: lang,
+          replyEmail,
+          files: await encodeFiles(selectedFiles),
+        };
+
+        submitBtn.textContent = t.sending;
+        await submitContact(payload);
       } else {
-        await submitViaAjax(subject, category, product, message, replyEmail);
+        await submitViaFormSubmit(subject, category, product, message, replyEmail);
       }
       showToast(t.success);
       closeModal();
     } catch {
       showToast(t.error);
     } finally {
-      resetFormTransport();
-      submittingNative = false;
       submitBtn.disabled = false;
       submitBtn.textContent = t.submit;
     }

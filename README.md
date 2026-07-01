@@ -115,6 +115,21 @@ Resolve-DnsName www.mansejin.com -Type CNAME -Server 8.8.8.8
 - `mansejin.com` → `185.199.108~111.153` 중 하나
 - `www.mansejin.com` → `mansejin.github.io`
 
+## 문의하기 (첨부 파일)
+
+FormSubmit은 **첨부 파일을 메일에 넣지 못합니다.** 첨부가 필요하면 Gmail Apps Script를 한 번만 설정하세요.
+
+1. [script.google.com](https://script.google.com) → 새 프로젝트
+2. `scripts/gmail-contact-handler.gs` 내용 붙여넣기
+3. `CONTACT_SECRET`을 긴 랜덤 문자열로 변경 (예: `openssl rand -hex 24`)
+4. **배포 → 새 배포 → 웹 앱**
+   - 실행: **나**
+   - 액세스: **모든 사용자**
+5. 웹 앱 URL을 `index.html` · `en/index.html`의 `data-contact-endpoint`에 넣기
+6. 같은 secret을 `data-contact-secret`에 넣기 (스크립트 `CONTACT_SECRET`과 동일)
+
+설정 전에는 **텍스트만** FormSubmit으로 전송됩니다. 첨부를 넣으면 설정 필요 안내가 뜹니다.
+
 ## 라이선스
 
 MIT
