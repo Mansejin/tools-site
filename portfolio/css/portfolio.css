@@ -410,10 +410,10 @@ a:hover {
 
 .skill-trigger {
   width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.5rem 0.875rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  column-gap: 8px;
   padding: 10px 14px;
   background: none;
   border: none;
@@ -431,14 +431,20 @@ a:hover {
 
 .skill-name {
   font-weight: 500;
+  min-width: 0;
 }
 
 .skill-level {
   font-size: 0.6875rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 0;
   border-radius: 999px;
   flex-shrink: 0;
+  width: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
 }
 
 .skill-level--top {
@@ -471,6 +477,8 @@ html[data-theme="dark"] .skill-level--top {
   color: var(--text-tertiary);
   transition: transform 0.2s ease;
   flex-shrink: 0;
+  justify-self: end;
+  text-align: center;
 }
 
 .skill-item.is-open .skill-chevron {
