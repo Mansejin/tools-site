@@ -57,52 +57,11 @@
     }
   }
 
-  function syncHeroPhotoSize() {
-    const inner = document.querySelector(".hero-inner");
-    const content = document.querySelector(".hero-content");
-    const wrap = document.querySelector(".hero-photo-wrap");
-    if (!inner || !content || !wrap) return;
-
-    const height = content.offsetHeight;
-    wrap.style.height = `${height}px`;
-
-    const gap = parseFloat(getComputedStyle(inner).gap) || 0;
-    const available = inner.clientWidth - content.offsetWidth - gap;
-    const isMobile = window.innerWidth <= 640;
-    const minWidth = isMobile ? 112 : 200;
-    const maxWidth = isMobile ? 140 : 280;
-    const width = Math.max(minWidth, Math.min(available, maxWidth));
-    wrap.style.width = `${width}px`;
-  }
-
-  let heroResizeObserver;
-
-  function setupHeroPhotoSync() {
-    const inner = document.querySelector(".hero-inner");
-    const content = document.querySelector(".hero-content");
-    if (!inner || !content) return;
-
-    const runSync = () => requestAnimationFrame(syncHeroPhotoSize);
-    runSync();
-
-    if (heroResizeObserver) heroResizeObserver.disconnect();
-    if (typeof ResizeObserver !== "undefined") {
-      heroResizeObserver = new ResizeObserver(runSync);
-      heroResizeObserver.observe(inner);
-      heroResizeObserver.observe(content);
-    }
-
-    const photo = document.querySelector(".hero-photo");
-    if (photo && !photo.complete) {
-      photo.addEventListener("load", runSync, { once: true });
-    }
-  }
-
   function renderHero(data) {
     const el = document.getElementById("hero");
     if (!el) return;
     const photo = data.hero.photo
-      ? `<div class="hero-photo-wrap"><img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" loading="eager"></div>`
+      ? `<div class="hero-photo-wrap"><img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" width="166" height="222" loading="eager"></div>`
       : "";
     el.innerHTML = `
       <div class="hero-inner">
@@ -113,8 +72,6 @@
         </div>
         ${photo}
       </div>`;
-    setupHeroPhotoSync();
-    document.fonts?.ready?.then(() => requestAnimationFrame(syncHeroPhotoSize));
   }
 
   function renderProfile(data) {
