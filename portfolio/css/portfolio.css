@@ -252,21 +252,16 @@ a:hover {
 .hero-photo-wrap {
   flex-shrink: 0;
   width: 166px;
+  padding: 0;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   background: var(--card);
   overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.3s ease;
-}
-
-.hero-photo-wrap:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.1);
-}
-
-html[data-theme="dark"] .hero-photo-wrap:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 16px 40px rgba(0, 0, 0, 0.45);
+  cursor: zoom-in;
+  font: inherit;
+  color: inherit;
+  text-align: left;
 }
 
 .hero-photo {
@@ -276,22 +271,41 @@ html[data-theme="dark"] .hero-photo-wrap:hover {
   object-fit: cover;
   object-position: center top;
   display: block;
-  transition: transform 0.4s ease;
+  pointer-events: none;
 }
 
-.hero-photo-wrap:hover .hero-photo {
-  transform: scale(1.5);
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: zoom-out;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-photo,
-  .hero-photo-wrap {
-    transition: none;
-  }
+.photo-lightbox.is-open {
+  opacity: 1;
+  visibility: visible;
+}
 
-  .hero-photo-wrap:hover .hero-photo {
-    transform: none;
-  }
+.photo-lightbox-image {
+  width: 498px;
+  max-width: min(90vw, 498px);
+  max-height: 90vh;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
 }
 
 .hero-badge {

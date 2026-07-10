@@ -57,11 +57,41 @@
     }
   }
 
+  let photoLightboxEl;
+
+  function ensurePhotoLightbox() {
+    if (photoLightboxEl) return photoLightboxEl;
+    photoLightboxEl = document.createElement("div");
+    photoLightboxEl.className = "photo-lightbox";
+    photoLightboxEl.innerHTML = '<img class="photo-lightbox-image" alt="">';
+    photoLightboxEl.addEventListener("click", closePhotoLightbox);
+    document.body.appendChild(photoLightboxEl);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePhotoLightbox();
+    });
+    return photoLightboxEl;
+  }
+
+  function openPhotoLightbox(src, alt) {
+    const lightbox = ensurePhotoLightbox();
+    const img = lightbox.querySelector(".photo-lightbox-image");
+    img.src = src;
+    img.alt = alt || "";
+    lightbox.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePhotoLightbox() {
+    if (!photoLightboxEl?.classList.contains("is-open")) return;
+    photoLightboxEl.classList.remove("is-open");
+    document.body.style.overflow = "";
+  }
+
   function renderHero(data) {
     const el = document.getElementById("hero");
     if (!el) return;
     const photo = data.hero.photo
-      ? `<div class="hero-photo-wrap"><img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" width="166" height="222" loading="eager"></div>`
+      ? `<button type="button" class="hero-photo-wrap" aria-label="${escapeHtml(data.hero.photoAlt || "프로필 사진 크게 보기")}"><img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="" width="166" height="222" loading="eager"></button>`
       : "";
     el.innerHTML = `
       <div class="hero-inner">
@@ -72,6 +102,13 @@
         </div>
         ${photo}
       </div>`;
+
+    const trigger = el.querySelector(".hero-photo-wrap");
+    if (trigger && data.hero.photo) {
+      trigger.addEventListener("click", () => {
+        openPhotoLightbox(data.hero.photo, data.hero.photoAlt || data.hero.name);
+      });
+    }
   }
 
   function renderProfile(data) {
