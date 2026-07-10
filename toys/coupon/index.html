@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>커플 쿠폰 뽑기 💕 · 장난감</title>
+  <meta name="description" content="남친 이용권, 여친 이용권 쿠폰팩을 뽑아보세요! 레어카드도 숨어있어요 🎴">
+  <meta property="og:url" content="https://mansejin.com/toys/coupon/">
+  <meta property="og:title" content="커플 쿠폰 뽑기 💕">
+  <meta property="og:description" content="남친 이용권, 여친 이용권 쿠폰팩을 뽑아보세요! 레어카드도 숨어있어요 🎴">
+  <link rel="canonical" href="https://mansejin.com/toys/coupon/">
+  <link rel="stylesheet" href="../css/toys.css">
+</head>
+<body>
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+  <div class="site-top no-capture">
+    <a class="site-top-link" href="../">← 장난감</a>
+    <div class="site-top-actions">
+      <a class="site-top-link" href="../../">도구함</a>
+      <label class="theme-switch">
+        <input type="checkbox" class="theme-switch-input" role="switch">
+        <span class="theme-switch-track">
+          <span class="theme-switch-thumb"></span>
+        </span>
+      </label>
+    </div>
+  </div>
+  <div id="shareZone" class="share-zone">
+    <header id="appHeader">
+      <div class="emoji-hero" id="headerEmoji">💕🎴</div>
+      <h1 id="headerTitle">커플 쿠폰 뽑기</h1>
+      <p class="subtitle" id="headerSubtitle">쿠폰팩을 뜯어보세요. 레어카드가 숨어있을지도?</p>
+    </header>
+    <main class="card" id="panelCoupon">
+      <p class="section-label">누구 이용권?</p>
+      <div class="tabs-row" id="packTabs">
+        <button type="button" class="tab pack-tab active" data-pack="bf">💙 남친 이용권</button>
+        <button type="button" class="tab pack-tab" data-pack="gf">💗 여친 이용권</button>
+      </div>
+
+      <label class="adult-toggle no-capture">
+        <input type="checkbox" id="adultToggle">
+        <span class="adult-toggle-box"></span>
+        <span class="adult-toggle-label">🔞 만 19세 이상 — 19금 쿠폰 포함</span>
+      </label>
+
+      <div class="coupon-stage" id="couponStage">
+        <div class="coupon-pack" id="couponPack">
+          <div class="pack-shine"></div>
+          <div class="pack-label" id="packLabel">남친 이용권</div>
+          <div class="pack-emoji">🎁</div>
+        </div>
+        <div class="coupon-card-wrap" id="cardWrap" hidden>
+          <div class="coupon-card" id="couponCard">
+            <div class="coupon-card-inner">
+              <div class="coupon-card-back">
+                <span class="card-back-pattern">💕</span>
+              </div>
+              <div class="coupon-card-front">
+                <div class="coupon-rarity" id="rarityBadge">COMMON</div>
+                <div class="coupon-emoji" id="cardEmoji">💋</div>
+                <div class="coupon-text" id="cardText">뽀뽀 1회</div>
+                <div class="coupon-category" id="cardCategory">달콤</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="draw-status" id="drawStatus"></div>
+
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+
+      <div class="btn-group no-capture">
+        <button type="button" class="btn btn-primary" id="drawBtn">🎴 쿠폰팩 뜯기!</button>
+        <button type="button" class="btn btn-secondary" id="copyBtn" style="display:none">📋 쿠폰 복사하기</button>
+        <button type="button" class="btn btn-share" id="shareBtn">📸 캡처해서 공유하기</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num" id="drawCount">0</div>
+          <div class="stat-label">뽑은 횟수</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="rareCount">0</div>
+          <div class="stat-label">레어 이상</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="totalCoupons">0</div>
+          <div class="stat-label">총 쿠폰 수</div>
+        </div>
+      </div>
+
+      <details class="collection-log no-capture" id="collectionLog">
+        <summary>📚 오늘 뽑은 쿠폰 기록</summary>
+        <ul class="collection-list" id="collectionList"></ul>
+      </details>
+    </main>
+    <footer id="appFooter">
+      <p id="footerLine1">※ 본 쿠폰의 이행 여부는 당사자 간 협의에 따릅니다 😇</p>
+      <p id="footerLine2">강요는 금물! 서로 합의된 재미로만 사용하세요 💕</p>
+    </footer>
+  </div>
+  <div class="coupon-flash" id="couponFlash"></div>
+  <div class="toast" id="toast"></div>
+  <script src="../js/coupon.js"></script>
+  <script src="../../js/theme.js"></script>
+  <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
+</body>
+</html>

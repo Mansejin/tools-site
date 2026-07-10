@@ -23,7 +23,7 @@
       var p = new URLSearchParams(q);
       if (p.get('e')) { location.replace('excuse/' + q); return; }
       var app = p.get('app');
-      if (app === 'excuse' || app === 'hair' || app === 'poker') {
+      if (app === 'excuse' || app === 'hair' || app === 'poker' || app === 'coupon') {
         location.replace(app + '/' + q);
       }
     })();
@@ -64,6 +64,11 @@
         <span class="toys-card-emoji">🃏</span>
         <span class="toys-card-title">콜 할까 말까?</span>
         <span class="toys-card-desc">홀덤 톡방 의사결정 도우미 (책임 안 짐)</span>
+      </a>
+      <a class="toys-card" href="coupon/">
+        <span class="toys-card-emoji">💕</span>
+        <span class="toys-card-title">커플 쿠폰 뽑기</span>
+        <span class="toys-card-desc">남친·여친 이용권 쿠폰팩! 레어카드도 숨어있어</span>
       </a>
     </nav>
 
