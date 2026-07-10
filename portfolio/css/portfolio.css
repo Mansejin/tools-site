@@ -239,9 +239,9 @@ a:hover {
 
 .hero-inner {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
+  flex-direction: row;
+  align-items: center;
+  gap: 32px;
 }
 
 .hero-photo {
@@ -259,7 +259,7 @@ a:hover {
 
 .hero-content {
   min-width: 0;
-  flex: 1;
+  max-width: 640px;
 }
 
 .hero-badge {
@@ -284,7 +284,7 @@ a:hover {
 .hero-intro {
   font-size: 1rem;
   color: var(--text-secondary);
-  max-width: 640px;
+  max-width: 100%;
   line-height: 1.75;
 }
 
@@ -892,10 +892,13 @@ html[data-theme="dark"] .skill-level--top {
   }
 
   .hero-inner {
-    gap: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
   }
 
   .hero-photo {
     width: 140px;
+    align-self: flex-end;
   }
 }

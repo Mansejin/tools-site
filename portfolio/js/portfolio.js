@@ -65,12 +65,12 @@
       : "";
     el.innerHTML = `
       <div class="hero-inner">
-        ${photo}
         <div class="hero-content">
           <span class="hero-badge">${escapeHtml(data.hero.role)}</span>
           <h1>${escapeHtml(data.hero.greeting)}</h1>
           <p class="hero-intro">${escapeHtml(data.hero.intro)}</p>
         </div>
+        ${photo}
       </div>`;
   }
 
