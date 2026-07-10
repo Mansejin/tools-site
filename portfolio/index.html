@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>콘텐츠 PD 오세진 포트폴리오</title>
+  <meta name="description" content="8년차 영상 PD 오세진의 포트폴리오 — 광고 제작, 브랜드 캠페인, 바이럴 영상, 유튜브 채널 운영">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="콘텐츠 PD 오세진 포트폴리오">
+  <meta property="og:description" content="8년차 영상 PD 오세진의 포트폴리오 — 광고 제작, 브랜드 캠페인, 바이럴 영상, 유튜브 채널 운영">
+  <meta property="og:locale" content="ko_KR">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/portfolio.css">
+</head>
+<body data-portfolio="data/portfolio.json" data-tools="../data/tools.json">
+
+  <nav class="site-nav" aria-label="주요 메뉴">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#hero">오세진 PD</a>
+      <div class="nav-links">
+        <a href="#profile">Profile</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#about">About</a>
+        <a href="#experience">Experience</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="nav-actions">
+        <label class="theme-switch">
+          <input type="checkbox" class="theme-switch-input" role="switch">
+          <span class="theme-switch-track">
+            <span class="theme-switch-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <section id="hero" class="hero" aria-label="소개"></section>
+
+    <section id="profile" class="section" aria-labelledby="profile-heading">
+      <div class="section-header">
+        <h2 id="profile-heading">Profile</h2>
+      </div>
+      <div id="profileContent"></div>
+    </section>
+
+    <section id="skills" class="section" aria-labelledby="skills-heading">
+      <div class="section-header">
+        <h2 id="skills-heading">Skills</h2>
+        <p>역량의 전문성에 따라 상 · 중 · 하 수준으로 분류하였습니다.</p>
+      </div>
+      <div id="skillsContent"></div>
+    </section>
+
+    <section id="projects" class="section" aria-labelledby="projects-heading">
+      <div class="section-header">
+        <h2 id="projects-heading">Projects</h2>
+        <p>담당한 프로젝트를 최신순으로 구성했습니다. 각 배너를 클릭하시면 영상을 확인하실 수 있습니다.</p>
+      </div>
+      <div id="projectTabs" class="project-tabs" role="tablist"></div>
+      <div id="projectGrid" class="project-grid"></div>
+    </section>
+
+    <section id="about" class="section" aria-labelledby="about-heading">
+      <div class="section-header">
+        <span class="section-subtitle">My Secondary Character</span>
+        <h2 id="about-heading">About me</h2>
+      </div>
+      <div id="aboutContent"></div>
+    </section>
+
+    <section id="experience" class="section" aria-labelledby="experience-heading">
+      <div class="section-header">
+        <h2 id="experience-heading">Experience</h2>
+      </div>
+      <div id="experienceContent"></div>
+    </section>
+
+    <section id="howIWork" class="section" aria-labelledby="work-heading">
+      <div class="section-header">
+        <h2 id="work-heading">How I Work</h2>
+      </div>
+      <div id="howIWorkContent"></div>
+    </section>
+
+    <section id="contact" class="section" aria-labelledby="contact-heading">
+      <div id="contactContent"></div>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 오세진 · <a href="https://mansjin.notion.site/PD-37ca2ebe40a14025968f4e1a3258ad9e" target="_blank" rel="noopener noreferrer">Notion 원본</a></p>
+    </footer>
+
+  </div>
+
+  <script src="../js/fallback-tools.js"></script>
+  <script src="js/fallback-portfolio.js"></script>
+  <script src="js/portfolio.js"></script>
+  <script src="../js/theme.js"></script>
+</body>
+</html>
