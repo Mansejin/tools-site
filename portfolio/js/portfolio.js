@@ -57,6 +57,33 @@
     }
   }
 
+  function syncHeroPhotoHeight() {
+    const content = document.querySelector(".hero-content");
+    const wrap = document.querySelector(".hero-photo-wrap");
+    if (!content || !wrap) return;
+    wrap.style.height = `${content.offsetHeight}px`;
+  }
+
+  let heroResizeObserver;
+
+  function setupHeroPhotoSync() {
+    const content = document.querySelector(".hero-content");
+    if (!content) return;
+
+    syncHeroPhotoHeight();
+
+    if (heroResizeObserver) heroResizeObserver.disconnect();
+    if (typeof ResizeObserver !== "undefined") {
+      heroResizeObserver = new ResizeObserver(syncHeroPhotoHeight);
+      heroResizeObserver.observe(content);
+    }
+
+    const photo = document.querySelector(".hero-photo");
+    if (photo && !photo.complete) {
+      photo.addEventListener("load", syncHeroPhotoHeight, { once: true });
+    }
+  }
+
   function renderHero(data) {
     const el = document.getElementById("hero");
     if (!el) return;
@@ -72,6 +99,8 @@
         </div>
         ${photo}
       </div>`;
+    setupHeroPhotoSync();
+    document.fonts?.ready?.then(syncHeroPhotoHeight);
   }
 
   function renderProfile(data) {
