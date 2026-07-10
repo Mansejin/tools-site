@@ -238,10 +238,10 @@ a:hover {
 }
 
 .hero-inner {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 32px;
+  column-gap: 32px;
 }
 
 .hero-photo {
@@ -892,13 +892,10 @@ html[data-theme="dark"] .skill-level--top {
   }
 
   .hero-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
+    column-gap: 16px;
   }
 
   .hero-photo {
-    width: 140px;
-    align-self: flex-end;
+    width: 112px;
   }
 }
