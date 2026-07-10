@@ -46,16 +46,32 @@
     if (ogTitle) ogTitle.content = data.meta.title;
     const ogDesc = document.querySelector('meta[property="og:description"]');
     if (ogDesc) ogDesc.content = data.meta.description;
+    if (data.meta.ogImage) {
+      const ogImage = document.querySelector('meta[property="og:image"]') || (() => {
+        const meta = document.createElement("meta");
+        meta.setAttribute("property", "og:image");
+        document.head.appendChild(meta);
+        return meta;
+      })();
+      ogImage.content = new URL(data.meta.ogImage, location.href).href;
+    }
   }
 
   function renderHero(data) {
     const el = document.getElementById("hero");
     if (!el) return;
+    const photo = data.hero.photo
+      ? `<img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" width="166" height="222" loading="eager">`
+      : "";
     el.innerHTML = `
-      <span class="hero-badge">${escapeHtml(data.hero.role)}</span>
-      <h1>${escapeHtml(data.hero.greeting)}</h1>
-      <p class="hero-intro">${escapeHtml(data.hero.intro)}</p>
-    `;
+      <div class="hero-inner">
+        ${photo}
+        <div class="hero-content">
+          <span class="hero-badge">${escapeHtml(data.hero.role)}</span>
+          <h1>${escapeHtml(data.hero.greeting)}</h1>
+          <p class="hero-intro">${escapeHtml(data.hero.intro)}</p>
+        </div>
+      </div>`;
   }
 
   function renderProfile(data) {
