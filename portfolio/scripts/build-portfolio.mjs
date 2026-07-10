@@ -17,6 +17,8 @@ const skills = {
 
 const projects = {
   campaign: [
+    { title: "23년 로지텍 + 디플러스 기아 바이럴", client: "Logitech G", year: "2023", url: "https://www.youtube.com/watch?v=ZgE8bJN8aik" },
+    { title: "로지텍G + T1 (페이커) 바이럴", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=HqWoQGU23zI" },
     { title: "로지텍G X 젠지", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=jXkpSnyv-5s", note: "기획-제작 100%, 연출 100%, 후반작업 80%" },
     { title: "라이프먼트(스타트업) 광고 제작", client: "라이프먼트", year: "", url: "https://www.youtube.com/watch?v=by4hsAuHcIA", note: "기획, 연출, 편집 총괄 (기여도 100%)" },
     { title: "로지텍G + 담원 기아", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=ZgE8bJN8aik" },
@@ -29,10 +31,8 @@ const projects = {
     { title: "로지텍 프로게이머스 픽스 젠지", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=cNs0Oz1KK7g" },
     { title: "한국타이어 기안도 전시 스케치", client: "한국타이어", year: "", url: "https://www.youtube.com/watch?v=KDV2dm1bVlY" },
     { title: "한국타이어 하이퍼 컬렉션 전시 스케치", client: "한국타이어", year: "", url: "https://www.youtube.com/watch?v=PG6SoTdV14w" },
-    { title: "23년 로지텍 + 디플러스 기아 바이럴", client: "Logitech G", year: "2023", url: "https://www.youtube.com/watch?v=ZgE8bJN8aik" },
     { title: "22년 로지텍 + 담원 기아 바이럴", client: "Logitech G", year: "2022", url: "https://www.youtube.com/watch?v=SEPeWMUgns0" },
     { title: "(숏폼) 로지텍 헤드셋 웹캠 바이럴", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=-sfl51qJQYg" },
-    { title: "로지텍G + T1 (페이커) 바이럴", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=HqWoQGU23zI" },
     { title: "MX MASTER 3 기업 바이럴", client: "Logitech", year: "", url: "" },
     { title: "로지텍G + KT 바이럴 콘텐츠", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=XhL9ea1huj8" },
     { title: "로지텍 프로게이머스 픽 KT", client: "Logitech G", year: "", url: "https://www.youtube.com/watch?v=JmJKzsTWVMY" },

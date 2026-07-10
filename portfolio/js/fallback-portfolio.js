@@ -45,7 +45,7 @@
     ]
   },
   "skills": {
-    "description": "역량의 전문성에 따라 상 · 중 · 하 수준으로 분류하였습니다. 각 항목을 누르면 상세 내용을 확인할 수 있습니다.",
+    "description": "역량의 전문성에 따라 최상 · 상 · 중 · 하 수준으로 분류하였습니다. 각 항목을 누르면 상세 내용을 확인할 수 있습니다.",
     "categories": [
       {
         "id": "hard",
@@ -135,6 +135,18 @@
         "label": "캠페인 광고",
         "items": [
           {
+            "title": "23년 로지텍 + 디플러스 기아 바이럴",
+            "client": "Logitech G",
+            "year": "2023",
+            "url": "https://www.youtube.com/watch?v=ZgE8bJN8aik"
+          },
+          {
+            "title": "로지텍G + T1 (페이커) 바이럴",
+            "client": "Logitech G",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=HqWoQGU23zI"
+          },
+          {
             "title": "로지텍G X 젠지",
             "client": "Logitech G",
             "year": "",
@@ -203,12 +215,6 @@
             "url": "https://www.youtube.com/watch?v=PG6SoTdV14w"
           },
           {
-            "title": "23년 로지텍 + 디플러스 기아 바이럴",
-            "client": "Logitech G",
-            "year": "2023",
-            "url": "https://www.youtube.com/watch?v=ZgE8bJN8aik"
-          },
-          {
             "title": "22년 로지텍 + 담원 기아 바이럴",
             "client": "Logitech G",
             "year": "2022",
@@ -219,12 +225,6 @@
             "client": "Logitech G",
             "year": "",
             "url": "https://www.youtube.com/watch?v=-sfl51qJQYg"
-          },
-          {
-            "title": "로지텍G + T1 (페이커) 바이럴",
-            "client": "Logitech G",
-            "year": "",
-            "url": "https://www.youtube.com/watch?v=HqWoQGU23zI"
           },
           {
             "title": "MX MASTER 3 기업 바이럴",
@@ -361,7 +361,7 @@
   "contact": {
     "email": "sea3648@naver.com",
     "phone": "+82 10-3049-3648",
-    "location": "서울 광진구"
+    "location": "서울 동작구"
   }
 }
 ;
