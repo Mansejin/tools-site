@@ -368,6 +368,25 @@ a:hover {
   margin-bottom: 24px;
 }
 
+.profile-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.profile-grid > .card + .card {
+  margin-top: 0;
+}
+
+.profile-grid > .card {
+  height: 100%;
+}
+
+.profile-empty {
+  font-size: 0.9375rem;
+  color: var(--text-tertiary);
+}
+
 .career-item {
   margin-bottom: 20px;
 }
@@ -946,5 +965,9 @@ html[data-theme="dark"] .skill-level--top {
   .hero-photo-wrap {
     width: 140px;
     align-self: flex-end;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
   }
 }

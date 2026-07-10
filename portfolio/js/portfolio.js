@@ -139,31 +139,32 @@
 
     el.innerHTML = `
       ${resumeHtml}
-      <div class="card">
-        <p class="card-title">경력 (총 ${p.career.totalYears}년)</p>
-        ${careerHtml}
-      </div>
-      <div class="card">
-        <p class="card-title">학력</p>
-        ${p.education
-          .map(
-            (e) => `
-          <div class="edu-item">
-            <p class="edu-school">${escapeHtml(e.school)}</p>
-            <p class="edu-meta">${escapeHtml(e.status)} · ${escapeHtml(e.period)}</p>
-          </div>`
-          )
-          .join("")}
-      </div>
-      ${
-        p.other.length
-          ? `<div class="card">
-        <p class="card-title">기타</p>
-        ${p.other.map((o) => `<div class="other-item"><p class="edu-school">${escapeHtml(o.title)}</p></div>`).join("")}
-      </div>`
-          : ""
-      }
-    `;
+      <div class="profile-grid">
+        <div class="card">
+          <p class="card-title">경력 (총 ${p.career.totalYears}년)</p>
+          ${careerHtml}
+        </div>
+        <div class="card">
+          <p class="card-title">학력</p>
+          ${p.education
+            .map(
+              (e) => `
+            <div class="edu-item">
+              <p class="edu-school">${escapeHtml(e.school)}</p>
+              <p class="edu-meta">${escapeHtml(e.status)} · ${escapeHtml(e.period)}</p>
+            </div>`
+            )
+            .join("")}
+        </div>
+        <div class="card">
+          <p class="card-title">기타</p>
+          ${
+            p.other.length
+              ? p.other.map((o) => `<div class="other-item"><p class="edu-school">${escapeHtml(o.title)}</p></div>`).join("")
+              : `<p class="profile-empty">—</p>`
+          }
+        </div>
+      </div>`;
   }
 
   function renderSkills(data) {
