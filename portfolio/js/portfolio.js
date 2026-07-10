@@ -61,7 +61,7 @@
     const el = document.getElementById("hero");
     if (!el) return;
     const photo = data.hero.photo
-      ? `<img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" width="166" height="222" loading="eager">`
+      ? `<div class="hero-photo-wrap"><img class="hero-photo" src="${escapeHtml(data.hero.photo)}" alt="${escapeHtml(data.hero.photoAlt || data.hero.name)}" loading="eager"></div>`
       : "";
     el.innerHTML = `
       <div class="hero-inner">

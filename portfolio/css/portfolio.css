@@ -240,20 +240,21 @@ a:hover {
 .hero-inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: stretch;
   column-gap: 32px;
 }
 
+.hero-photo-wrap {
+  display: flex;
+  align-self: stretch;
+  min-height: 0;
+}
+
 .hero-photo {
-  width: 166px;
-  height: auto;
-  aspect-ratio: 3 / 4;
+  height: 100%;
+  width: auto;
   object-fit: cover;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  flex-shrink: 0;
-  background: var(--card);
+  object-position: center top;
   display: block;
 }
 
@@ -893,9 +894,5 @@ html[data-theme="dark"] .skill-level--top {
 
   .hero-inner {
     column-gap: 16px;
-  }
-
-  .hero-photo {
-    width: 112px;
   }
 }
