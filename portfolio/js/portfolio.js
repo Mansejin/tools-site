@@ -57,30 +57,44 @@
     }
   }
 
-  function syncHeroPhotoHeight() {
+  function syncHeroPhotoSize() {
+    const inner = document.querySelector(".hero-inner");
     const content = document.querySelector(".hero-content");
     const wrap = document.querySelector(".hero-photo-wrap");
-    if (!content || !wrap) return;
-    wrap.style.height = `${content.offsetHeight}px`;
+    if (!inner || !content || !wrap) return;
+
+    const height = content.offsetHeight;
+    wrap.style.height = `${height}px`;
+
+    const gap = parseFloat(getComputedStyle(inner).gap) || 0;
+    const available = inner.clientWidth - content.offsetWidth - gap;
+    const isMobile = window.innerWidth <= 640;
+    const minWidth = isMobile ? 112 : 200;
+    const maxWidth = isMobile ? 140 : 280;
+    const width = Math.max(minWidth, Math.min(available, maxWidth));
+    wrap.style.width = `${width}px`;
   }
 
   let heroResizeObserver;
 
   function setupHeroPhotoSync() {
+    const inner = document.querySelector(".hero-inner");
     const content = document.querySelector(".hero-content");
-    if (!content) return;
+    if (!inner || !content) return;
 
-    syncHeroPhotoHeight();
+    const runSync = () => requestAnimationFrame(syncHeroPhotoSize);
+    runSync();
 
     if (heroResizeObserver) heroResizeObserver.disconnect();
     if (typeof ResizeObserver !== "undefined") {
-      heroResizeObserver = new ResizeObserver(syncHeroPhotoHeight);
+      heroResizeObserver = new ResizeObserver(runSync);
+      heroResizeObserver.observe(inner);
       heroResizeObserver.observe(content);
     }
 
     const photo = document.querySelector(".hero-photo");
     if (photo && !photo.complete) {
-      photo.addEventListener("load", syncHeroPhotoHeight, { once: true });
+      photo.addEventListener("load", runSync, { once: true });
     }
   }
 
@@ -100,7 +114,7 @@
         ${photo}
       </div>`;
     setupHeroPhotoSync();
-    document.fonts?.ready?.then(syncHeroPhotoHeight);
+    document.fonts?.ready?.then(() => requestAnimationFrame(syncHeroPhotoSize));
   }
 
   function renderProfile(data) {
