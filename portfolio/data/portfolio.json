@@ -252,24 +252,6 @@
         ]
       },
       {
-        "id": "personal",
-        "label": "개인 작품",
-        "items": [
-          {
-            "title": "(영화) '혐의' 졸업작품",
-            "client": "",
-            "year": "",
-            "url": "https://www.youtube.com/watch?v=tip_mQQHF60"
-          },
-          {
-            "title": "(모작) 오징어게임 타이틀 모션그래픽",
-            "client": "",
-            "year": "",
-            "url": "https://www.youtube.com/watch?v=AGu4kQuizV4"
-          }
-        ]
-      },
-      {
         "id": "youtube",
         "label": "유튜브 편집",
         "items": [
@@ -296,6 +278,24 @@
             "client": "국방홍보원",
             "year": "",
             "url": "https://www.youtube.com/watch?v=YYUYg59pp_Q"
+          }
+        ]
+      },
+      {
+        "id": "personal",
+        "label": "개인 작품",
+        "items": [
+          {
+            "title": "(영화) '혐의' 졸업작품",
+            "client": "",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=tip_mQQHF60"
+          },
+          {
+            "title": "(모작) 오징어게임 타이틀 모션그래픽",
+            "client": "",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=AGu4kQuizV4"
           }
         ]
       }

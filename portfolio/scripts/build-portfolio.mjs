@@ -89,8 +89,8 @@ portfolio.skills.categories = [
 portfolio.projects.categories = [
   { id: "campaign", label: "캠페인 광고", items: projects.campaign },
   { id: "viral", label: "바이럴 광고", items: projects.viral },
-  { id: "personal", label: "개인 작품", items: projects.personal },
   { id: "youtube", label: "유튜브 편집", items: projects.youtube },
+  { id: "personal", label: "개인 작품", items: projects.personal },
 ];
 
 fs.writeFileSync("portfolio/data/portfolio.json", JSON.stringify(portfolio, null, 2) + "\n");
