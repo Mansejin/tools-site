@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>만세진의 주옥 같은 프리미어 강의</title>
+  <meta name="description" content="4주 만에 끝내는 실전 프리미어 영상편집 — 프리미어 13년차 만세진의 커리큘럼">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mansejin.com/pr/">
+  <meta property="og:title" content="만세진의 주옥 같은 프리미어 강의">
+  <meta property="og:description" content="4주 완성 · 주 1회 2시간 · 총 8시간 · 실전 컷편집부터 AI 자막·사운드·최종 출력까지">
+  <meta property="og:locale" content="ko_KR">
+  <link rel="canonical" href="https://mansejin.com/pr/">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="css/course.css?v=20260711">
+</head>
+<body data-course="data/course.json">
+
+  <nav class="site-nav" aria-label="주요 메뉴">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#hero">Pr 강의</a>
+      <div class="nav-links">
+        <a href="#about">소개</a>
+        <a href="#curriculum">커리큘럼</a>
+        <a href="#install">설치</a>
+        <a href="#materials">자료</a>
+        <a href="#faq">FAQ</a>
+        <a href="#enroll">신청</a>
+      </div>
+      <div class="nav-actions">
+        <label class="theme-switch" title="다크 모드">
+          <input type="checkbox" class="theme-switch-input" role="switch">
+          <span class="theme-switch-track">
+            <span class="theme-switch-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </div>
+  </nav>
+
+  <header id="hero" class="hero" aria-label="강의 소개">
+    <div id="heroContent"></div>
+  </header>
+
+  <div class="page">
+
+    <section id="about" class="section" aria-labelledby="about-heading">
+      <div class="section-header">
+        <p class="section-sub">About</p>
+        <h2 id="about-heading">강사 소개</h2>
+      </div>
+      <div id="instructorContent"></div>
+    </section>
+
+    <section class="section" aria-labelledby="schedule-heading">
+      <div class="section-header">
+        <p class="section-sub">Schedule</p>
+        <h2 id="schedule-heading">일정 &amp; 수업 정보</h2>
+        <p>다음 기수 일정과 수업 방식을 확인하세요.</p>
+      </div>
+      <div id="scheduleContent"></div>
+    </section>
+
+    <section class="section" aria-labelledby="target-heading">
+      <div class="section-header">
+        <p class="section-sub">For Whom</p>
+        <h2 id="target-heading">이런 분께 추천합니다</h2>
+      </div>
+      <div id="targetContent"></div>
+    </section>
+
+    <section class="section" aria-labelledby="outcomes-heading">
+      <div class="section-header">
+        <p class="section-sub">Outcomes</p>
+        <h2 id="outcomes-heading">수강 후 이렇게 됩니다</h2>
+      </div>
+      <div id="outcomesContent"></div>
+    </section>
+
+    <section id="curriculum" class="section" aria-labelledby="curriculum-heading">
+      <div class="section-header">
+        <p class="section-sub">Curriculum</p>
+        <h2 id="curriculum-heading">4주 커리큘럼</h2>
+        <p>기초 컷편집부터 AI 자막, 사운드 믹싱, 최종 출력까지 단계별로 진행합니다.</p>
+      </div>
+      <div id="curriculumContent" class="curriculum-grid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="prereq-heading">
+      <div class="section-header">
+        <p class="section-sub">Requirements</p>
+        <h2 id="prereq-heading">수강 전 준비사항</h2>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1rem;margin-bottom:12px">사전 설치 안내</h3>
+        <div id="prerequisitesContent"></div>
+        <p style="margin-top:16px;font-size:0.88rem;color:var(--text-secondary)">
+          본 강의에서는 프리미어 프로그램을 별도로 제공하지 않습니다.
+          원활한 실습을 위해 수업 전 개인 노트북에 직접 설치를 완료해 오셔야 합니다.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="equipment-heading">
+      <div class="section-header">
+        <h2 id="equipment-heading">권장 장비</h2>
+      </div>
+      <div id="equipmentContent"></div>
+    </section>
+
+    <section id="install" class="section" aria-labelledby="install-heading">
+      <div class="section-header">
+        <p class="section-sub">Setup</p>
+        <h2 id="install-heading">Adobe Premiere Pro 영문 설치법</h2>
+        <p>강의 실습을 위해 <strong>English (International)</strong> 버전으로 설치해주세요.</p>
+      </div>
+
+      <div class="card">
+        <div class="install-steps">
+
+          <div class="install-step">
+            <span class="step-num">1</span>
+            <div>
+              <h3>Adobe 계정 만들기 &amp; Creative Cloud 설치</h3>
+              <p>
+                <a href="https://www.adobe.com/kr/" target="_blank" rel="noopener noreferrer">adobe.com/kr</a>에 접속해 회원가입 후 로그인합니다.
+                Creative Cloud 앱을 설치하세요. Creative Cloud는 프리미어, 애프터이펙트, 포토샵, 일러스트레이터 등 Adobe 프로그램을 관리하는 통합 앱입니다.
+              </p>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <span class="step-num">2</span>
+            <div>
+              <h3>기본 설치 언어를 English로 변경 <span class="placeholder-badge" style="margin-left:0">중요</span></h3>
+              <p>Creative Cloud 실행 후, 왼쪽 위 <strong>≡ (삼선)</strong> 메뉴 → <strong>파일 → 환경 설정</strong> (단축키 <kbd>Ctrl + ,</kbd>)으로 진입합니다.</p>
+              <ol>
+                <li>좌측 <strong>언어</strong> 메뉴 클릭</li>
+                <li><strong>기본 설치 언어</strong> → 언어를 <strong>한국어</strong>에서 <strong>English (International)</strong>로 변경</li>
+                <li><strong>완료</strong> 클릭</li>
+              </ol>
+              <div class="install-note">
+                <strong>왜 영문인가요?</strong> 강의 자료와 튜토리얼이 영문 UI 기준으로 진행됩니다. 한국어로 설치하면 메뉴 위치가 달라져 따라하기 어려울 수 있습니다.
+              </div>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <span class="step-num">3</span>
+            <div>
+              <h3>Premiere Pro 설치</h3>
+              <p>Creative Cloud <strong>앱</strong> 메뉴에서 <strong>Premiere Pro</strong>를 찾아 설치합니다. 설치가 완료되면 수업 전에 한 번 실행해 정상 작동을 확인해주세요.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <h3 style="font-size:1rem;margin:28px 0 4px">구독료 절감 꿀팁</h3>
+        <div id="tipsContent"></div>
+      </div>
+    </section>
+
+    <section id="materials" class="section" aria-labelledby="materials-heading">
+      <div class="section-header">
+        <p class="section-sub">Materials</p>
+        <h2 id="materials-heading">강의 자료 &amp; 실습 에셋</h2>
+      </div>
+      <div class="card drive-link-card">
+        <span class="drive-icon" aria-hidden="true">📁</span>
+        <div class="drive-info">
+          <h3>Google Drive — 실습 에셋 폴더</h3>
+          <p id="driveDescription"></p>
+        </div>
+        <a id="driveLink" class="btn btn-outline" href="#" target="_blank" rel="noopener noreferrer">폴더 열기</a>
+      </div>
+    </section>
+
+    <section id="faq" class="section" aria-labelledby="faq-heading">
+      <div class="section-header">
+        <p class="section-sub">FAQ</p>
+        <h2 id="faq-heading">자주 묻는 질문</h2>
+      </div>
+      <div id="faqContent"></div>
+    </section>
+
+    <section class="section" aria-labelledby="reviews-heading">
+      <div class="section-header">
+        <p class="section-sub">Reviews</p>
+        <h2 id="reviews-heading">수강생 후기</h2>
+      </div>
+      <div id="testimonialsContent"></div>
+    </section>
+
+    <section id="enroll" class="section cta-section" aria-labelledby="enroll-heading">
+      <div id="enrollmentContent"></div>
+    </section>
+
+  </div>
+
+  <footer class="site-footer">
+    <p>© 2026 만세진 · <a href="https://mansejin.com">mansejin.com</a></p>
+  </footer>
+
+  <script src="js/course.js?v=20260711"></script>
+  <script src="../js/theme.js"></script>
+</body>
+</html>
