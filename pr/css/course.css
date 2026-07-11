@@ -636,6 +636,49 @@ a.work-chip:hover {
   color: var(--text-tertiary);
 }
 
+.week-card--detailed {
+  grid-column: 1 / -1;
+}
+
+.week-topic-group {
+  margin-bottom: 4px;
+}
+
+.week-topic-group strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.week-topic-group::before {
+  content: none !important;
+}
+
+.week-subtopics {
+  list-style: none;
+  margin: 4px 0 8px 0;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.week-subtopics li {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  padding-left: 12px;
+  position: relative;
+}
+
+.week-subtopics li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: var(--text-tertiary);
+}
+
 /* Install steps */
 
 .install-steps {
