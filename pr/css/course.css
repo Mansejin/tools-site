@@ -454,6 +454,129 @@ a:hover {
   font-style: italic;
 }
 
+/* Instructor */
+
+.instructor-card {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.instructor-photo-wrap {
+  flex-shrink: 0;
+}
+
+.instructor-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.instructor-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.instructor-body h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.instructor-headline {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+
+.instructor-bio {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.instructor-highlights {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.instructor-highlights li {
+  font-size: 0.88rem;
+  color: var(--text);
+  padding-left: 16px;
+  position: relative;
+}
+
+.instructor-highlights li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.instructor-works-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.instructor-works-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.work-chip {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--blue-light);
+  color: var(--blue);
+  border: 1px solid color-mix(in srgb, var(--blue) 15%, transparent);
+  transition: background 0.15s;
+}
+
+a.work-chip:hover {
+  background: color-mix(in srgb, var(--blue) 12%, var(--card));
+  color: var(--blue-hover);
+}
+
+.instructor-links {
+  font-size: 0.88rem;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .instructor-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .instructor-highlights li {
+    padding-left: 0;
+    text-align: left;
+  }
+
+  .instructor-works-list {
+    justify-content: center;
+  }
+}
+
 /* Curriculum */
 
 .curriculum-grid {

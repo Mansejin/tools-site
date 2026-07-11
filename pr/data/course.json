@@ -2,13 +2,26 @@
   "title": "만세진의 주옥 같은 프리미어 강의",
   "tagline": "4주 만에 끝내는 실전 프리미어 영상편집",
   "instructor": {
-    "name": "만세진",
-    "headline": "프리미어 영상편집 13년차",
-    "bio": "[자료 입력 필요] 강사 소개, 경력, 대표 작업물 등을 여기에 작성해주세요.",
-    "photo": null,
+    "name": "만세진 (오세진)",
+    "headline": "프리미어 13년 · 광고 PD 8년차",
+    "bio": "한국영상대학교 영상편집제작과를 전공하고, 광고대행사에서 PD로 8년 이상 활동해 왔습니다. Premiere Pro를 13년째 사용하며 제작·연출·후반 편집을 직접 해온 실무 경험을 바탕으로 강의합니다. 로지텍G, 지누스, 한국타이어 등 브랜드 캠페인과 유튜브 콘텐츠를 기획부터 편집·출력까지 총괄한 경험을 수업에 녹여, 현장에서 바로 쓰이는 편집 노하우를 전달합니다.",
+    "photo": "../portfolio/images/profile.jpg",
+    "highlights": [
+      "한국영상대학교 영상편집제작과 졸업",
+      "광고대행사 PD — 제작·연출·후반 작업 총괄",
+      "Premiere Pro 13년 실무 · After Effects 활용",
+      "로지텍G · 지누스 · 한국타이어 등 브랜드 영상 다수 제작",
+      "유튜브 채널 기획·제작·운영 (디디딧, 만세진 채널)",
+      "AI 자막·생성형 AI를 편집 워크플로에 적극 활용"
+    ],
+    "works": [
+      { "title": "로지텍G × T1(페이커) 바이럴", "url": "https://www.youtube.com/watch?v=HqWoQGU23zI" },
+      { "title": "로지텍G × 젠지 캠페인", "url": "https://www.youtube.com/watch?v=jXkpSnyv-5s" },
+      { "title": "지누스 브랜드 캠페인", "url": "https://www.youtube.com/watch?v=FEAcbnA8DLo" }
+    ],
     "links": {
-      "portfolio": null,
-      "youtube": null,
+      "portfolio": "https://mansejin.com/portfolio/",
+      "youtube": "https://www.youtube.com/@mansejin96",
       "instagram": null
     }
   },
@@ -31,21 +44,19 @@
     "capacity": "[자료 입력 필요] 정원 (예: 선착순 8명)"
   },
   "targetAudience": [
-  ],
-  "targetAudiencePlaceholder": [
     "영상 편집을 처음 시작하는 분",
     "유튜브·숏폼 콘텐츠를 직접 만들고 싶은 분",
     "회사·프로젝트에서 간단한 영상 편집이 필요한 분",
-    "[자료 입력 필요] 추가 대상자를 입력해주세요"
+    "브랜드·바이럴 영상 제작 흐름을 배우고 싶은 분"
   ],
+  "targetAudiencePlaceholder": [],
   "outcomes": [
-  ],
-  "outcomesPlaceholder": [
     "프리미어 인터페이스와 기본 컷편집을 스스로 할 수 있다",
     "AI 자막·예능자막·BGM·효과음을 활용한 완성도 있는 영상을 만든다",
     "피드백을 반영해 최종본과 세로형 베리에이션까지 출력한다",
-    "[자료 입력 필요] 수강 후 기대 성과를 추가해주세요"
+    "광고·유튜브 현장에서 쓰이는 실무 편집 워크플로를 이해한다"
   ],
+  "outcomesPlaceholder": [],
   "curriculum": [
     {
       "week": 1,
@@ -121,6 +132,10 @@
     "note": "[자료 입력 필요] 결제 방법, 환불 규정 등 신청 안내"
   },
   "faq": [
+    {
+      "q": "프리미어를 한 번도 안 써봐도 괜찮나요?",
+      "a": "네, 괜찮습니다. 1주차에서 설치부터 인터페이스, 기본 컷편집까지 차근차근 진행합니다. Premiere Pro를 처음 접하시는 분도 따라오실 수 있도록 구성했습니다."
+    }
   ],
   "faqPlaceholder": [
     {
