@@ -204,12 +204,42 @@
     );
   }
 
+  function renderTopicItem(topic) {
+    if (typeof topic === "string") {
+      return "<li>" + escapeHtml(topic) + "</li>";
+    }
+    var sub =
+      topic.items && topic.items.length
+        ? '<ul class="week-subtopics">' +
+          topic.items
+            .map(function (item) {
+              return "<li>" + escapeHtml(item) + "</li>";
+            })
+            .join("") +
+          "</ul>"
+        : "";
+    return (
+      '<li class="week-topic-group">' +
+      "<strong>" +
+      escapeHtml(topic.title) +
+      "</strong>" +
+      sub +
+      "</li>"
+    );
+  }
+
   function renderCurriculum(data) {
     var el = document.getElementById("curriculumContent");
     el.innerHTML = data.curriculum
       .map(function (week) {
+        var hasGroups = week.topics.some(function (t) {
+          return typeof t === "object";
+        });
+        var cardClass = hasGroups ? "week-card week-card--detailed" : "week-card";
         return (
-          '<article class="week-card">' +
+          '<article class="' +
+          cardClass +
+          '">' +
           '<span class="week-label">' +
           week.week +
           "주차</span>" +
@@ -217,9 +247,7 @@
           escapeHtml(week.title) +
           "</h3>" +
           '<ul class="week-topics">' +
-          week.topics.map(function (t) {
-            return "<li>" + escapeHtml(t) + "</li>";
-          }).join("") +
+          week.topics.map(renderTopicItem).join("") +
           "</ul>" +
           "</article>"
         );
