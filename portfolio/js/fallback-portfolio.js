@@ -256,8 +256,26 @@
       },
       {
         "id": "youtube",
-        "label": "유튜브 편집",
+        "label": "유튜브",
         "items": [
+          {
+            "title": "스위치가 없다고? 로지텍G에서 작정하고 만든 괴물 마우스 출시! | PRO X2 SUPERSTRIKE",
+            "client": "디디딧",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=qVh-8rNKNig"
+          },
+          {
+            "title": "추우세요? 일단 들어와 | 가성비 있는 겨울 난방템 BEST 6 추천!",
+            "client": "디디딧",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=C1f40WY25pk"
+          },
+          {
+            "title": "원터치로 집에서 라떼까지! 전자동 커피머신 [필립스 바리스티나]",
+            "client": "디디딧",
+            "year": "",
+            "url": "https://www.youtube.com/watch?v=vgIZEqwvu9w"
+          },
           {
             "title": "코인 유튜브",
             "client": "",

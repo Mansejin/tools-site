@@ -43,6 +43,9 @@ const projects = {
     { title: "(모작) 오징어게임 타이틀 모션그래픽", client: "", year: "", url: "https://www.youtube.com/watch?v=AGu4kQuizV4" },
   ],
   youtube: [
+    { title: "스위치가 없다고? 로지텍G에서 작정하고 만든 괴물 마우스 출시! | PRO X2 SUPERSTRIKE", client: "디디딧", year: "", url: "https://www.youtube.com/watch?v=qVh-8rNKNig" },
+    { title: "추우세요? 일단 들어와 | 가성비 있는 겨울 난방템 BEST 6 추천!", client: "디디딧", year: "", url: "https://www.youtube.com/watch?v=C1f40WY25pk" },
+    { title: "원터치로 집에서 라떼까지! 전자동 커피머신 [필립스 바리스티나]", client: "디디딧", year: "", url: "https://www.youtube.com/watch?v=vgIZEqwvu9w" },
     { title: "코인 유튜브", client: "", year: "", url: "https://www.youtube.com/watch?v=aUWTGA4smm4" },
     { title: "코인 유튜브", client: "", year: "", url: "https://www.youtube.com/watch?v=7lkAOq6qoCY" },
     { title: "코인 유튜브", client: "", year: "", url: "https://www.youtube.com/watch?v=mgSVgatQrXc" },
@@ -89,7 +92,7 @@ portfolio.skills.categories = [
 portfolio.projects.categories = [
   { id: "campaign", label: "캠페인 광고", items: projects.campaign },
   { id: "viral", label: "바이럴 광고", items: projects.viral },
-  { id: "youtube", label: "유튜브 편집", items: projects.youtube },
+  { id: "youtube", label: "유튜브", items: projects.youtube },
   { id: "personal", label: "개인 작품", items: projects.personal },
 ];
 
