@@ -104,18 +104,78 @@
 
   function renderInstructor(data) {
     var el = document.getElementById("instructorContent");
-    var badge = isPlaceholder(data.instructor.bio) ? '<span class="placeholder-badge">자료 입력 필요</span>' : "";
+    var inst = data.instructor || {};
+    var badge = isPlaceholder(inst.bio) ? '<span class="placeholder-badge">자료 입력 필요</span>' : "";
+
+    var photoHtml = "";
+    if (inst.photo) {
+      photoHtml =
+        '<div class="instructor-photo-wrap">' +
+        '<img class="instructor-photo" src="' +
+        escapeHtml(inst.photo) +
+        '" alt="' +
+        escapeHtml(inst.name || "강사") +
+        ' 프로필" loading="lazy" onerror="this.parentElement.style.display=\'none\'">' +
+        "</div>";
+    }
+
+    var highlightsHtml = "";
+    if (inst.highlights && inst.highlights.length) {
+      highlightsHtml =
+        '<ul class="instructor-highlights">' +
+        inst.highlights
+          .map(function (h) {
+            return "<li>" + escapeHtml(h) + "</li>";
+          })
+          .join("") +
+        "</ul>";
+    }
+
+    var worksHtml = "";
+    if (inst.works && inst.works.length) {
+      worksHtml =
+        '<div class="instructor-works"><p class="instructor-works-label">대표 작업</p><div class="instructor-works-list">' +
+        inst.works
+          .map(function (w) {
+            if (w.url) {
+              return (
+                '<a class="work-chip" href="' +
+                escapeHtml(w.url) +
+                '" target="_blank" rel="noopener noreferrer">' +
+                escapeHtml(w.title) +
+                " ↗</a>"
+              );
+            }
+            return '<span class="work-chip">' + escapeHtml(w.title) + "</span>";
+          })
+          .join("") +
+        "</div></div>";
+    }
+
+    var links = inst.links || {};
+    var linkItems = [];
+    if (links.portfolio) linkItems.push('<a href="' + escapeHtml(links.portfolio) + '" target="_blank" rel="noopener noreferrer">포트폴리오</a>');
+    if (links.youtube) linkItems.push('<a href="' + escapeHtml(links.youtube) + '" target="_blank" rel="noopener noreferrer">YouTube</a>');
+    var linksHtml = linkItems.length ? '<div class="instructor-links">' + linkItems.join(" · ") + "</div>" : "";
+
     el.innerHTML =
-      '<div class="card">' +
+      '<div class="card instructor-card">' +
+      photoHtml +
+      '<div class="instructor-body">' +
       "<h3>" +
-      escapeHtml(data.instructor.name) +
-      " · " +
-      escapeHtml(data.instructor.headline) +
+      escapeHtml(inst.name) +
       badge +
       "</h3>" +
-      '<p style="margin-top:12px;color:var(--text-secondary)">' +
-      escapeHtml(data.instructor.bio) +
+      '<p class="instructor-headline">' +
+      escapeHtml(inst.headline) +
       "</p>" +
+      '<p class="instructor-bio">' +
+      escapeHtml(inst.bio) +
+      "</p>" +
+      highlightsHtml +
+      worksHtml +
+      linksHtml +
+      "</div>" +
       "</div>";
   }
 
