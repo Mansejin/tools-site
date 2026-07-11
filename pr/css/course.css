@@ -961,3 +961,280 @@ a.work-chip:hover {
     padding: 28px 20px;
   }
 }
+
+/* Enrollment section */
+
+.enroll-cohort {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-bottom: 16px;
+}
+
+.enroll-process {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  max-width: 420px;
+  margin: 0 auto 8px;
+}
+
+.enroll-process li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.enroll-process li span {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.enroll-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.enroll-info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.enroll-info-card h3 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.enroll-info-card p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+}
+
+.enroll-info-note {
+  margin-top: 8px !important;
+  font-size: 0.8rem !important;
+  color: var(--text-tertiary) !important;
+}
+
+.enroll-policy {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.enroll-policy summary {
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.enroll-policy ul {
+  margin-top: 10px;
+  padding-left: 20px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Enrollment modal */
+
+.enroll-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.enroll-modal.is-open {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.enroll-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.enroll-modal-panel {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.enroll-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.enroll-modal-panel h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.enroll-modal-sub {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.enroll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.enroll-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.enroll-field span {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.enroll-field em {
+  color: var(--red);
+  font-style: normal;
+}
+
+.enroll-field small {
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.enroll-field input {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.enroll-field input:focus {
+  outline: 2px solid var(--blue-light);
+  border-color: var(--blue);
+}
+
+.enroll-form-note {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  text-align: left;
+}
+
+.enroll-form-error {
+  color: var(--red);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.enroll-submit {
+  width: 100%;
+}
+
+.enroll-success {
+  text-align: center;
+}
+
+.enroll-success-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 auto 16px;
+}
+
+.enroll-bank-card {
+  background: var(--blue-light);
+  border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.enroll-bank-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+
+.enroll-bank-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: 0.88rem;
+}
+
+.enroll-bank-dl dt {
+  color: var(--text-tertiary);
+}
+
+.enroll-bank-note {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.enroll-contact {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}

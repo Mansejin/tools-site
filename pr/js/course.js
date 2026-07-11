@@ -95,9 +95,9 @@
       "% 할인</span>" +
       "</div>" +
       '<div class="hero-cta">' +
-      '<a class="btn btn-primary" href="#enroll">' +
+      '<button type="button" class="btn btn-primary" data-enroll-open>' +
       escapeHtml(data.enrollment && data.enrollment.ctaText ? data.enrollment.ctaText : "수강 신청하기") +
-      "</a>" +
+      "</button>" +
       "</div>" +
       "</div>";
   }
@@ -304,20 +304,73 @@
   function renderEnrollment(data) {
     var el = document.getElementById("enrollmentContent");
     var e = data.enrollment || {};
-    var linkHtml = e.link
-      ? '<a class="btn btn-primary" href="' + escapeHtml(e.link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(e.ctaText || "수강 신청하기") + "</a>"
-      : '<a class="btn btn-primary" href="#">' + escapeHtml(e.ctaText || "수강 신청하기") + "</a>";
-    var badge = isPlaceholder(e.contact) ? '<span class="placeholder-badge">자료 입력 필요</span>' : "";
+    var pay = e.payment || {};
+    var processHtml = "";
+    if (e.process && e.process.length) {
+      processHtml =
+        '<ol class="enroll-process">' +
+        e.process
+          .map(function (step, i) {
+            return "<li><span>" + (i + 1) + "</span>" + escapeHtml(step) + "</li>";
+          })
+          .join("") +
+        "</ol>";
+    }
+
+    var refundHtml = "";
+    if (e.refundPolicy && e.refundPolicy.length) {
+      refundHtml =
+        '<details class="enroll-policy"><summary>환불 규정</summary><ul>' +
+        e.refundPolicy
+          .map(function (r) {
+            return "<li>" + escapeHtml(r) + "</li>";
+          })
+          .join("") +
+        "</ul></details>";
+    }
+
     el.innerHTML =
-      "<h2>수강 신청" +
-      badge +
-      "</h2>" +
-      "<p>관심 있으시면 아래로 연락 주세요.</p>" +
-      linkHtml +
-      '<p class="cta-contact">' +
-      escapeHtml(e.contact || "") +
+      "<h2>수강 신청</h2>" +
+      '<p class="enroll-cohort">' +
+      escapeHtml(e.cohort || "") +
+      " · " +
+      escapeHtml((data.schedule && data.schedule.registrationDeadline) || "") +
+      " 마감</p>" +
+      processHtml +
+      '<button type="button" class="btn btn-primary" data-enroll-open style="margin-top:16px">' +
+      escapeHtml(e.ctaText || "수강 신청하기") +
+      "</button>" +
+      '<div class="enroll-info-grid">' +
+      '<div class="enroll-info-card">' +
+      "<h3>결제 안내</h3>" +
+      "<p><strong>" +
+      formatPrice(pay.amount || 120000) +
+      "</strong></p>" +
+      "<p>" +
+      escapeHtml(pay.bank || "") +
+      " " +
+      escapeHtml(pay.account || "") +
+      "<br>예금주 " +
+      escapeHtml(pay.holder || "") +
       "</p>" +
-      (e.note ? '<p class="cta-contact" style="margin-top:8px;font-size:0.85rem">' + escapeHtml(e.note) + "</p>" : "");
+      '<p class="enroll-info-note">' +
+      escapeHtml(pay.note || "") +
+      "</p>" +
+      "</div>" +
+      '<div class="enroll-info-card">' +
+      "<h3>문의</h3>" +
+      '<p><a href="tel:' +
+      escapeHtml((e.phone || "").replace(/\D/g, "")) +
+      '">' +
+      escapeHtml(e.phone || "") +
+      '</a><br><a href="mailto:' +
+      escapeHtml(e.email || "") +
+      '">' +
+      escapeHtml(e.email || "") +
+      "</a></p>" +
+      "</div>" +
+      "</div>" +
+      refundHtml;
   }
 
   function renderTips(data) {
@@ -362,6 +415,10 @@
     document.title = data.title + " · 만세진";
     var meta = document.querySelector('meta[name="description"]');
     if (meta) meta.content = data.tagline;
+
+    if (window.PrEnrollment) {
+      window.PrEnrollment.init(data);
+    }
   }
 
   function load() {
