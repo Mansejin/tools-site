@@ -12,8 +12,8 @@
  */
 
 const NOTIFY_TO = "sea3648@naver.com";
-const ENROLL_SECRET = "mansejin-pr-enroll-k9m2x7p4q1w8n5z3";
-const SURVEY_SECRET = "mansejin-pr-survey-p3k8m2x7n1w5z9q4";
+const ENROLL_SECRET = "O5100jun@@";
+const SURVEY_SECRET = "O5100jun@@";
 const ADMIN_SECRET = "O5100jun@@";
 const SPREADSHEET_ID = "SPREADSHEET_ID_HERE";
 
