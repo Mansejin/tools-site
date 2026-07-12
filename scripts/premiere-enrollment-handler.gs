@@ -17,7 +17,7 @@
 
 const ENROLL_TO = "sea3648@naver.com";
 const ENROLL_SECRET = "mansejin-pr-enroll-k9m2x7p4q1w8n5z3";
-const ADMIN_SECRET = "mansejin-pr-admin-h6j3v9r2t8c5m1k4";
+const ADMIN_SECRET = "O5100jun@@";
 const SPREADSHEET_ID = "SPREADSHEET_ID_HERE";
 const SHEET_NAME = "applications";
 

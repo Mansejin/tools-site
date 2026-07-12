@@ -56,7 +56,7 @@
       '<button type="submit" class="btn btn-primary">로그인</button>' +
       '<p class="admin-error" id="loginError" hidden></p>' +
       "</form>" +
-      '<p class="admin-hint">Google Apps Script 배포 후 <code>data-admin-secret</code>과 동일한 값을 사용합니다.</p>' +
+      '<p class="admin-hint">Google Apps Script에 설정한 관리자 비밀번호를 입력하세요.</p>' +
       "</div>";
 
     document.getElementById("loginForm").addEventListener("submit", function (e) {
