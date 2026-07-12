@@ -15,7 +15,7 @@
 const SURVEY_TO = "sea3648@naver.com";
 const SURVEY_SECRET = "mansejin-pr-survey-p3k8m2x7n1w5z9q4";
 const ADMIN_SECRET = "O5100jun@@";
-const SPREADSHEET_ID = "SPREADSHEET_ID_HERE";
+const SPREADSHEET_ID = "1FrFeZXwySdIg88CJL2r6uGRjLNo5LIgacYBOqhqtdFk";
 const SHEET_NAME = "surveys";
 
 const HEADERS = ["id", "submitted_at", "cohort", "name", "answers_json"];
