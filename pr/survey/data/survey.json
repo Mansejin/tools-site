@@ -1,0 +1,79 @@
+{
+  "title": "프리미어 강의 만족도 조사",
+  "subtitle": "4주 과정을 수강해주셔서 감사합니다. 솔직한 의견이 다음 강의를 만드는 데 큰 도움이 됩니다.",
+  "googleFormUrl": null,
+  "cohorts": [
+    "2026년 8월 2기 (온라인)",
+    "2026년 8월 1기",
+    "기타 / 기억 안 남"
+  ],
+  "fields": {
+    "cohort": { "label": "수강 기수", "required": true },
+    "name": { "label": "이름", "required": false, "hint": "선택 · 익명 가능" }
+  },
+  "questions": [
+    {
+      "id": "overall",
+      "type": "rating",
+      "label": "전체 만족도",
+      "required": true,
+      "labels": ["매우 불만", "불만", "보통", "만족", "매우 만족"]
+    },
+    {
+      "id": "clarity",
+      "type": "rating",
+      "label": "강사 설명의 이해도",
+      "required": true,
+      "labels": ["매우 어려움", "어려움", "보통", "쉬움", "매우 쉬움"]
+    },
+    {
+      "id": "pace",
+      "type": "select",
+      "label": "수업 진행 속도",
+      "required": true,
+      "options": ["너무 빨랐어요", "적절했어요", "조금 느렸어요", "너무 느렸어요"]
+    },
+    {
+      "id": "practice",
+      "type": "select",
+      "label": "실습 분량",
+      "required": true,
+      "options": ["부족했어요", "적절했어요", "많았어요"]
+    },
+    {
+      "id": "online",
+      "type": "rating",
+      "label": "온라인(Zoom) 수업 환경",
+      "required": true,
+      "labels": ["매우 불편", "불편", "보통", "편함", "매우 편함"]
+    },
+    {
+      "id": "best_week",
+      "type": "select",
+      "label": "가장 도움이 된 주차",
+      "required": true,
+      "options": ["1주차 — Pr 기초", "2주차 — 자막 (AI)", "3주차 — 사운드 & 효과", "4주차 — 색보정 & 최종 출력", "비슷했어요"]
+    },
+    {
+      "id": "recommend",
+      "type": "nps",
+      "label": "지인에게 추천할 의향",
+      "required": true,
+      "hint": "0 = 전혀 추천 안 함 · 10 = 적극 추천"
+    },
+    {
+      "id": "improve",
+      "type": "textarea",
+      "label": "개선하면 좋을 점",
+      "required": false,
+      "placeholder": "커리큘럼, 속도, 자료, 온라인 운영 등"
+    },
+    {
+      "id": "comment",
+      "type": "textarea",
+      "label": "자유 의견",
+      "required": false,
+      "placeholder": "좋았던 점, 감사 인사 등 무엇이든 환영합니다"
+    }
+  ]
+}

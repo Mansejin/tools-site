@@ -1,0 +1,262 @@
+.survey-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.survey-loading {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 80px 0;
+}
+
+.survey-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.survey-header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.survey-sub {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.survey-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.survey-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.survey-field span,
+.survey-rating legend,
+.survey-nps legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.survey-field em,
+.survey-rating em,
+.survey-nps em {
+  color: var(--red);
+  font-style: normal;
+}
+
+.survey-field small {
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.survey-field input,
+.survey-field select,
+.survey-field textarea {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.survey-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.survey-field input:focus,
+.survey-field select:focus,
+.survey-field textarea:focus {
+  outline: 2px solid var(--blue-light);
+  border-color: var(--blue);
+}
+
+.survey-rating,
+.survey-nps {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.survey-rating legend,
+.survey-nps legend {
+  margin-bottom: 10px;
+}
+
+.survey-nps legend small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.rating-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rating-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rating-option:has(input:checked) {
+  background: var(--blue-light);
+  border-color: var(--blue);
+}
+
+.rating-option input {
+  flex-shrink: 0;
+}
+
+.rating-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--surface-hover);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.rating-option:has(input:checked) .rating-num {
+  background: var(--blue);
+  color: #fff;
+}
+
+.rating-label {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.nps-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nps-option {
+  cursor: pointer;
+}
+
+.nps-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.nps-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.nps-option:has(input:checked) span {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.nps-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.survey-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.survey-error {
+  color: var(--red);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.survey-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.88rem;
+}
+
+.survey-success {
+  text-align: center;
+  padding: 48px 28px;
+}
+
+.survey-success-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 auto 20px;
+}
+
+.survey-success h1 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.survey-success p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.survey-setup {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.survey-setup p {
+  color: var(--text-secondary);
+  margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+  .nps-option span {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+}
