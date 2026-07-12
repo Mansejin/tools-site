@@ -196,7 +196,13 @@
       }),
     })
       .then(function (r) {
-        return r.json();
+        return r.text().then(function (text) {
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            throw new Error("서버 응답 오류 — GAS 배포 및 ENROLL_SECRET 설정을 확인해주세요.");
+          }
+        });
       })
       .then(function (res) {
         if (!res.success) throw new Error(res.message || "신청에 실패했습니다.");

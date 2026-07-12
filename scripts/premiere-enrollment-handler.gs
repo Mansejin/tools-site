@@ -1,5 +1,5 @@
 /**
- * mansejin.com/pr 수강 신청 → Google Sheet 저장 + 이메일 알림
+ * ⚠️ 이 파일 대신 scripts/premiere-api-handler.gs (통합) 사용을 권장합니다.
  *
  * 설정:
  * 1. https://script.google.com → 새 프로젝트 → 이 코드 붙여넣기
