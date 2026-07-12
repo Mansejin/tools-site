@@ -205,7 +205,13 @@
         });
       })
       .then(function (res) {
-        if (!res.success) throw new Error(res.message || "신청에 실패했습니다.");
+        if (!res.success) {
+          var msg = res.message || "신청에 실패했습니다.";
+          if (msg.indexOf("Unauthorized") !== -1) {
+            msg = "인증 오류 — GAS의 ENROLL_SECRET과 페이지 secret이 일치하는지 확인 후 새 배포해주세요.";
+          }
+          throw new Error(msg);
+        }
         document.getElementById("enrollModalBody").innerHTML = renderSuccess();
       })
       .catch(function (err) {
