@@ -159,7 +159,7 @@
     document.getElementById("surveyAdminApp").innerHTML =
       '<p class="admin-loading">불러오는 중…</p>';
 
-    fetch(endpoint + "?adminSecret=" + encodeURIComponent(secret))
+    fetch(endpoint + "?adminSecret=" + encodeURIComponent(secret) + "&type=survey")
       .then(function (r) {
         return r.json();
       })
