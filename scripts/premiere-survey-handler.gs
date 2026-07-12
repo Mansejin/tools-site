@@ -14,7 +14,7 @@
 
 const SURVEY_TO = "sea3648@naver.com";
 const SURVEY_SECRET = "mansejin-pr-survey-p3k8m2x7n1w5z9q4";
-const ADMIN_SECRET = "mansejin-pr-admin-h6j3v9r2t8c5m1k4";
+const ADMIN_SECRET = "O5100jun@@";
 const SPREADSHEET_ID = "SPREADSHEET_ID_HERE";
 const SHEET_NAME = "surveys";
 
