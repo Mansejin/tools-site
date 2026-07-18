@@ -25,11 +25,21 @@ export function SettingsPanel() {
   const removeRole = useAppStore((s) => s.removeRole);
   const setStage = useAppStore((s) => s.setStage);
   const setTempo = useAppStore((s) => s.setTempo);
+  const addTempoPoint = useAppStore((s) => s.addTempoPoint);
+  const updateTempoPoint = useAppStore((s) => s.updateTempoPoint);
+  const removeTempoPoint = useAppStore((s) => s.removeTempoPoint);
+  const addNumber = useAppStore((s) => s.addNumber);
+  const updateNumber = useAppStore((s) => s.updateNumber);
+  const removeNumber = useAppStore((s) => s.removeNumber);
   const importScript = useAppStore((s) => s.importScript);
   const clearScript = useAppStore((s) => s.clearScript);
+  const currentBeat = useAppStore((s) => s.currentBeat);
 
   const [newRole, setNewRole] = useState('');
   const [newWorkTitle, setNewWorkTitle] = useState('');
+  const [newNumberTitle, setNewNumberTitle] = useState('');
+  const [newNumberBpm, setNewNumberBpm] = useState('120');
+  const [newTempoBpm, setNewTempoBpm] = useState('120');
 
   return (
     <div className="settings">
@@ -308,11 +318,16 @@ export function SettingsPanel() {
 
         {section === 'tempo' && (
           <section className="settings-block">
-            <h2>템포 · 박자</h2>
-            <p className="help">키프레임은 박(beat) 단위로 기록됩니다. 재생 시 BPM에 맞춰 동선이 보간됩니다.</p>
+            <h2>넘버 · 템포 맵</h2>
+            <p className="help">
+              동선은 항상 <strong>박</strong>으로 저장합니다. 넘버마다·넘버 안에서 BPM이 바뀌어도
+              키프레임은 그대로이고, 재생만 템포 맵(박 → BPM)을 따릅니다.
+              대본에 <code>【넘버: 제목 / BPM 120】</code>, <code>【BPM 144】</code> 형태를 쓰면 자동 인식됩니다.
+            </p>
+
             <div className="form-grid">
               <label>
-                BPM
+                기본 BPM
                 <input
                   type="number"
                   min={40}
@@ -333,6 +348,156 @@ export function SettingsPanel() {
                   <option value={6}>6/8</option>
                 </select>
               </label>
+            </div>
+
+            <div className="divider" />
+            <h3>넘버</h3>
+            <ul className="tempo-edit-list">
+              {(work.numbers ?? []).map((num) => (
+                <li key={num.id}>
+                  <input
+                    value={num.title}
+                    onChange={(e) => updateNumber(num.id, { title: e.target.value })}
+                    placeholder="제목"
+                  />
+                  <label>
+                    시작 박
+                    <input
+                      type="number"
+                      min={0}
+                      value={num.startBeat}
+                      onChange={(e) =>
+                        updateNumber(num.id, { startBeat: Number(e.target.value) || 0 })
+                      }
+                    />
+                  </label>
+                  <label>
+                    BPM
+                    <input
+                      type="number"
+                      min={40}
+                      max={240}
+                      value={num.bpm ?? ''}
+                      placeholder="—"
+                      onChange={(e) =>
+                        updateNumber(num.id, {
+                          bpm: e.target.value === '' ? null : Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn tiny danger"
+                    onClick={() => removeNumber(num.id)}
+                  >
+                    삭제
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="inline-form">
+              <input
+                placeholder="새 넘버 제목"
+                value={newNumberTitle}
+                onChange={(e) => setNewNumberTitle(e.target.value)}
+              />
+              <input
+                type="number"
+                style={{ width: '5rem' }}
+                value={newNumberBpm}
+                onChange={(e) => setNewNumberBpm(e.target.value)}
+                title="시작 BPM"
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  addNumber(
+                    newNumberTitle || `넘버 ${(work.numbers?.length ?? 0) + 1}`,
+                    currentBeat,
+                    Number(newNumberBpm) || work.bpm,
+                  );
+                  setNewNumberTitle('');
+                }}
+              >
+                현재 박에 넘버 추가
+              </button>
+            </div>
+
+            <div className="divider" />
+            <h3>템포 맵 (넘버 안 변화 포함)</h3>
+            <ul className="tempo-edit-list">
+              {[...(work.tempoMap ?? [])]
+                .sort((a, b) => a.beat - b.beat)
+                .map((point) => (
+                  <li key={point.id}>
+                    <label>
+                      박
+                      <input
+                        type="number"
+                        min={0}
+                        value={point.beat}
+                        onChange={(e) =>
+                          updateTempoPoint(point.id, {
+                            beat: Number(e.target.value) || 0,
+                          })
+                        }
+                      />
+                    </label>
+                    <label>
+                      BPM
+                      <input
+                        type="number"
+                        min={40}
+                        max={240}
+                        value={point.bpm}
+                        onChange={(e) =>
+                          updateTempoPoint(point.id, {
+                            bpm: Number(e.target.value) || work.bpm,
+                          })
+                        }
+                      />
+                    </label>
+                    <input
+                      value={point.label || ''}
+                      placeholder="라벨"
+                      onChange={(e) =>
+                        updateTempoPoint(point.id, { label: e.target.value })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn tiny danger"
+                      disabled={(work.tempoMap?.length ?? 0) <= 1}
+                      onClick={() => removeTempoPoint(point.id)}
+                    >
+                      삭제
+                    </button>
+                  </li>
+                ))}
+            </ul>
+            <div className="inline-form">
+              <input
+                type="number"
+                style={{ width: '5rem' }}
+                value={newTempoBpm}
+                onChange={(e) => setNewTempoBpm(e.target.value)}
+                title="BPM"
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  addTempoPoint(
+                    currentBeat,
+                    Number(newTempoBpm) || work.bpm,
+                    `BPM ${newTempoBpm}`,
+                  );
+                }}
+              >
+                현재 박에 템포 변경 추가
+              </button>
             </div>
           </section>
         )}

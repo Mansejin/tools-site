@@ -6,6 +6,12 @@ import {
   maxScriptBeat,
   timedScriptLines,
 } from '../lib/cues';
+import {
+  advanceBeatByMs,
+  bpmAtBeat,
+  numberAtBeat,
+  numberSpan,
+} from '../lib/tempoMap';
 
 export function Timeline() {
   const work = useAppStore((s) => s.activeWork());
@@ -20,6 +26,7 @@ export function Timeline() {
   const setLineBeat = useAppStore((s) => s.setLineBeat);
   const nudgeSelectedCue = useAppStore((s) => s.nudgeSelectedCue);
   const deleteBlockingForLine = useAppStore((s) => s.deleteBlockingForLine);
+  const addTempoPoint = useAppStore((s) => s.addTempoPoint);
 
   const cues = useMemo(() => timedScriptLines(work.script), [work.script]);
   const maxBeat = useMemo(
@@ -27,9 +34,14 @@ export function Timeline() {
       Math.max(
         maxScriptBeat(work.script, work.beatsPerBar),
         currentBeat + work.beatsPerBar,
+        ...(work.tempoMap ?? []).map((p) => p.beat + work.beatsPerBar),
+        ...(work.numbers ?? []).map((n) => n.startBeat + work.beatsPerBar),
       ),
-    [work.script, work.beatsPerBar, currentBeat],
+    [work.script, work.beatsPerBar, work.tempoMap, work.numbers, currentBeat],
   );
+
+  const currentBpm = bpmAtBeat(currentBeat, work.tempoMap ?? [], work.bpm);
+  const currentNumber = numberAtBeat(currentBeat, work.numbers ?? []);
 
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -38,14 +50,19 @@ export function Timeline() {
     if (!isPlaying) return;
     let frame = 0;
     let prev: number | null = null;
-    const beatDurationMs = (60 / work.bpm) * 1000;
 
     const tick = (ts: number) => {
       if (prev == null) prev = ts;
       const dt = ts - prev;
       prev = ts;
       const store = useAppStore.getState();
-      const next = store.currentBeat + dt / beatDurationMs;
+      const w = store.activeWork();
+      const next = advanceBeatByMs(
+        store.currentBeat,
+        dt,
+        w.tempoMap ?? [],
+        w.bpm,
+      );
       if (next >= maxBeat) {
         store.setCurrentBeat(maxBeat, { syncSelection: true });
         store.setPlaying(false);
@@ -56,7 +73,7 @@ export function Timeline() {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [isPlaying, work.bpm, maxBeat]);
+  }, [isPlaying, maxBeat, work.tempoMap, work.bpm]);
 
   useEffect(() => {
     if (!draggingLineId) return;
@@ -114,6 +131,14 @@ export function Timeline() {
         >
           +1박
         </button>
+        <button
+          type="button"
+          className="btn ghost"
+          title="현재 박에 템포 변경점 추가"
+          onClick={() => addTempoPoint(currentBeat, currentBpm, `BPM ${currentBpm}`)}
+        >
+          템포 포인트
+        </button>
         <label className="check">
           <input
             type="checkbox"
@@ -126,13 +151,14 @@ export function Timeline() {
           {formatBeat(currentBeat, work.beatsPerBar)}
           <small>
             {' '}
-            / BPM {work.bpm} · 큐 {cues.length}
+            / BPM {currentBpm}
+            {currentNumber ? ` · ${currentNumber.title}` : ''} · 큐 {cues.length}
           </small>
         </span>
       </div>
 
       <p className="timeline-hint">
-        타임라인 마커 = 대본 줄. 드래그하면 그 대사의 박이 바뀌고, 동선 키프레임도 같이 이동합니다.
+        동선은 박 기준으로 유지됩니다. 넘버·BPM이 바뀌어도 키프레임은 그대로이고, 재생 속도만 템포 맵을 따릅니다.
       </p>
 
       <div
@@ -147,6 +173,28 @@ export function Timeline() {
           setCurrentBeat(Math.max(0, beat), { syncSelection: true });
         }}
       >
+        <div className="number-bands">
+          {(work.numbers ?? []).map((num) => {
+            const { start, end } = numberSpan(num, work.numbers, maxBeat);
+            const left = (start / maxBeat) * 100;
+            const width = Math.max(0.5, ((end - start) / maxBeat) * 100);
+            return (
+              <div
+                key={num.id}
+                className="number-band"
+                style={{
+                  left: `${left}%`,
+                  width: `${width}%`,
+                  background: num.color,
+                }}
+                title={`${num.title}${num.bpm ? ` · BPM ${num.bpm}` : ''}`}
+              >
+                <span>{num.title}</span>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="timeline-bars">
           {Array.from({ length: Math.ceil(maxBeat / work.beatsPerBar) + 1 }, (_, i) => (
             <div key={i} className="bar-mark" style={{ left: pct(i * work.beatsPerBar) }}>
@@ -154,6 +202,17 @@ export function Timeline() {
             </div>
           ))}
         </div>
+
+        {(work.tempoMap ?? []).map((point) => (
+          <div
+            key={point.id}
+            className="tempo-mark"
+            style={{ left: pct(point.beat) }}
+            title={`${formatBeat(point.beat, work.beatsPerBar)} · BPM ${point.bpm}${point.label ? ` · ${point.label}` : ''}`}
+          >
+            <span>{point.bpm}</span>
+          </div>
+        ))}
 
         {cues.map((line) => {
           if (line.beat == null) return null;
@@ -190,6 +249,10 @@ export function Timeline() {
         {cues.map((line) => {
           const kf = keyframeForLine(work.keyframes, line.id);
           const active = selectedId === line.id;
+          const lineBpm =
+            line.beat != null
+              ? bpmAtBeat(line.beat, work.tempoMap ?? [], work.bpm)
+              : work.bpm;
           return (
             <div
               key={line.id}
@@ -213,6 +276,7 @@ export function Timeline() {
                 {line.speaker ? `${line.speaker}: ` : ''}
                 {line.text}
               </span>
+              <span className="tempo-chip">♩={lineBpm}</span>
               <span className={`block-status ${kf ? 'on' : 'off'}`}>
                 {kf ? '동선 ◆' : '동선 없음'}
               </span>

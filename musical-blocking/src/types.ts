@@ -26,6 +26,8 @@ export interface ScriptLine {
   speaker?: string;
   text: string;
   beat?: number;
+  /** Optional link to musical number id */
+  numberId?: string;
 }
 
 export interface CharSelection {
@@ -45,11 +47,36 @@ export interface Keyframe {
   note?: string;
 }
 
+/** Stepped tempo change at a musical beat. */
+export interface TempoPoint {
+  id: string;
+  beat: number;
+  bpm: number;
+  label?: string;
+  /** Script line that created this point, if any */
+  sourceLineId?: string;
+}
+
+/** Named musical number / song section spanning a beat range. */
+export interface MusicalNumber {
+  id: string;
+  title: string;
+  startBeat: number;
+  endBeat?: number;
+  /** BPM introduced at the start of this number (also mirrored in tempoMap). */
+  bpm?: number;
+  color: string;
+  sourceLineId?: string;
+}
+
 export interface MusicalWork {
   id: string;
   title: string;
+  /** Default BPM before the first tempo-map point. */
   bpm: number;
   beatsPerBar: number;
+  tempoMap: TempoPoint[];
+  numbers: MusicalNumber[];
   stage: StageConfig;
   roles: Role[];
   script: ScriptLine[];

@@ -632,12 +632,61 @@
 
 .timeline-track {
   position: relative;
-  height: 3.25rem;
+  height: 4.25rem;
   background: var(--bg);
   border-radius: 8px;
   border: 1px solid var(--line);
   cursor: pointer;
   overflow: hidden;
+}
+
+.number-bands {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1.15rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.number-band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.number-band span {
+  display: block;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.62rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tempo-mark {
+  position: absolute;
+  top: 1.2rem;
+  bottom: 0.35rem;
+  width: 0;
+  border-left: 1px dashed rgba(232, 184, 90, 0.55);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tempo-mark span {
+  position: absolute;
+  top: 0;
+  left: 0.2rem;
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  color: var(--accent-hot);
+  background: rgba(26, 24, 20, 0.75);
+  padding: 0 0.2rem;
 }
 
 .timeline-bars {
@@ -721,7 +770,7 @@
 
 .kf-row {
   display: grid;
-  grid-template-columns: 5.5rem 1fr auto auto;
+  grid-template-columns: 5.5rem 1fr auto auto auto;
   gap: 0.5rem;
   align-items: center;
   padding: 0.4rem 0.55rem;
@@ -729,6 +778,53 @@
   background: var(--bg);
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.tempo-chip {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.tempo-edit-list {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tempo-edit-list li {
+  display: grid;
+  grid-template-columns: 1fr 5.5rem 5rem auto;
+  gap: 0.45rem;
+  align-items: end;
+  padding: 0.55rem;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.tempo-edit-list label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+.tempo-edit-list input {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+}
+
+.settings-block code {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--accent-hot);
 }
 
 .kf-row.current {
