@@ -32,11 +32,24 @@ function defaultStage(): StageConfig {
   return { widthM: 12, depthM: 8, showGrid: true, gridDivisions: 8 };
 }
 
+const DEFAULT_ROLE_NAMES = [
+  '홍련',
+  '바리',
+  '강림',
+  '월하',
+  '일직',
+  '배무룡',
+  '화음',
+] as const;
+
 function defaultRoles(): Role[] {
-  return [
-    { id: uuid(), name: '민수', shortName: '민', color: roleColorAt(0), visible: true },
-    { id: uuid(), name: '지아', shortName: '지', color: roleColorAt(1), visible: true },
-  ];
+  return DEFAULT_ROLE_NAMES.map((name, i) => ({
+    id: uuid(),
+    name,
+    shortName: shortNameFrom(name),
+    color: roleColorAt(i),
+    visible: true,
+  }));
 }
 
 function normalizeWork(raw: MusicalWork): MusicalWork {
