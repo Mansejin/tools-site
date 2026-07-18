@@ -36,6 +36,12 @@ export function SettingsPanel() {
   const removeNumber = useAppStore((s) => s.removeNumber);
   const importScript = useAppStore((s) => s.importScript);
   const clearScript = useAppStore((s) => s.clearScript);
+  const setAudioOffsetMs = useAppStore((s) => s.setAudioOffsetMs);
+  const setSyncStartBeat = useAppStore((s) => s.setSyncStartBeat);
+  const updateSyncAnchor = useAppStore((s) => s.updateSyncAnchor);
+  const removeSyncAnchor = useAppStore((s) => s.removeSyncAnchor);
+  const clearSyncAnchors = useAppStore((s) => s.clearSyncAnchors);
+  const applyAnchorTempo = useAppStore((s) => s.applyAnchorTempo);
   const currentBeat = useAppStore((s) => s.currentBeat);
 
   const reloadPrivateSeed = () => {
@@ -358,8 +364,8 @@ export function SettingsPanel() {
           <section className="settings-block">
             <h2>넘버 · 템포 맵</h2>
             <p className="help">
-              동선은 항상 <strong>박</strong>으로 저장합니다. 넘버마다·넘버 안에서 BPM이 바뀌어도
-              키프레임은 그대로이고, 재생만 템포 맵(박 → BPM)을 따릅니다.
+              동선은 항상 <strong>박</strong>으로 저장합니다. 노래와 맞출 때는 캡처 화면의{' '}
+              <strong>싱크</strong>에서 오프셋·앵커를 찍고, 여기서 세부 값을 고칠 수 있습니다.
               대본에 <code>【넘버: 제목 / BPM 120】</code>, <code>【BPM 144】</code> 형태를 쓰면 자동 인식됩니다.
             </p>
 
@@ -386,6 +392,103 @@ export function SettingsPanel() {
                   <option value={6}>6/8</option>
                 </select>
               </label>
+            </div>
+
+            <div className="divider" />
+            <h3>오디오 싱크</h3>
+            <p className="help">
+              오프셋 = 파일에서 연주가 시작하는 시각. 앵커 = 「이 박 = 이 초」.
+              앵커→BPM은 앵커 사이 실제 속도로 템포맵을 다시 씁니다.
+            </p>
+            <div className="form-grid">
+              <label>
+                오디오 오프셋 (초)
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={Number(((work.audioOffsetMs ?? 0) / 1000).toFixed(2))}
+                  onChange={(e) =>
+                    setAudioOffsetMs(Math.max(0, (Number(e.target.value) || 0) * 1000))
+                  }
+                />
+              </label>
+              <label>
+                시작 박
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={work.syncStartBeat ?? 0}
+                  onChange={(e) => setSyncStartBeat(Number(e.target.value) || 0)}
+                />
+              </label>
+            </div>
+            <ul className="tempo-edit-list">
+              {(work.syncAnchors ?? []).length === 0 && (
+                <li className="empty-row">
+                  <span className="empty">앵커 없음 · 캡처 화면 싱크에서 찍으세요</span>
+                </li>
+              )}
+              {(work.syncAnchors ?? []).map((a) => (
+                <li key={a.id}>
+                  <label>
+                    박
+                    <input
+                      type="number"
+                      min={0}
+                      value={a.beat}
+                      onChange={(e) =>
+                        updateSyncAnchor(a.id, { beat: Number(e.target.value) || 0 })
+                      }
+                    />
+                  </label>
+                  <label>
+                    오디오(초)
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={Number((a.audioMs / 1000).toFixed(2))}
+                      onChange={(e) =>
+                        updateSyncAnchor(a.id, {
+                          audioMs: Math.max(0, (Number(e.target.value) || 0) * 1000),
+                        })
+                      }
+                    />
+                  </label>
+                  <input
+                    value={a.label || ''}
+                    placeholder="라벨"
+                    onChange={(e) => updateSyncAnchor(a.id, { label: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    className="btn tiny danger"
+                    onClick={() => removeSyncAnchor(a.id)}
+                  >
+                    삭제
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="btn-row">
+              <button
+                type="button"
+                className="btn"
+                disabled={(work.syncAnchors?.length ?? 0) < 1}
+                onClick={applyAnchorTempo}
+              >
+                앵커→BPM 적용
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
+                disabled={(work.syncAnchors?.length ?? 0) === 0}
+                onClick={clearSyncAnchors}
+              >
+                앵커 모두 지우기
+              </button>
             </div>
 
             <div className="divider" />

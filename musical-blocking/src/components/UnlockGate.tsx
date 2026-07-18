@@ -39,6 +39,9 @@ function buildWorkFromSeed(
     cueSpacing,
     tempoMap: bundle.tempoMap,
     numbers: bundle.numbers,
+    audioOffsetMs: 0,
+    syncStartBeat: 0,
+    syncAnchors: [],
     stage: {
       widthM: 12,
       depthM: 8,

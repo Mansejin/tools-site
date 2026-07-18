@@ -11,6 +11,7 @@ import type {
   Role,
   SettingsSection,
   StageConfig,
+  SyncAnchor,
   TempoPoint,
 } from '../types';
 import { roleColorAt, shortNameFrom } from '../lib/colors';
@@ -30,6 +31,7 @@ import {
 } from '../lib/cues';
 import { nearestKeyframe } from '../lib/interpolation';
 import { clampBpm, numberColorAt } from '../lib/tempoMap';
+import { tempoMapFromAnchors } from '../lib/audioSync';
 
 function defaultStage(): StageConfig {
   return { widthM: 12, depthM: 8, showGrid: true, gridDivisions: 8 };
@@ -80,6 +82,11 @@ function normalizeWork(raw: MusicalWork): MusicalWork {
     script,
     numbers,
     tempoMap: [...tempoMap].sort((a, b) => a.beat - b.beat),
+    audioOffsetMs: Math.max(0, raw.audioOffsetMs ?? 0),
+    syncStartBeat: Math.max(0, raw.syncStartBeat ?? 0),
+    syncAnchors: [...(raw.syncAnchors ?? [])].sort(
+      (a, b) => a.beat - b.beat || a.audioMs - b.audioMs,
+    ),
     keyframes: raw.keyframes ?? [],
   };
 }
@@ -97,6 +104,9 @@ function createWork(title = '새 작품'): MusicalWork {
     cueSpacing,
     tempoMap: bundle.tempoMap,
     numbers: bundle.numbers,
+    audioOffsetMs: 0,
+    syncStartBeat: 0,
+    syncAnchors: [],
     stage: defaultStage(),
     roles: defaultRoles(),
     script: bundle.script,
@@ -189,6 +199,20 @@ interface AppState {
   setAudioFileName: (name: string | null) => void;
   clearLastStamp: () => void;
   setLyricsOpen: (open: boolean) => void;
+
+  setAudioOffsetMs: (ms: number) => void;
+  setSyncStartBeat: (beat: number) => void;
+  upsertSyncAnchor: (input: {
+    beat: number;
+    audioMs: number;
+    label?: string;
+    id?: string;
+  }) => void;
+  updateSyncAnchor: (id: string, patch: Partial<SyncAnchor>) => void;
+  removeSyncAnchor: (id: string) => void;
+  clearSyncAnchors: () => void;
+  /** Rebuild tempo-map BPM from consecutive sync anchors. */
+  applyAnchorTempo: () => void;
 
   /** Stamp/update a keyframe at playhead (or explicit beat). No dialogue click required. */
   moveRoleAtCurrentCue: (roleId: string, pos: Position, atBeat?: number) => void;
@@ -288,6 +312,7 @@ export const useAppStore = create<AppState>()(
           keyframes: src.keyframes.map((k) => ({ ...k, id: uuid() })),
           tempoMap: (src.tempoMap ?? []).map((t) => ({ ...t, id: uuid() })),
           numbers: (src.numbers ?? []).map((n) => ({ ...n, id: uuid() })),
+          syncAnchors: (src.syncAnchors ?? []).map((a) => ({ ...a, id: uuid() })),
         };
         const roleMap = new Map(src.roles.map((r, i) => [r.id, copy.roles[i].id]));
         const lineMap = new Map(src.script.map((l, i) => [l.id, copy.script[i].id]));
@@ -476,12 +501,18 @@ export const useAppStore = create<AppState>()(
                   ? Math.round(n.endBeat * f * 100) / 100
                   : undefined,
             }));
+            const syncAnchors = (w.syncAnchors ?? []).map((a) => ({
+              ...a,
+              beat: Math.round(a.beat * f * 100) / 100,
+            }));
             return {
               ...w,
               script,
               keyframes,
               tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
               numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
+              syncStartBeat: Math.round((w.syncStartBeat ?? 0) * f * 100) / 100,
+              syncAnchors: syncAnchors.sort((a, b) => a.beat - b.beat),
             };
           }),
           currentBeat: Math.max(
@@ -681,6 +712,9 @@ export const useAppStore = create<AppState>()(
               numbers: bundle.numbers,
               tempoMap: bundle.tempoMap,
               keyframes: [],
+              syncAnchors: [],
+              audioOffsetMs: 0,
+              syncStartBeat: 0,
             };
           }),
           selectedLineIds: [],
@@ -696,6 +730,9 @@ export const useAppStore = create<AppState>()(
             keyframes: [],
             numbers: [],
             tempoMap: [{ id: uuid(), beat: 0, bpm: w.bpm, label: '기본' }],
+            syncAnchors: [],
+            audioOffsetMs: 0,
+            syncStartBeat: 0,
           })),
           selectedLineIds: [],
           charSelection: null,
@@ -799,6 +836,101 @@ export const useAppStore = create<AppState>()(
       setAudioFileName: (name) => set({ audioFileName: name }),
       clearLastStamp: () => set({ lastStamp: null }),
       setLyricsOpen: (open) => set({ lyricsOpen: open }),
+
+      setAudioOffsetMs: (ms) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            audioOffsetMs: Math.max(0, ms),
+          })),
+        })),
+
+      setSyncStartBeat: (beat) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncStartBeat: Math.max(0, beat),
+          })),
+        })),
+
+      upsertSyncAnchor: (input) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const beat = Math.max(0, input.beat);
+            const audioMs = Math.max(0, input.audioMs);
+            const anchors = [...(w.syncAnchors ?? [])];
+            const nearIdx = anchors.findIndex(
+              (a) =>
+                (input.id && a.id === input.id) ||
+                Math.abs(a.beat - beat) < 0.51,
+            );
+            if (nearIdx >= 0) {
+              anchors[nearIdx] = {
+                ...anchors[nearIdx],
+                beat,
+                audioMs,
+                label: input.label ?? anchors[nearIdx].label,
+              };
+            } else {
+              anchors.push({
+                id: input.id ?? uuid(),
+                beat,
+                audioMs,
+                label: input.label,
+              });
+            }
+            return {
+              ...w,
+              syncAnchors: anchors.sort(
+                (a, b) => a.beat - b.beat || a.audioMs - b.audioMs,
+              ),
+            };
+          }),
+        })),
+
+      updateSyncAnchor: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: (w.syncAnchors ?? [])
+              .map((a) => (a.id === id ? { ...a, ...patch, id: a.id } : a))
+              .sort((a, b) => a.beat - b.beat || a.audioMs - b.audioMs),
+          })),
+        })),
+
+      removeSyncAnchor: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: (w.syncAnchors ?? []).filter((a) => a.id !== id),
+          })),
+        })),
+
+      clearSyncAnchors: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: [],
+          })),
+        })),
+
+      applyAnchorTempo: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const derived = tempoMapFromAnchors(w);
+            if (derived.length === 0) return w;
+            const tempoMap = derived.map((p) => ({
+              ...p,
+              id: uuid(),
+            }));
+            const firstBpm = tempoMap[0]?.bpm ?? w.bpm;
+            return {
+              ...w,
+              bpm: firstBpm,
+              tempoMap,
+            };
+          }),
+        })),
 
       moveRoleAtCurrentCue: (roleId, pos, atBeat) => {
         const s = get();

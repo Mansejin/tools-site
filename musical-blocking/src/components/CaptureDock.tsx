@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { lineAtBeat } from '../lib/cues';
-import { beatAtMs, bpmAtBeat, msAtBeat, numberAtBeat } from '../lib/tempoMap';
+import { bpmAtBeat, numberAtBeat } from '../lib/tempoMap';
+import {
+  audioMsAtBeat,
+  beatAtAudioMs,
+  effectiveAnchors,
+  formatAudioMs,
+} from '../lib/audioSync';
 import { formatBeat } from '../lib/interpolation';
 
 /** Unified song transport + live number/lyric readout for capture. */
@@ -12,6 +18,7 @@ export function CaptureDock() {
   const audioFollow = useAppStore((s) => s.audioFollow);
   const audioFileName = useAppStore((s) => s.audioFileName);
   const lastStamp = useAppStore((s) => s.lastStamp);
+  const selectedLineIds = useAppStore((s) => s.selectedLineIds);
   const keyframeCount = work.keyframes.length;
   const setPlaying = useAppStore((s) => s.setPlaying);
   const setCurrentBeat = useAppStore((s) => s.setCurrentBeat);
@@ -20,17 +27,28 @@ export function CaptureDock() {
   const clearLastStamp = useAppStore((s) => s.clearLastStamp);
   const setLyricsOpen = useAppStore((s) => s.setLyricsOpen);
   const lyricsOpen = useAppStore((s) => s.lyricsOpen);
+  const setAudioOffsetMs = useAppStore((s) => s.setAudioOffsetMs);
+  const setSyncStartBeat = useAppStore((s) => s.setSyncStartBeat);
+  const upsertSyncAnchor = useAppStore((s) => s.upsertSyncAnchor);
+  const removeSyncAnchor = useAppStore((s) => s.removeSyncAnchor);
+  const clearSyncAnchors = useAppStore((s) => s.clearSyncAnchors);
+  const applyAnchorTempo = useAppStore((s) => s.applyAnchorTempo);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [duration, setDuration] = useState(0);
+  const [audioMs, setAudioMs] = useState(0);
   const [stampFlash, setStampFlash] = useState<string | null>(null);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const syncing = useRef(false);
 
   const num = numberAtBeat(currentBeat, work.numbers ?? []);
   const line = lineAtBeat(work.script, currentBeat);
   const bpm = bpmAtBeat(currentBeat, work.tempoMap ?? [], work.bpm);
+  const anchors = effectiveAnchors(work);
+  const userAnchorCount = work.syncAnchors?.length ?? 0;
   const lyric =
     line && line.type !== 'blank' && line.type !== 'direction'
       ? `${line.speaker ? `${line.speaker}: ` : ''}${line.text}`
@@ -44,17 +62,18 @@ export function CaptureDock() {
     };
   }, []);
 
+  const syncWorkRef = useRef(work);
+  syncWorkRef.current = work;
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioFollow) return;
 
     const onTime = () => {
       if (syncing.current) return;
-      const beat = beatAtMs(
-        audio.currentTime * 1000,
-        work.tempoMap ?? [],
-        work.bpm,
-      );
+      const ms = audio.currentTime * 1000;
+      setAudioMs(ms);
+      const beat = beatAtAudioMs(ms, syncWorkRef.current);
       setCurrentBeat(beat, { syncSelection: true });
     };
     const onEnded = () => setPlaying(false);
@@ -65,17 +84,17 @@ export function CaptureDock() {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('ended', onEnded);
     };
-  }, [audioFollow, work.tempoMap, work.bpm, setCurrentBeat, setPlaying]);
+  }, [audioFollow, setCurrentBeat, setPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioFollow || !audioFileName) return;
 
-    const targetSec =
-      msAtBeat(currentBeat, work.tempoMap ?? [], work.bpm) / 1000;
+    const targetSec = audioMsAtBeat(currentBeat, syncWorkRef.current) / 1000;
     if (Math.abs(audio.currentTime - targetSec) > 0.35) {
       syncing.current = true;
       audio.currentTime = Math.max(0, targetSec);
+      setAudioMs(Math.max(0, targetSec) * 1000);
       requestAnimationFrame(() => {
         syncing.current = false;
       });
@@ -88,6 +107,9 @@ export function CaptureDock() {
     isPlaying,
     audioFollow,
     audioFileName,
+    work.audioOffsetMs,
+    work.syncStartBeat,
+    work.syncAnchors,
     work.tempoMap,
     work.bpm,
     setPlaying,
@@ -103,6 +125,12 @@ export function CaptureDock() {
     return () => window.clearTimeout(t);
   }, [lastStamp, clearLastStamp]);
 
+  useEffect(() => {
+    if (!syncMsg) return;
+    const t = window.setTimeout(() => setSyncMsg(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [syncMsg]);
+
   const onFile = (file: File) => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     const url = URL.createObjectURL(file);
@@ -114,6 +142,7 @@ export function CaptureDock() {
     setAudioFileName(file.name);
     setAudioFollow(true);
     setPlaying(false);
+    setSyncOpen(true);
   };
 
   const clearAudio = () => {
@@ -129,12 +158,74 @@ export function CaptureDock() {
     setAudioFileName(null);
     setAudioFollow(false);
     setDuration(0);
+    setAudioMs(0);
     setPlaying(false);
   };
 
   const togglePlay = () => {
     if (audioFileName && !audioFollow) setAudioFollow(true);
     setPlaying(!isPlaying);
+  };
+
+  const readAudioMs = () => {
+    const audio = audioRef.current;
+    if (audio) return audio.currentTime * 1000;
+    return audioMs;
+  };
+
+  const markAnchorAtBeat = (beat: number, label?: string) => {
+    if (!audioFileName) {
+      setSyncMsg('먼저 노래를 올리세요');
+      return;
+    }
+    const ms = readAudioMs();
+    upsertSyncAnchor({
+      beat,
+      audioMs: ms,
+      label: label ?? formatBeat(beat, work.beatsPerBar),
+    });
+    setSyncMsg(`앵커 · ${formatBeat(beat, work.beatsPerBar)} = ${formatAudioMs(ms)}`);
+    setSyncOpen(true);
+  };
+
+  const markCurrentBeat = () => {
+    markAnchorAtBeat(currentBeat, line?.text?.slice(0, 24) || '현재 박');
+  };
+
+  const markSelectedLyric = () => {
+    const id = selectedLineIds[0];
+    const selected = id ? work.script.find((l) => l.id === id) : undefined;
+    if (!selected || selected.beat == null) {
+      setSyncMsg('가사에서 줄을 먼저 선택하세요');
+      return;
+    }
+    markAnchorAtBeat(
+      selected.beat,
+      selected.text.slice(0, 24) || formatBeat(selected.beat, work.beatsPerBar),
+    );
+  };
+
+  const setOffsetHere = () => {
+    if (!audioFileName) {
+      setSyncMsg('먼저 노래를 올리세요');
+      return;
+    }
+    const ms = readAudioMs();
+    setAudioOffsetMs(ms);
+    setSyncMsg(`오프셋 ${formatAudioMs(ms)} → 시작 박 ${formatBeat(work.syncStartBeat ?? 0, work.beatsPerBar)}`);
+    setSyncOpen(true);
+  };
+
+  const goToStart = () => {
+    setPlaying(false);
+    const startBeat = work.syncStartBeat ?? 0;
+    setCurrentBeat(startBeat, { syncSelection: true });
+    const audio = audioRef.current;
+    if (audio) {
+      const t = audioMsAtBeat(startBeat, work) / 1000;
+      audio.currentTime = Math.max(0, t);
+      setAudioMs(Math.max(0, t) * 1000);
+    }
   };
 
   return (
@@ -144,7 +235,11 @@ export function CaptureDock() {
           <span className="capture-number">{num?.title ?? work.title}</span>
           <span className="capture-beat">
             {formatBeat(currentBeat, work.beatsPerBar)}
-            <span className="capture-beat-meta"> · ♩={bpm}</span>
+            <span className="capture-beat-meta">
+              {' '}
+              · ♩={bpm}
+              {audioFileName ? ` · ${formatAudioMs(audioMs)}` : ''}
+            </span>
           </span>
         </div>
         <p className="capture-lyric" title={lyric}>
@@ -161,16 +256,7 @@ export function CaptureDock() {
         >
           {isPlaying ? '일시정지' : audioFileName ? '곡 재생' : '재생'}
         </button>
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => {
-            setPlaying(false);
-            setCurrentBeat(0, { syncSelection: true });
-            const audio = audioRef.current;
-            if (audio) audio.currentTime = 0;
-          }}
-        >
+        <button type="button" className="btn ghost" onClick={goToStart}>
           처음으로
         </button>
         <button
@@ -199,6 +285,14 @@ export function CaptureDock() {
         <button
           type="button"
           className="btn ghost"
+          onClick={() => setSyncOpen((v) => !v)}
+          aria-expanded={syncOpen}
+        >
+          싱크{userAnchorCount > 0 ? ` ·${userAnchorCount}` : ''}
+        </button>
+        <button
+          type="button"
+          className="btn ghost"
           onClick={() => setLyricsOpen(!lyricsOpen)}
           aria-pressed={lyricsOpen}
         >
@@ -224,7 +318,114 @@ export function CaptureDock() {
             저장됨 · {stampFlash}
           </span>
         )}
+        {syncMsg && (
+          <span className="capture-stamp sync" role="status">
+            {syncMsg}
+          </span>
+        )}
       </div>
+
+      {syncOpen && (
+        <div className="sync-panel">
+          <p className="sync-help">
+            노래가 밀리면: 연주 시작에서 <strong>오프셋</strong> → 중간마다{' '}
+            <strong>앵커</strong> 3~5개 → 필요하면 <strong>앵커→BPM</strong>.
+          </p>
+          <div className="sync-row">
+            <label>
+              오프셋(초)
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={Number(((work.audioOffsetMs ?? 0) / 1000).toFixed(2))}
+                onChange={(e) =>
+                  setAudioOffsetMs(Math.max(0, (Number(e.target.value) || 0) * 1000))
+                }
+              />
+            </label>
+            <label>
+              시작 박
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={work.syncStartBeat ?? 0}
+                onChange={(e) => setSyncStartBeat(Number(e.target.value) || 0)}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={!audioFileName}
+              onClick={setOffsetHere}
+              title="지금 오디오 위치를 오프셋으로"
+            >
+              지금=오프셋
+            </button>
+          </div>
+          <div className="sync-actions">
+            <button
+              type="button"
+              className="btn"
+              disabled={!audioFileName}
+              onClick={markCurrentBeat}
+            >
+              지금=현재 박 앵커
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={!audioFileName}
+              onClick={markSelectedLyric}
+            >
+              지금=선택 가사 앵커
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={userAnchorCount < 1}
+              onClick={() => {
+                applyAnchorTempo();
+                setSyncMsg('앵커 사이 BPM으로 템포맵 갱신');
+              }}
+            >
+              앵커→BPM
+            </button>
+            <button
+              type="button"
+              className="btn tiny danger ghost"
+              disabled={userAnchorCount === 0}
+              onClick={() => {
+                clearSyncAnchors();
+                setSyncMsg('앵커 삭제됨');
+              }}
+            >
+              앵커 지우기
+            </button>
+          </div>
+          <ul className="sync-anchor-list">
+            {anchors.map((a) => (
+              <li key={a.id}>
+                <span className="sync-anchor-beat">
+                  {formatBeat(a.beat, work.beatsPerBar)}
+                </span>
+                <span className="sync-anchor-ms">{formatAudioMs(a.audioMs)}</span>
+                <span className="sync-anchor-label">{a.label || '—'}</span>
+                {a.id !== '__sync_start' && (
+                  <button
+                    type="button"
+                    className="btn tiny danger ghost"
+                    onClick={() => removeSyncAnchor(a.id)}
+                  >
+                    삭제
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

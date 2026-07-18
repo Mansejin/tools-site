@@ -69,6 +69,18 @@ export interface MusicalNumber {
   sourceLineId?: string;
 }
 
+/**
+ * Absolute sync point: this musical beat is heard at this audio file time.
+ * Combined with audioOffsetMs / syncStartBeat for song↔timeline lock.
+ */
+export interface SyncAnchor {
+  id: string;
+  beat: number;
+  /** Milliseconds into the uploaded audio file. */
+  audioMs: number;
+  label?: string;
+}
+
 export interface MusicalWork {
   id: string;
   title: string;
@@ -82,6 +94,15 @@ export interface MusicalWork {
   cueSpacing: number;
   tempoMap: TempoPoint[];
   numbers: MusicalNumber[];
+  /**
+   * Audio file ms that maps to syncStartBeat (count-in / leading silence).
+   * Default 0 = file start is musical start.
+   */
+  audioOffsetMs: number;
+  /** Musical beat that begins when audio reaches audioOffsetMs. */
+  syncStartBeat: number;
+  /** Extra beat↔audio lock points for mid-song correction. */
+  syncAnchors: SyncAnchor[];
   stage: StageConfig;
   roles: Role[];
   script: ScriptLine[];
