@@ -1,0 +1,62 @@
+:root {
+  --bg-deep: #1a1814;
+  --bg: #221f1a;
+  --bg-elev: #2c2822;
+  --bg-soft: #363129;
+  --ink: #f3ebe0;
+  --ink-muted: #b8a992;
+  --ink-dim: #8a7d6a;
+  --line: rgba(243, 235, 224, 0.12);
+  --accent: #d4a24c;
+  --accent-hot: #e8b85a;
+  --accent-ink: #1a1814;
+  --danger: #c45c4a;
+  --ok: #6f9e7a;
+  --stage-floor: #c4a574;
+  --stage-floor-dark: #a88858;
+  --stage-edge: #3d3428;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  --radius: 12px;
+  --font-display: 'Syne', 'Pretendard', sans-serif;
+  --font-body: 'Pretendard', 'Noto Sans KR', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(212, 162, 76, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(111, 158, 122, 0.1), transparent 50%),
+    linear-gradient(180deg, var(--bg-deep), var(--bg) 40%, #1e1b16);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(212, 162, 76, 0.35);
+}

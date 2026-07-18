@@ -1,0 +1,1173 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { v4 as uuid } from 'uuid';
+import type {
+  AppTab,
+  CharSelection,
+  Keyframe,
+  MusicalNumber,
+  MusicalWork,
+  Position,
+  Role,
+  SettingsSection,
+  StageConfig,
+  SyncAnchor,
+  TempoPoint,
+} from '../types';
+import { roleColorAt, shortNameFrom } from '../lib/colors';
+import {
+  extractTimingFromScript,
+  formatCueLabel,
+  parseScriptBundle,
+  SAMPLE_SCRIPT,
+} from '../lib/scriptParser';
+import {
+  assignBeatsToScript,
+  ensureScriptBeats,
+  keyframeForLine,
+  lineAtBeat,
+  scaleScriptBeats,
+  setLineDuration,
+} from '../lib/cues';
+import {
+  nearestKeyframe,
+  neighborKeyframeBeat,
+  positionsAtBeat,
+  previousKeyframe,
+} from '../lib/interpolation';
+import { clampBpm, numberColorAt } from '../lib/tempoMap';
+import { tempoMapFromAnchors } from '../lib/audioSync';
+
+function defaultStage(): StageConfig {
+  return { widthM: 12, depthM: 8, showGrid: true, gridDivisions: 8 };
+}
+
+/** Real cast only. 배무룡=월직 빙의, 화음=기존 배역이 담당. */
+const DEFAULT_ROLE_NAMES = [
+  '홍련',
+  '바리',
+  '강림',
+  '월직',
+  '일직',
+] as const;
+
+function defaultRoles(): Role[] {
+  return DEFAULT_ROLE_NAMES.map((name, i) => ({
+    id: uuid(),
+    name,
+    shortName: shortNameFrom(name),
+    color: roleColorAt(i),
+    visible: true,
+  }));
+}
+
+function normalizeWork(raw: MusicalWork): MusicalWork {
+  const bpm = clampBpm(raw.bpm || 120);
+  const cueSpacing = Math.max(0.25, raw.cueSpacing ?? 2);
+  let script = ensureScriptBeats(raw.script ?? [], cueSpacing);
+  let numbers = raw.numbers ?? [];
+  let tempoMap = raw.tempoMap ?? [];
+
+  if (!raw.tempoMap || !raw.numbers) {
+    const extracted = extractTimingFromScript(script, bpm);
+    script = extracted.script;
+    if (!raw.numbers?.length) numbers = extracted.numbers;
+    if (!raw.tempoMap?.length) tempoMap = extracted.tempoMap;
+  }
+
+  if (tempoMap.length === 0) {
+    tempoMap = [{ id: uuid(), beat: 0, bpm, label: '기본' }];
+  }
+
+  return {
+    ...raw,
+    bpm,
+    beatsPerBar: raw.beatsPerBar || 4,
+    cueSpacing,
+    script,
+    numbers,
+    tempoMap: [...tempoMap].sort((a, b) => a.beat - b.beat),
+    audioOffsetMs: Math.max(0, raw.audioOffsetMs ?? 0),
+    syncStartBeat: Math.max(0, raw.syncStartBeat ?? 0),
+    syncAnchors: [...(raw.syncAnchors ?? [])].sort(
+      (a, b) => a.beat - b.beat || a.audioMs - b.audioMs,
+    ),
+    keyframes: raw.keyframes ?? [],
+  };
+}
+
+function createWork(title = '새 작품'): MusicalWork {
+  const now = Date.now();
+  const defaultBpm = 120;
+  const cueSpacing = 2;
+  const bundle = parseScriptBundle(SAMPLE_SCRIPT, defaultBpm, cueSpacing);
+  return normalizeWork({
+    id: uuid(),
+    title,
+    bpm: defaultBpm,
+    beatsPerBar: 4,
+    cueSpacing,
+    tempoMap: bundle.tempoMap,
+    numbers: bundle.numbers,
+    audioOffsetMs: 0,
+    syncStartBeat: 0,
+    syncAnchors: [],
+    stage: defaultStage(),
+    roles: defaultRoles(),
+    script: bundle.script,
+    keyframes: [],
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
+function seedPositions(work: MusicalWork, beat: number): Record<string, Position> {
+  const seed: Record<string, Position> = {};
+  work.roles.forEach((role, i) => {
+    const near = [...work.keyframes]
+      .sort((a, b) => Math.abs(a.beat - beat) - Math.abs(b.beat - beat))
+      .find((kf) => kf.positions[role.id]);
+    seed[role.id] = near
+      ? { ...near.positions[role.id] }
+      : {
+          x: 0.2 + (i % 5) * 0.15,
+          y: 0.55 + Math.floor(i / 5) * 0.15,
+        };
+  });
+  return seed;
+}
+
+interface AppState {
+  works: MusicalWork[];
+  activeWorkId: string;
+  activeTab: AppTab;
+  settingsSection: SettingsSection;
+  selectedLineIds: string[];
+  charSelection: CharSelection | null;
+  currentBeat: number;
+  isPlaying: boolean;
+  snapToBeat: boolean;
+  /** When true, audio transport drives playhead (song-based capture). */
+  audioFollow: boolean;
+  audioFileName: string | null;
+  selectedRoleId: string | null;
+  /** Brief feedback after stamping a keyframe while listening. */
+  lastStamp: { beat: number; label: string; at: number } | null;
+  /** Lyrics monitor open (desktop/mobile). */
+  lyricsOpen: boolean;
+  /** Stage Write–style traffic paths between keyframes. */
+  showPaths: boolean;
+  /** Onion-skin previous keyframe positions. */
+  showGhosts: boolean;
+  /** Downstage number line (SL↔SR). */
+  showNumberLine: boolean;
+
+  activeWork: () => MusicalWork;
+  setTab: (tab: AppTab) => void;
+  setSettingsSection: (s: SettingsSection) => void;
+  setActiveWork: (id: string) => void;
+  addWork: (title?: string) => void;
+  renameWork: (id: string, title: string) => void;
+  deleteWork: (id: string) => void;
+  duplicateWork: (id: string) => void;
+  updateWork: (patch: Partial<MusicalWork>) => void;
+
+  addRole: (name: string) => void;
+  updateRole: (id: string, patch: Partial<Role>) => void;
+  removeRole: (id: string) => void;
+  toggleRoleVisible: (id: string) => void;
+  setAllRolesVisible: (visible: boolean) => void;
+  setSelectedRole: (id: string | null) => void;
+
+  setStage: (patch: Partial<StageConfig>) => void;
+  setTempo: (bpm: number, beatsPerBar?: number) => void;
+  setCueSpacing: (spacing: number, retime?: boolean) => void;
+  scaleAllTiming: (factor: number) => void;
+  setSelectedLineDuration: (durationBeats: number) => void;
+  addTempoPoint: (beat: number, bpm: number, label?: string) => void;
+  updateTempoPoint: (id: string, patch: Partial<TempoPoint>) => void;
+  removeTempoPoint: (id: string) => void;
+  addNumber: (title: string, startBeat: number, bpm?: number) => void;
+  updateNumber: (
+    id: string,
+    patch: Partial<Omit<MusicalNumber, 'bpm'>> & { bpm?: number | null },
+  ) => void;
+  removeNumber: (id: string) => void;
+
+  importScript: (raw: string) => void;
+  clearScript: () => void;
+  retimeScript: () => void;
+  selectLine: (lineId: string, multi?: boolean) => void;
+  clearSelection: () => void;
+  setCharSelection: (sel: CharSelection | null) => void;
+  setLineBeat: (lineId: string, beat: number) => void;
+  nudgeSelectedCue: (delta: number) => void;
+
+  setCurrentBeat: (beat: number, opts?: { syncSelection?: boolean }) => void;
+  setPlaying: (playing: boolean) => void;
+  setSnapToBeat: (snap: boolean) => void;
+  setAudioFollow: (on: boolean) => void;
+  setAudioFileName: (name: string | null) => void;
+  clearLastStamp: () => void;
+  setLyricsOpen: (open: boolean) => void;
+  setShowPaths: (on: boolean) => void;
+  setShowGhosts: (on: boolean) => void;
+  setShowNumberLine: (on: boolean) => void;
+  jumpToNeighborKeyframe: (dir: -1 | 1) => void;
+  /** Copy positions from previous KF onto the playhead (selected role or all). */
+  copyFromPreviousKeyframe: (roleId?: string | null) => void;
+  /** Mirror role across center line at playhead. */
+  mirrorRoleAtPlayhead: (roleId: string, axis?: 'x' | 'y') => void;
+
+  setAudioOffsetMs: (ms: number) => void;
+  setSyncStartBeat: (beat: number) => void;
+  upsertSyncAnchor: (input: {
+    beat: number;
+    audioMs: number;
+    label?: string;
+    id?: string;
+  }) => void;
+  updateSyncAnchor: (id: string, patch: Partial<SyncAnchor>) => void;
+  removeSyncAnchor: (id: string) => void;
+  clearSyncAnchors: () => void;
+  /** Rebuild tempo-map BPM from consecutive sync anchors. */
+  applyAnchorTempo: () => void;
+
+  /** Stamp/update a keyframe at playhead (or explicit beat). No dialogue click required. */
+  moveRoleAtCurrentCue: (roleId: string, pos: Position, atBeat?: number) => void;
+  updateKeyframe: (id: string, patch: Partial<Keyframe>) => void;
+  deleteKeyframe: (id: string) => void;
+  deleteBlockingForLine: (lineId: string) => void;
+}
+
+function touch(work: MusicalWork): MusicalWork {
+  return { ...work, updatedAt: Date.now() };
+}
+
+function mapActive(
+  works: MusicalWork[],
+  activeWorkId: string,
+  fn: (w: MusicalWork) => MusicalWork,
+): MusicalWork[] {
+  return works.map((w) => (w.id === activeWorkId ? touch(fn(w)) : w));
+}
+
+const initial = createWork('샘플 뮤지컬');
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      works: [initial],
+      activeWorkId: initial.id,
+      activeTab: 'stage',
+      settingsSection: 'works',
+      selectedLineIds: [],
+      charSelection: null,
+      currentBeat: 0,
+      isPlaying: false,
+      snapToBeat: true,
+      audioFollow: false,
+      audioFileName: null,
+      selectedRoleId: null,
+      lastStamp: null,
+      lyricsOpen: true,
+      showPaths: true,
+      showGhosts: true,
+      showNumberLine: true,
+
+      activeWork: () => {
+        const { works, activeWorkId } = get();
+        return works.find((w) => w.id === activeWorkId) ?? works[0];
+      },
+
+      setTab: (tab) => set({ activeTab: tab }),
+      setSettingsSection: (s) => set({ settingsSection: s }),
+
+      setActiveWork: (id) =>
+        set({
+          activeWorkId: id,
+          selectedLineIds: [],
+          charSelection: null,
+          currentBeat: 0,
+          isPlaying: false,
+          selectedRoleId: null,
+        }),
+
+      addWork: (title) => {
+        const work = createWork(title);
+        set((s) => ({
+          works: [...s.works, work],
+          activeWorkId: work.id,
+          selectedLineIds: [],
+          charSelection: null,
+          currentBeat: 0,
+        }));
+      },
+
+      renameWork: (id, title) =>
+        set((s) => ({
+          works: s.works.map((w) =>
+            w.id === id ? touch({ ...w, title: title.trim() || w.title }) : w,
+          ),
+        })),
+
+      deleteWork: (id) =>
+        set((s) => {
+          if (s.works.length <= 1) return s;
+          const works = s.works.filter((w) => w.id !== id);
+          const activeWorkId =
+            s.activeWorkId === id ? works[0].id : s.activeWorkId;
+          return { works, activeWorkId };
+        }),
+
+      duplicateWork: (id) => {
+        const src = get().works.find((w) => w.id === id);
+        if (!src) return;
+        const copy: MusicalWork = {
+          ...structuredClone(normalizeWork(src)),
+          id: uuid(),
+          title: `${src.title} (복사)`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          roles: src.roles.map((r) => ({ ...r, id: uuid() })),
+          script: src.script.map((l) => ({ ...l, id: uuid() })),
+          keyframes: src.keyframes.map((k) => ({ ...k, id: uuid() })),
+          tempoMap: (src.tempoMap ?? []).map((t) => ({ ...t, id: uuid() })),
+          numbers: (src.numbers ?? []).map((n) => ({ ...n, id: uuid() })),
+          syncAnchors: (src.syncAnchors ?? []).map((a) => ({ ...a, id: uuid() })),
+        };
+        const roleMap = new Map(src.roles.map((r, i) => [r.id, copy.roles[i].id]));
+        const lineMap = new Map(src.script.map((l, i) => [l.id, copy.script[i].id]));
+        const numberMap = new Map(
+          (src.numbers ?? []).map((n, i) => [n.id, copy.numbers[i].id]),
+        );
+        copy.script = copy.script.map((l, i) => ({
+          ...l,
+          numberId: src.script[i]?.numberId
+            ? numberMap.get(src.script[i].numberId!)
+            : l.numberId,
+        }));
+        copy.keyframes = copy.keyframes.map((kf) => {
+          const positions: Record<string, Position> = {};
+          for (const [oldId, pos] of Object.entries(kf.positions)) {
+            const newId = roleMap.get(oldId);
+            if (newId) positions[newId] = pos;
+          }
+          return {
+            ...kf,
+            positions,
+            cueLineId: kf.cueLineId ? lineMap.get(kf.cueLineId) : kf.cueLineId,
+          };
+        });
+        set((s) => ({
+          works: [...s.works, copy],
+          activeWorkId: copy.id,
+        }));
+      },
+
+      updateWork: (patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({ ...w, ...patch })),
+        })),
+
+      addRole: (name) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const role: Role = {
+              id: uuid(),
+              name: name.trim() || `배역 ${w.roles.length + 1}`,
+              shortName: shortNameFrom(name.trim() || `배${w.roles.length + 1}`),
+              color: roleColorAt(w.roles.length),
+              visible: true,
+            };
+            return { ...w, roles: [...w.roles, role] };
+          }),
+        })),
+
+      updateRole: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            roles: w.roles.map((r) => {
+              if (r.id !== id) return r;
+              const next = { ...r, ...patch };
+              if (patch.name && !patch.shortName) {
+                next.shortName = shortNameFrom(patch.name);
+              }
+              return next;
+            }),
+          })),
+        })),
+
+      removeRole: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            roles: w.roles.filter((r) => r.id !== id),
+            keyframes: w.keyframes.map((kf) => {
+              const { [id]: _, ...positions } = kf.positions;
+              return { ...kf, positions };
+            }),
+          })),
+          selectedRoleId: s.selectedRoleId === id ? null : s.selectedRoleId,
+        })),
+
+      toggleRoleVisible: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            roles: w.roles.map((r) =>
+              r.id === id ? { ...r, visible: !r.visible } : r,
+            ),
+          })),
+        })),
+
+      setAllRolesVisible: (visible) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            roles: w.roles.map((r) => ({ ...r, visible })),
+          })),
+        })),
+
+      setSelectedRole: (id) => set({ selectedRoleId: id }),
+
+      setStage: (patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            stage: { ...w.stage, ...patch },
+          })),
+        })),
+
+      setTempo: (bpm, beatsPerBar) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const nextBpm = clampBpm(bpm);
+            let tempoMap = [...(w.tempoMap ?? [])].sort((a, b) => a.beat - b.beat);
+            if (tempoMap.length === 0 || tempoMap[0].beat > 0) {
+              tempoMap = [
+                { id: uuid(), beat: 0, bpm: nextBpm, label: '기본' },
+                ...tempoMap,
+              ];
+            } else {
+              tempoMap[0] = { ...tempoMap[0], bpm: nextBpm };
+            }
+            return {
+              ...w,
+              bpm: nextBpm,
+              beatsPerBar: beatsPerBar ?? w.beatsPerBar,
+              tempoMap,
+            };
+          }),
+        })),
+
+      setCueSpacing: (spacing, retime = true) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const cueSpacing = Math.max(0.25, Math.min(8, spacing));
+            if (!retime) return { ...w, cueSpacing };
+            const oldBeats = new Map(
+              w.script
+                .filter((l) => l.beat != null)
+                .map((l) => [l.id, l.beat as number]),
+            );
+            const script = assignBeatsToScript(w.script, { spacing: cueSpacing });
+            const keyframes = w.keyframes.map((kf) => {
+              if (!kf.cueLineId) return kf;
+              const line = script.find((l) => l.id === kf.cueLineId);
+              if (!line || line.beat == null) return kf;
+              const oldBeat = oldBeats.get(kf.cueLineId);
+              const offset = oldBeat != null ? kf.beat - oldBeat : 0;
+              return { ...kf, beat: Math.max(0, line.beat + offset) };
+            });
+            const tempoMap = w.tempoMap.map((p) => {
+              if (!p.sourceLineId) return p;
+              const line = script.find((l) => l.id === p.sourceLineId);
+              return line?.beat != null ? { ...p, beat: line.beat } : p;
+            });
+            const numbers = w.numbers.map((n) => {
+              if (!n.sourceLineId) return n;
+              const line = script.find((l) => l.id === n.sourceLineId);
+              return line?.beat != null ? { ...n, startBeat: line.beat } : n;
+            });
+            return {
+              ...w,
+              cueSpacing,
+              script,
+              keyframes,
+              tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
+              numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
+            };
+          }),
+        })),
+
+      scaleAllTiming: (factor) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const f = Math.max(0.25, Math.min(8, factor));
+            const script = scaleScriptBeats(w.script, f);
+            const keyframes = w.keyframes.map((kf) => ({
+              ...kf,
+              beat: Math.round(kf.beat * f * 100) / 100,
+            }));
+            const tempoMap = w.tempoMap.map((p) => ({
+              ...p,
+              beat: Math.round(p.beat * f * 100) / 100,
+            }));
+            const numbers = w.numbers.map((n) => ({
+              ...n,
+              startBeat: Math.round(n.startBeat * f * 100) / 100,
+              endBeat:
+                n.endBeat != null
+                  ? Math.round(n.endBeat * f * 100) / 100
+                  : undefined,
+            }));
+            const syncAnchors = (w.syncAnchors ?? []).map((a) => ({
+              ...a,
+              beat: Math.round(a.beat * f * 100) / 100,
+            }));
+            return {
+              ...w,
+              script,
+              keyframes,
+              tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
+              numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
+              syncStartBeat: Math.round((w.syncStartBeat ?? 0) * f * 100) / 100,
+              syncAnchors: syncAnchors.sort((a, b) => a.beat - b.beat),
+            };
+          }),
+          currentBeat: Math.max(
+            0,
+            Math.round(s.currentBeat * Math.max(0.25, Math.min(8, factor)) * 100) /
+              100,
+          ),
+        })),
+
+      setSelectedLineDuration: (durationBeats) => {
+        const s = get();
+        const lineId = s.selectedLineIds[0];
+        if (!lineId) return;
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const script = setLineDuration(w.script, lineId, durationBeats);
+            // Keep keyframes glued to their cue lines
+            const keyframes = w.keyframes.map((kf) => {
+              if (!kf.cueLineId) return kf;
+              const line = script.find((l) => l.id === kf.cueLineId);
+              return line?.beat != null ? { ...kf, beat: line.beat } : kf;
+            });
+            return { ...w, script, keyframes };
+          }),
+        });
+      },
+
+      addTempoPoint: (beat, bpm, label) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            let b = Math.max(0, beat);
+            if (s.snapToBeat) b = Math.round(b);
+            const point: TempoPoint = {
+              id: uuid(),
+              beat: b,
+              bpm: clampBpm(bpm),
+              label: label || `BPM ${clampBpm(bpm)}`,
+            };
+            const tempoMap = [...w.tempoMap.filter((p) => Math.abs(p.beat - b) > 0.01), point].sort(
+              (a, c) => a.beat - c.beat,
+            );
+            return { ...w, tempoMap };
+          }),
+        })),
+
+      updateTempoPoint: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            tempoMap: w.tempoMap
+              .map((p) =>
+                p.id === id
+                  ? {
+                      ...p,
+                      ...patch,
+                      bpm: patch.bpm != null ? clampBpm(patch.bpm) : p.bpm,
+                      beat:
+                        patch.beat != null
+                          ? Math.max(0, s.snapToBeat ? Math.round(patch.beat) : patch.beat)
+                          : p.beat,
+                    }
+                  : p,
+              )
+              .sort((a, b) => a.beat - b.beat),
+            bpm:
+              w.tempoMap[0]?.id === id && patch.bpm != null
+                ? clampBpm(patch.bpm)
+                : w.bpm,
+          })),
+        })),
+
+      removeTempoPoint: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            if (w.tempoMap.length <= 1) return w;
+            return {
+              ...w,
+              tempoMap: w.tempoMap.filter((p) => p.id !== id),
+            };
+          }),
+        })),
+
+      addNumber: (title, startBeat, bpm) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            let beat = Math.max(0, startBeat);
+            if (s.snapToBeat) beat = Math.round(beat);
+            const num: MusicalNumber = {
+              id: uuid(),
+              title: title.trim() || `넘버 ${w.numbers.length + 1}`,
+              startBeat: beat,
+              bpm: bpm != null ? clampBpm(bpm) : undefined,
+              color: numberColorAt(w.numbers.length),
+            };
+            const numbers = [...w.numbers, num].sort(
+              (a, b) => a.startBeat - b.startBeat,
+            );
+            let tempoMap = w.tempoMap;
+            if (num.bpm != null) {
+              tempoMap = [
+                ...w.tempoMap.filter((p) => Math.abs(p.beat - beat) > 0.01),
+                {
+                  id: uuid(),
+                  beat,
+                  bpm: num.bpm,
+                  label: num.title,
+                },
+              ].sort((a, b) => a.beat - b.beat);
+            }
+            return { ...w, numbers, tempoMap };
+          }),
+        })),
+
+      updateNumber: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const prev = w.numbers.find((n) => n.id === id);
+            if (!prev) return w;
+            const next: MusicalNumber = {
+              ...prev,
+              title: patch.title ?? prev.title,
+              color: patch.color ?? prev.color,
+              endBeat: patch.endBeat !== undefined ? patch.endBeat : prev.endBeat,
+              startBeat:
+                patch.startBeat != null
+                  ? Math.max(
+                      0,
+                      s.snapToBeat ? Math.round(patch.startBeat) : patch.startBeat,
+                    )
+                  : prev.startBeat,
+              bpm:
+                patch.bpm === undefined
+                  ? prev.bpm
+                  : patch.bpm === null
+                    ? undefined
+                    : clampBpm(patch.bpm),
+            };
+            const numbers = w.numbers
+              .map((n) => (n.id === id ? next : n))
+              .sort((a, b) => a.startBeat - b.startBeat);
+
+            let tempoMap = w.tempoMap;
+            if (next.bpm != null) {
+              const existing = tempoMap.find(
+                (p) =>
+                  Math.abs(p.beat - prev.startBeat) < 0.01 ||
+                  Math.abs(p.beat - next.startBeat) < 0.01,
+              );
+              if (existing) {
+                tempoMap = tempoMap
+                  .map((p) =>
+                    p.id === existing.id
+                      ? {
+                          ...p,
+                          beat: next.startBeat,
+                          bpm: next.bpm!,
+                          label: next.title,
+                        }
+                      : p,
+                  )
+                  .sort((a, b) => a.beat - b.beat);
+              } else {
+                tempoMap = [
+                  ...tempoMap,
+                  {
+                    id: uuid(),
+                    beat: next.startBeat,
+                    bpm: next.bpm,
+                    label: next.title,
+                  },
+                ].sort((a, b) => a.beat - b.beat);
+              }
+            }
+            return { ...w, numbers, tempoMap };
+          }),
+        })),
+
+      removeNumber: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            numbers: w.numbers.filter((n) => n.id !== id),
+            script: w.script.map((l) =>
+              l.numberId === id ? { ...l, numberId: undefined } : l,
+            ),
+          })),
+        })),
+
+      importScript: (raw) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const spacing = w.cueSpacing ?? 2;
+            const bundle = parseScriptBundle(raw, w.bpm, spacing);
+            return {
+              ...w,
+              script: bundle.script,
+              numbers: bundle.numbers,
+              tempoMap: bundle.tempoMap,
+              keyframes: [],
+              syncAnchors: [],
+              audioOffsetMs: 0,
+              syncStartBeat: 0,
+            };
+          }),
+          selectedLineIds: [],
+          charSelection: null,
+          currentBeat: 0,
+        })),
+
+      clearScript: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            script: [],
+            keyframes: [],
+            numbers: [],
+            tempoMap: [{ id: uuid(), beat: 0, bpm: w.bpm, label: '기본' }],
+            syncAnchors: [],
+            audioOffsetMs: 0,
+            syncStartBeat: 0,
+          })),
+          selectedLineIds: [],
+          charSelection: null,
+          currentBeat: 0,
+        })),
+
+      retimeScript: () => {
+        const w = get().activeWork();
+        get().setCueSpacing(w.cueSpacing ?? 2, true);
+      },
+
+      selectLine: (lineId, multi = false) =>
+        set((s) => {
+          const work = s.activeWork();
+          const line = work.script.find((l) => l.id === lineId);
+          const beat = line?.beat ?? s.currentBeat;
+
+          if (multi) {
+            const has = s.selectedLineIds.includes(lineId);
+            return {
+              selectedLineIds: has
+                ? s.selectedLineIds.filter((id) => id !== lineId)
+                : [...s.selectedLineIds, lineId],
+              charSelection: null,
+              currentBeat: has ? s.currentBeat : beat,
+              isPlaying: false,
+            };
+          }
+          return {
+            selectedLineIds: [lineId],
+            charSelection: null,
+            currentBeat: beat,
+            isPlaying: false,
+          };
+        }),
+
+      clearSelection: () => set({ selectedLineIds: [], charSelection: null }),
+
+      setCharSelection: (sel) => {
+        const work = get().activeWork();
+        const line = sel ? work.script.find((l) => l.id === sel.lineId) : undefined;
+        set({
+          charSelection: sel,
+          selectedLineIds: sel ? [sel.lineId] : [],
+          currentBeat: line?.beat ?? get().currentBeat,
+          isPlaying: false,
+        });
+      },
+
+      setLineBeat: (lineId, beat) => {
+        const s = get();
+        let nextBeat = Math.max(0, beat);
+        if (s.snapToBeat) nextBeat = Math.round(nextBeat);
+
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            script: w.script.map((l) =>
+              l.id === lineId ? { ...l, beat: nextBeat } : l,
+            ),
+            keyframes: w.keyframes.map((kf) =>
+              kf.cueLineId === lineId ? { ...kf, beat: nextBeat } : kf,
+            ),
+          })),
+          currentBeat:
+            s.selectedLineIds[0] === lineId ? nextBeat : s.currentBeat,
+        });
+      },
+
+      nudgeSelectedCue: (delta) => {
+        const s = get();
+        const lineId = s.selectedLineIds[0];
+        if (!lineId) {
+          s.setCurrentBeat(Math.max(0, s.currentBeat + delta));
+          return;
+        }
+        const line = s.activeWork().script.find((l) => l.id === lineId);
+        const base = line?.beat ?? s.currentBeat;
+        s.setLineBeat(lineId, base + delta);
+      },
+
+      setCurrentBeat: (beat, opts) => {
+        const next = Math.max(0, beat);
+        const sync = opts?.syncSelection ?? false;
+        if (!sync) {
+          set({ currentBeat: next });
+          return;
+        }
+        const work = get().activeWork();
+        const line = lineAtBeat(work.script, next);
+        set({
+          currentBeat: next,
+          selectedLineIds: line ? [line.id] : get().selectedLineIds,
+          charSelection: null,
+        });
+      },
+
+      setPlaying: (playing) => set({ isPlaying: playing }),
+      setSnapToBeat: (snap) => set({ snapToBeat: snap }),
+      setAudioFollow: (on) => set({ audioFollow: on }),
+      setAudioFileName: (name) => set({ audioFileName: name }),
+      clearLastStamp: () => set({ lastStamp: null }),
+      setLyricsOpen: (open) => set({ lyricsOpen: open }),
+      setShowPaths: (on) => set({ showPaths: on }),
+      setShowGhosts: (on) => set({ showGhosts: on }),
+      setShowNumberLine: (on) => set({ showNumberLine: on }),
+
+      jumpToNeighborKeyframe: (dir) => {
+        const s = get();
+        const work = s.activeWork();
+        const next = neighborKeyframeBeat(work.keyframes, s.currentBeat, dir);
+        if (next == null) return;
+        s.setCurrentBeat(next, { syncSelection: true });
+        s.setPlaying(false);
+      },
+
+      copyFromPreviousKeyframe: (roleId) => {
+        const s = get();
+        const work = s.activeWork();
+        const targetRole = roleId === undefined ? s.selectedRoleId : roleId;
+        const prev = previousKeyframe(work.keyframes, s.currentBeat, targetRole);
+        if (!prev) return;
+
+        let beat = s.currentBeat;
+        if (s.snapToBeat) beat = Math.round(beat);
+
+        const roles =
+          targetRole != null
+            ? work.roles.filter((r) => r.id === targetRole)
+            : work.roles.filter((r) => r.visible);
+
+        const roleName =
+          targetRole != null
+            ? (work.roles.find((r) => r.id === targetRole)?.name ?? '배역')
+            : '전체';
+
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const atBeatKf = nearestKeyframe(
+              w.keyframes,
+              beat,
+              s.snapToBeat ? 0.51 : 0.2,
+            );
+            const basePositions = atBeatKf
+              ? { ...atBeatKf.positions }
+              : seedPositions(w, beat);
+
+            for (const role of roles) {
+              const p = prev.positions[role.id];
+              if (p) basePositions[role.id] = { ...p };
+            }
+
+            if (atBeatKf) {
+              return {
+                ...w,
+                keyframes: w.keyframes.map((kf) =>
+                  kf.id === atBeatKf.id
+                    ? { ...kf, beat, positions: basePositions }
+                    : kf,
+                ),
+              };
+            }
+
+            const kf: Keyframe = {
+              id: uuid(),
+              beat,
+              cueLabel: prev.cueLabel || `박 ${beat}`,
+              cueLineId: prev.cueLineId,
+              positions: basePositions,
+            };
+            return { ...w, keyframes: [...w.keyframes, kf] };
+          }),
+          lastStamp: {
+            beat,
+            label: `복사 · ${roleName} ← 이전 KF`,
+            at: Date.now(),
+          },
+        });
+      },
+
+      mirrorRoleAtPlayhead: (roleId, axis = 'x') => {
+        const s = get();
+        const work = s.activeWork();
+        const pos =
+          positionsAtBeat(work.keyframes, s.currentBeat, [roleId])[roleId] ?? {
+            x: 0.5,
+            y: 0.5,
+          };
+        const mirrored =
+          axis === 'x'
+            ? { x: 1 - pos.x, y: pos.y }
+            : { x: pos.x, y: 1 - pos.y };
+        s.moveRoleAtCurrentCue(roleId, mirrored);
+      },
+
+      setAudioOffsetMs: (ms) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            audioOffsetMs: Math.max(0, ms),
+          })),
+        })),
+
+      setSyncStartBeat: (beat) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncStartBeat: Math.max(0, beat),
+          })),
+        })),
+
+      upsertSyncAnchor: (input) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const beat = Math.max(0, input.beat);
+            const audioMs = Math.max(0, input.audioMs);
+            const anchors = [...(w.syncAnchors ?? [])];
+            const nearIdx = anchors.findIndex(
+              (a) =>
+                (input.id && a.id === input.id) ||
+                Math.abs(a.beat - beat) < 0.51,
+            );
+            if (nearIdx >= 0) {
+              anchors[nearIdx] = {
+                ...anchors[nearIdx],
+                beat,
+                audioMs,
+                label: input.label ?? anchors[nearIdx].label,
+              };
+            } else {
+              anchors.push({
+                id: input.id ?? uuid(),
+                beat,
+                audioMs,
+                label: input.label,
+              });
+            }
+            return {
+              ...w,
+              syncAnchors: anchors.sort(
+                (a, b) => a.beat - b.beat || a.audioMs - b.audioMs,
+              ),
+            };
+          }),
+        })),
+
+      updateSyncAnchor: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: (w.syncAnchors ?? [])
+              .map((a) => (a.id === id ? { ...a, ...patch, id: a.id } : a))
+              .sort((a, b) => a.beat - b.beat || a.audioMs - b.audioMs),
+          })),
+        })),
+
+      removeSyncAnchor: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: (w.syncAnchors ?? []).filter((a) => a.id !== id),
+          })),
+        })),
+
+      clearSyncAnchors: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            syncAnchors: [],
+          })),
+        })),
+
+      applyAnchorTempo: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const derived = tempoMapFromAnchors(w);
+            if (derived.length === 0) return w;
+            const tempoMap = derived.map((p) => ({
+              ...p,
+              id: uuid(),
+            }));
+            const firstBpm = tempoMap[0]?.bpm ?? w.bpm;
+            return {
+              ...w,
+              bpm: firstBpm,
+              tempoMap,
+            };
+          }),
+        })),
+
+      moveRoleAtCurrentCue: (roleId, pos, atBeat) => {
+        const s = get();
+        const work = s.activeWork();
+
+        // Playhead-first: dialogue selection is optional (label only)
+        let beat = atBeat ?? s.currentBeat;
+        if (s.snapToBeat) beat = Math.round(beat);
+
+        const nearLine =
+          s.selectedLineIds[0]
+            ? work.script.find((l) => l.id === s.selectedLineIds[0])
+            : lineAtBeat(work.script, beat);
+        const cueLabel = formatCueLabel(nearLine, s.charSelection?.text);
+        const cueLineId = nearLine?.id;
+        const roleName = work.roles.find((r) => r.id === roleId)?.name ?? '배역';
+
+        // Prefer existing keyframe at this beat; else one glued to same cue line
+        const atBeatKf = nearestKeyframe(work.keyframes, beat, s.snapToBeat ? 0.51 : 0.2);
+        const byLine =
+          !atBeatKf && cueLineId
+            ? keyframeForLine(work.keyframes, cueLineId)
+            : undefined;
+        const existing = atBeatKf ?? byLine;
+        const stampLabel = cueLabel || `박 ${beat}`;
+
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            if (existing) {
+              return {
+                ...w,
+                keyframes: w.keyframes.map((kf) =>
+                  kf.id === existing.id
+                    ? {
+                        ...kf,
+                        beat,
+                        positions: { ...kf.positions, [roleId]: pos },
+                        cueLineId: cueLineId ?? kf.cueLineId,
+                        cueLabel: cueLabel || kf.cueLabel,
+                        charSelection: s.charSelection ?? kf.charSelection,
+                      }
+                    : kf,
+                ),
+              };
+            }
+
+            const seed = seedPositions(w, beat);
+            seed[roleId] = pos;
+            const kf: Keyframe = {
+              id: uuid(),
+              beat,
+              cueLineId,
+              cueLabel: stampLabel,
+              charSelection: s.charSelection ?? undefined,
+              positions: seed,
+            };
+            return { ...w, keyframes: [...w.keyframes, kf] };
+          }),
+          // Keep playhead where the user stamped (don't jump away while listening)
+          currentBeat: atBeat != null ? s.currentBeat : beat,
+          lastStamp: {
+            beat,
+            label: `${roleName} · ${stampLabel}`,
+            at: Date.now(),
+          },
+        });
+      },
+
+      updateKeyframe: (id, patch) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const target = w.keyframes.find((kf) => kf.id === id);
+            const keyframes = w.keyframes.map((kf) =>
+              kf.id === id ? { ...kf, ...patch } : kf,
+            );
+            // Keep script line beat in sync when keyframe beat changes
+            let script = w.script;
+            if (target?.cueLineId && patch.beat != null) {
+              script = w.script.map((l) =>
+                l.id === target.cueLineId ? { ...l, beat: patch.beat } : l,
+              );
+            }
+            return { ...w, keyframes, script };
+          }),
+        })),
+
+      deleteKeyframe: (id) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            keyframes: w.keyframes.filter((kf) => kf.id !== id),
+          })),
+        })),
+
+      deleteBlockingForLine: (lineId) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            keyframes: w.keyframes.filter((kf) => kf.cueLineId !== lineId),
+          })),
+        })),
+    }),
+    {
+      name: 'musical-blocking-v3',
+      partialize: (s) => ({
+        works: s.works,
+        activeWorkId: s.activeWorkId,
+        snapToBeat: s.snapToBeat,
+        lyricsOpen: s.lyricsOpen,
+        showPaths: s.showPaths,
+        showGhosts: s.showGhosts,
+        showNumberLine: s.showNumberLine,
+      }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<AppState> | undefined;
+        if (!p?.works) return current;
+        const works = p.works.map((w) => normalizeWork(w as MusicalWork));
+        return {
+          ...current,
+          ...p,
+          works,
+          activeWorkId: p.activeWorkId ?? works[0]?.id ?? current.activeWorkId,
+        };
+      },
+    },
+  ),
+);
