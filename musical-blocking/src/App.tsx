@@ -4,8 +4,7 @@ import { ScriptPanel } from './components/ScriptPanel';
 import { StageCanvas } from './components/StageCanvas';
 import { RoleToggles } from './components/RoleToggles';
 import { Timeline } from './components/Timeline';
-import { AudioTransport } from './components/AudioTransport';
-import { NowPlaying } from './components/NowPlaying';
+import { CaptureDock } from './components/CaptureDock';
 import { SettingsPanel } from './components/settings/SettingsPanel';
 import { UnlockGate, isUnlocked } from './components/UnlockGate';
 import { snapshotCurrentState } from './lib/recovery';
@@ -16,11 +15,12 @@ export default function App() {
   const work = useAppStore((s) => s.activeWork());
   const works = useAppStore((s) => s.works);
   const activeTab = useAppStore((s) => s.activeTab);
+  const lyricsOpen = useAppStore((s) => s.lyricsOpen);
   const setTab = useAppStore((s) => s.setTab);
   const setActiveWork = useAppStore((s) => s.setActiveWork);
+  const setPlaying = useAppStore((s) => s.setPlaying);
   const keyframeCount = work.keyframes.length;
 
-  // Keep rolling backups while keyframes exist
   useEffect(() => {
     snapshotCurrentState('app-boot');
   }, []);
@@ -30,6 +30,29 @@ export default function App() {
     const t = window.setTimeout(() => snapshotCurrentState('auto-keyframes'), 800);
     return () => window.clearTimeout(t);
   }, [ready, keyframeCount, work.updatedAt]);
+
+  // Space = play/pause (not while typing)
+  useEffect(() => {
+    if (!ready || activeTab !== 'stage') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' && e.key !== ' ') return;
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.tagName === 'SELECT' ||
+          t.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      const s = useAppStore.getState();
+      s.setPlaying(!s.isPlaying);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ready, activeTab, setPlaying]);
 
   if (!ready) {
     return <UnlockGate onDone={() => setReady(true)} />;
@@ -42,7 +65,7 @@ export default function App() {
           <span className="brand-mark" aria-hidden />
           <div>
             <p className="brand-name">StageCue</p>
-            <p className="brand-sub">뮤지컬 동선 체크리스트</p>
+            <p className="brand-sub">듣고 · 찍고 · 맞추기</p>
           </div>
         </div>
 
@@ -63,7 +86,7 @@ export default function App() {
             className={activeTab === 'stage' ? 'active' : ''}
             onClick={() => setTab('stage')}
           >
-            무대
+            캡처
           </button>
           <button
             type="button"
@@ -76,15 +99,14 @@ export default function App() {
       </header>
 
       {activeTab === 'stage' ? (
-        <main className="stage-layout">
-          <ScriptPanel />
+        <main className={`stage-layout ${lyricsOpen ? 'lyrics-open' : 'lyrics-closed'}`}>
+          <CaptureDock />
           <div className="stage-column">
-            <AudioTransport />
-            <NowPlaying />
             <StageCanvas />
             <RoleToggles />
             <Timeline />
           </div>
+          {lyricsOpen && <ScriptPanel />}
         </main>
       ) : (
         <main className="settings-layout">

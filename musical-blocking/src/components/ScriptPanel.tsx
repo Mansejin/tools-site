@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { formatBeat } from '../lib/interpolation';
 import { keyframeForLine, lineAtBeat, lineDurationBeats } from '../lib/cues';
@@ -21,7 +21,6 @@ function lineClass(
 export function ScriptPanel() {
   const work = useAppStore((s) => s.activeWork());
   const selectedLineIds = useAppStore((s) => s.selectedLineIds);
-  const charSelection = useAppStore((s) => s.charSelection);
   const currentBeat = useAppStore((s) => s.currentBeat);
   const selectLine = useAppStore((s) => s.selectLine);
   const setCharSelection = useAppStore((s) => s.setCharSelection);
@@ -33,6 +32,7 @@ export function ScriptPanel() {
   const setSelectedLineDuration = useAppStore((s) => s.setSelectedLineDuration);
   const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const selectedId = selectedLineIds[0];
   const selectedDuration =
     selectedId != null ? lineDurationBeats(work.script, selectedId) : undefined;
@@ -60,7 +60,6 @@ export function ScriptPanel() {
     });
   };
 
-  // Follow the song / playhead — not a click requirement for keyframes
   useEffect(() => {
     const id = liveLine?.id ?? selectedLineIds[0];
     if (!id || !listRef.current) return;
@@ -71,17 +70,36 @@ export function ScriptPanel() {
   }, [liveLine?.id, selectedLineIds, currentBeat]);
 
   return (
-    <aside className="script-panel">
+    <aside className="script-panel" aria-label="가사 모니터">
       <header className="panel-head">
-        <h2>가사 모니터</h2>
+        <div>
+          <h2>가사</h2>
+          {liveNumber && <p className="panel-sub">{liveNumber.title}</p>}
+        </div>
         <div className="panel-actions">
+          <button
+            type="button"
+            className="btn tiny ghost"
+            onClick={() => setToolsOpen((v) => !v)}
+            aria-expanded={toolsOpen}
+          >
+            {toolsOpen ? '도구 닫기' : '싱크 도구'}
+          </button>
+          <button type="button" className="btn tiny ghost" onClick={clearSelection}>
+            선택 해제
+          </button>
+        </div>
+      </header>
+
+      {toolsOpen && (
+        <div className="script-tools">
           <button type="button" className="btn ghost" onClick={() => fileRef.current?.click()}>
-            대본
+            대본 파일
           </button>
           <button
             type="button"
             className="btn ghost"
-            title="가사 줄 간격을 다시 배정 (노래 싱크 보정용)"
+            title="가사 줄 간격을 다시 배정"
             onClick={retimeScript}
           >
             박 재배정
@@ -89,13 +107,10 @@ export function ScriptPanel() {
           <button
             type="button"
             className="btn ghost"
-            title="가사 타임라인만 늘림 (키프레임은 비율 유지하려면 설정에서 전체 ×2)"
+            title="가사 타임라인만 ×2"
             onClick={() => scaleAllTiming(2)}
           >
             간격 ×2
-          </button>
-          <button type="button" className="btn ghost" onClick={clearSelection}>
-            선택 해제
           </button>
           <input
             ref={fileRef}
@@ -108,20 +123,30 @@ export function ScriptPanel() {
               e.target.value = '';
             }}
           />
+          <label className="paste-label">
+            대본 붙여넣기 · Ctrl+Enter
+            <textarea
+              placeholder="【넘버: … / BPM …】"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault();
+                  const v = (e.target as HTMLTextAreaElement).value;
+                  if (v.trim()) {
+                    importScript(v);
+                    (e.target as HTMLTextAreaElement).value = '';
+                  }
+                }
+              }}
+            />
+          </label>
         </div>
-      </header>
+      )}
 
-      <div className="selection-banner sticky-hint">
-        <span>
-          키프레임은 <em>노래 재생 + 배역 드래그</em>로 찍습니다.
-          {liveNumber ? ` · 지금 넘버: ${liveNumber.title}` : ''}
-          {' '}가사는 따라가기/점프용입니다.
-        </span>
-      </div>
+      <p className="script-hint">클릭하면 그 가사로 점프 · 키프레임은 무대 드래그로</p>
 
       <div className="script-body" ref={listRef}>
         {work.script.length === 0 && (
-          <p className="empty">대본을 넣으면 노래에 맞춰 가사가 하이라이트됩니다.</p>
+          <p className="empty">대본을 넣으면 재생에 맞춰 하이라이트됩니다.</p>
         )}
         {work.script.map((line) => {
           if (line.type === 'blank') {
@@ -177,7 +202,7 @@ export function ScriptPanel() {
                     />
                   </label>
                   <label className="beat-edit">
-                    이 줄 길이(박)
+                    길이(박)
                     <input
                       type="number"
                       min={1}
@@ -188,32 +213,12 @@ export function ScriptPanel() {
                       }
                     />
                   </label>
-                  <span className="beat-edit-hint">가사↔노래 어긋날 때 보정</span>
                 </div>
               )}
             </div>
           );
         })}
       </div>
-
-      <footer className="script-foot">
-        <label className="paste-label">
-          대본 붙여넣기 (가사·넘버 표시용)
-          <textarea
-            placeholder="【넘버: … / BPM …】 포함 대본을 Ctrl+Enter로 적용"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                const v = (e.target as HTMLTextAreaElement).value;
-                if (v.trim()) {
-                  importScript(v);
-                  (e.target as HTMLTextAreaElement).value = '';
-                }
-              }
-            }}
-          />
-        </label>
-      </footer>
     </aside>
   );
 }

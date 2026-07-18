@@ -14,12 +14,9 @@ export function StageCanvas() {
   const setSelectedRole = useAppStore((s) => s.setSelectedRole);
   const moveRoleAtCurrentCue = useAppStore((s) => s.moveRoleAtCurrentCue);
   const isPlaying = useAppStore((s) => s.isPlaying);
-  const snapToBeat = useAppStore((s) => s.snapToBeat);
-  const audioFollow = useAppStore((s) => s.audioFollow);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<string | null>(null);
-  /** Freeze musical time for one drag gesture so playback can keep running. */
   const stampBeatRef = useRef<number | null>(null);
 
   const roleIds = work.roles.map((r) => r.id);
@@ -57,19 +54,7 @@ export function StageCanvas() {
   }, [dragging, moveRoleAtCurrentCue, pointerToPos]);
 
   return (
-    <div className="stage-wrap">
-      <div className="stage-meta">
-        <span>
-          무대 {work.stage.widthM}m × {work.stage.depthM}m
-        </span>
-        <span className="hint ok">
-          {isPlaying || audioFollow
-            ? '재생 중 · 배역을 옮기면 잡은 순간에 키프레임 저장'
-            : '배역을 드래그하면 현재 재생헤드 위치에 키프레임 저장 (대사 클릭 불필요)'}
-          {snapToBeat ? ' · 박 스냅 ON' : ''}
-        </span>
-      </div>
-
+    <div className={`stage-wrap ${isPlaying ? 'capturing' : ''}`}>
       <div className="stage-frame">
         <div className="stage-label upstage">UPSTAGE</div>
         <div
@@ -125,7 +110,12 @@ export function StageCanvas() {
               );
             })}
         </div>
-        <div className="stage-label downstage">DOWNSTAGE · 객석</div>
+        <div className="stage-label downstage">
+          DOWNSTAGE · 객석
+          <span className="stage-size">
+            {work.stage.widthM}×{work.stage.depthM}m
+          </span>
+        </div>
       </div>
     </div>
   );

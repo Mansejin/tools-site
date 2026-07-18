@@ -136,6 +136,10 @@ interface AppState {
   audioFollow: boolean;
   audioFileName: string | null;
   selectedRoleId: string | null;
+  /** Brief feedback after stamping a keyframe while listening. */
+  lastStamp: { beat: number; label: string; at: number } | null;
+  /** Lyrics monitor open (desktop/mobile). */
+  lyricsOpen: boolean;
 
   activeWork: () => MusicalWork;
   setTab: (tab: AppTab) => void;
@@ -183,6 +187,8 @@ interface AppState {
   setSnapToBeat: (snap: boolean) => void;
   setAudioFollow: (on: boolean) => void;
   setAudioFileName: (name: string | null) => void;
+  clearLastStamp: () => void;
+  setLyricsOpen: (open: boolean) => void;
 
   /** Stamp/update a keyframe at playhead (or explicit beat). No dialogue click required. */
   moveRoleAtCurrentCue: (roleId: string, pos: Position, atBeat?: number) => void;
@@ -220,6 +226,8 @@ export const useAppStore = create<AppState>()(
       audioFollow: false,
       audioFileName: null,
       selectedRoleId: null,
+      lastStamp: null,
+      lyricsOpen: true,
 
       activeWork: () => {
         const { works, activeWorkId } = get();
@@ -789,6 +797,8 @@ export const useAppStore = create<AppState>()(
       setSnapToBeat: (snap) => set({ snapToBeat: snap }),
       setAudioFollow: (on) => set({ audioFollow: on }),
       setAudioFileName: (name) => set({ audioFileName: name }),
+      clearLastStamp: () => set({ lastStamp: null }),
+      setLyricsOpen: (open) => set({ lyricsOpen: open }),
 
       moveRoleAtCurrentCue: (roleId, pos, atBeat) => {
         const s = get();
@@ -804,6 +814,7 @@ export const useAppStore = create<AppState>()(
             : lineAtBeat(work.script, beat);
         const cueLabel = formatCueLabel(nearLine, s.charSelection?.text);
         const cueLineId = nearLine?.id;
+        const roleName = work.roles.find((r) => r.id === roleId)?.name ?? '배역';
 
         // Prefer existing keyframe at this beat; else one glued to same cue line
         const atBeatKf = nearestKeyframe(work.keyframes, beat, s.snapToBeat ? 0.51 : 0.2);
@@ -812,6 +823,7 @@ export const useAppStore = create<AppState>()(
             ? keyframeForLine(work.keyframes, cueLineId)
             : undefined;
         const existing = atBeatKf ?? byLine;
+        const stampLabel = cueLabel || `박 ${beat}`;
 
         set({
           works: mapActive(s.works, s.activeWorkId, (w) => {
@@ -839,7 +851,7 @@ export const useAppStore = create<AppState>()(
               id: uuid(),
               beat,
               cueLineId,
-              cueLabel: cueLabel || `박 ${beat}`,
+              cueLabel: stampLabel,
               charSelection: s.charSelection ?? undefined,
               positions: seed,
             };
@@ -847,6 +859,11 @@ export const useAppStore = create<AppState>()(
           }),
           // Keep playhead where the user stamped (don't jump away while listening)
           currentBeat: atBeat != null ? s.currentBeat : beat,
+          lastStamp: {
+            beat,
+            label: `${roleName} · ${stampLabel}`,
+            at: Date.now(),
+          },
         });
       },
 
@@ -890,6 +907,7 @@ export const useAppStore = create<AppState>()(
         works: s.works,
         activeWorkId: s.activeWorkId,
         snapToBeat: s.snapToBeat,
+        lyricsOpen: s.lyricsOpen,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<AppState> | undefined;

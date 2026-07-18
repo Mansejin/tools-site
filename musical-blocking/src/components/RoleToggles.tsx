@@ -11,9 +11,9 @@ export function RoleToggles() {
   const allOn = work.roles.every((r) => r.visible);
 
   return (
-    <div className="role-toggles">
+    <div className="role-toggles" aria-label="배역">
       <div className="role-toggles-head">
-        <h3>배역 표시</h3>
+        <span className="role-toggles-label">배역</span>
         <button
           type="button"
           className="btn tiny ghost"
@@ -34,14 +34,14 @@ export function RoleToggles() {
               <span className="swatch">{role.shortName}</span>
               <span className="name">{role.name}</span>
             </button>
-            <label className="vis-toggle" title="무대에 표시">
-              <input
-                type="checkbox"
-                checked={role.visible}
-                onChange={() => toggleRoleVisible(role.id)}
-              />
-              <span>{role.visible ? 'ON' : 'OFF'}</span>
-            </label>
+            <button
+              type="button"
+              className={`vis-btn ${role.visible ? 'on' : 'off'}`}
+              title={role.visible ? '무대에서 숨기기' : '무대에 표시'}
+              onClick={() => toggleRoleVisible(role.id)}
+            >
+              {role.visible ? '보이기' : '숨김'}
+            </button>
           </li>
         ))}
       </ul>

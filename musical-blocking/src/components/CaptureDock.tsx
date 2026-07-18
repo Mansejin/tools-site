@@ -1,24 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { beatAtMs, msAtBeat } from '../lib/tempoMap';
+import { lineAtBeat } from '../lib/cues';
+import { beatAtMs, bpmAtBeat, msAtBeat, numberAtBeat } from '../lib/tempoMap';
+import { formatBeat } from '../lib/interpolation';
 
-/** Song-based capture: play audio and stamp blocking at the playhead. */
-export function AudioTransport() {
+/** Unified song transport + live number/lyric readout for capture. */
+export function CaptureDock() {
   const work = useAppStore((s) => s.activeWork());
   const currentBeat = useAppStore((s) => s.currentBeat);
   const isPlaying = useAppStore((s) => s.isPlaying);
   const audioFollow = useAppStore((s) => s.audioFollow);
   const audioFileName = useAppStore((s) => s.audioFileName);
+  const lastStamp = useAppStore((s) => s.lastStamp);
+  const keyframeCount = work.keyframes.length;
   const setPlaying = useAppStore((s) => s.setPlaying);
   const setCurrentBeat = useAppStore((s) => s.setCurrentBeat);
   const setAudioFollow = useAppStore((s) => s.setAudioFollow);
   const setAudioFileName = useAppStore((s) => s.setAudioFileName);
+  const clearLastStamp = useAppStore((s) => s.clearLastStamp);
+  const setLyricsOpen = useAppStore((s) => s.setLyricsOpen);
+  const lyricsOpen = useAppStore((s) => s.lyricsOpen);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [duration, setDuration] = useState(0);
+  const [stampFlash, setStampFlash] = useState<string | null>(null);
   const syncing = useRef(false);
+
+  const num = numberAtBeat(currentBeat, work.numbers ?? []);
+  const line = lineAtBeat(work.script, currentBeat);
+  const bpm = bpmAtBeat(currentBeat, work.tempoMap ?? [], work.bpm);
+  const lyric =
+    line && line.type !== 'blank' && line.type !== 'direction'
+      ? `${line.speaker ? `${line.speaker}: ` : ''}${line.text}`
+      : line?.type === 'direction' || line?.type === 'cue'
+        ? line.text
+        : '가사를 불러오면 재생에 맞춰 여기에 표시됩니다';
 
   useEffect(() => {
     return () => {
@@ -26,7 +44,6 @@ export function AudioTransport() {
     };
   }, []);
 
-  // Audio → playhead
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioFollow) return;
@@ -50,7 +67,6 @@ export function AudioTransport() {
     };
   }, [audioFollow, work.tempoMap, work.bpm, setCurrentBeat, setPlaying]);
 
-  // Playhead / play state → audio (when not following scrub from audio)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioFollow || !audioFileName) return;
@@ -76,6 +92,16 @@ export function AudioTransport() {
     work.bpm,
     setPlaying,
   ]);
+
+  useEffect(() => {
+    if (!lastStamp) return;
+    setStampFlash(lastStamp.label);
+    const t = window.setTimeout(() => {
+      setStampFlash(null);
+      clearLastStamp();
+    }, 1600);
+    return () => window.clearTimeout(t);
+  }, [lastStamp, clearLastStamp]);
 
   const onFile = (file: File) => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -106,15 +132,47 @@ export function AudioTransport() {
     setPlaying(false);
   };
 
+  const togglePlay = () => {
+    if (audioFileName && !audioFollow) setAudioFollow(true);
+    setPlaying(!isPlaying);
+  };
+
   return (
-    <div className="audio-transport">
-      <div className="audio-transport-head">
-        <strong>노래로 찍기</strong>
-        <span className="hint">
-          곡 올리고 재생 → 배역만 옮기면 현재 순간에 키프레임 저장 (대사 클릭 불필요)
-        </span>
+    <section className={`capture-dock ${isPlaying ? 'live' : ''}`} aria-label="캡처 컨트롤">
+      <div className="capture-now">
+        <div className="capture-now-top">
+          <span className="capture-number">{num?.title ?? work.title}</span>
+          <span className="capture-beat">
+            {formatBeat(currentBeat, work.beatsPerBar)}
+            <span className="capture-beat-meta"> · ♩={bpm}</span>
+          </span>
+        </div>
+        <p className="capture-lyric" title={lyric}>
+          {lyric}
+        </p>
       </div>
-      <div className="audio-transport-controls">
+
+      <div className="capture-controls">
+        <button
+          type="button"
+          className={`btn capture-play ${isPlaying ? 'playing' : ''}`}
+          onClick={togglePlay}
+          title="스페이스바"
+        >
+          {isPlaying ? '일시정지' : audioFileName ? '곡 재생' : '재생'}
+        </button>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => {
+            setPlaying(false);
+            setCurrentBeat(0, { syncSelection: true });
+            const audio = audioRef.current;
+            if (audio) audio.currentTime = 0;
+          }}
+        >
+          처음으로
+        </button>
         <button
           type="button"
           className="btn ghost"
@@ -133,50 +191,40 @@ export function AudioTransport() {
             e.target.value = '';
           }}
         />
-        <button
-          type="button"
-          className="btn"
-          disabled={!audioFileName}
-          onClick={() => {
-            if (!audioFollow) setAudioFollow(true);
-            setPlaying(!isPlaying);
-          }}
-        >
-          {isPlaying ? '일시정지' : '곡 재생'}
-        </button>
-        <button
-          type="button"
-          className="btn ghost"
-          disabled={!audioFileName}
-          onClick={() => {
-            setPlaying(false);
-            setCurrentBeat(0);
-            const audio = audioRef.current;
-            if (audio) audio.currentTime = 0;
-          }}
-        >
-          처음으로
-        </button>
         {audioFileName && (
           <button type="button" className="btn tiny danger ghost" onClick={clearAudio}>
             곡 제거
           </button>
         )}
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={audioFollow}
-            disabled={!audioFileName}
-            onChange={(e) => setAudioFollow(e.target.checked)}
-          />
-          노래에 타임라인 맞추기
-        </label>
-        <span className="audio-meta">
-          {audioFileName
-            ? `${audioFileName}${duration ? ` · ${Math.round(duration)}초` : ''}`
-            : '오디오 없음 — 타임라인 재생만으로도 배역 드래그 가능'}
-        </span>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => setLyricsOpen(!lyricsOpen)}
+          aria-pressed={lyricsOpen}
+        >
+          {lyricsOpen ? '가사 숨기기' : '가사 보기'}
+        </button>
       </div>
-    </div>
+
+      <div className="capture-meta">
+        <span className="capture-guide">
+          {isPlaying
+            ? '재생 중 · 배역을 옮기면 이 순간에 키프레임 저장'
+            : '노래/재생 후 무대에서 배역을 드래그하세요'}
+        </span>
+        <span className="capture-file">
+          {audioFileName
+            ? `${audioFileName}${duration ? ` · ${Math.round(duration)}초` : ''}${audioFollow ? ' · 연동' : ''}`
+            : '오디오 없음 · 타임라인 재생으로도 찍기 가능'}
+          {' · '}
+          KF {keyframeCount}
+        </span>
+        {stampFlash && (
+          <span className="capture-stamp" role="status">
+            저장됨 · {stampFlash}
+          </span>
+        )}
+      </div>
+    </section>
   );
 }

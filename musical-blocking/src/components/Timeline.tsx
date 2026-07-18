@@ -48,9 +48,9 @@ export function Timeline() {
   const currentNumber = numberAtBeat(currentBeat, work.numbers ?? []);
 
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
+  const [listOpen, setListOpen] = useState(true);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  // Beat clock only when NOT following uploaded audio (audio drives playhead then)
   useEffect(() => {
     if (!isPlaying) return;
     if (audioFollow && audioFileName) return;
@@ -103,28 +103,20 @@ export function Timeline() {
 
   const pct = (beat: number) => `${(beat / maxBeat) * 100}%`;
   const selectedId = selectedLineIds[0];
-  const selectedLine = cues.find((c) => c.id === selectedId);
+  const drivenByAudio = Boolean(audioFollow && audioFileName);
 
   return (
-    <section className="timeline">
+    <section className="timeline" aria-label="타임라인">
       <div className="timeline-controls">
-        <button type="button" className="btn" onClick={() => setPlaying(!isPlaying)}>
-          {isPlaying ? '일시정지' : '재생'}
-        </button>
+        {!drivenByAudio && (
+          <button type="button" className="btn ghost" onClick={() => setPlaying(!isPlaying)}>
+            {isPlaying ? '타임라인 정지' : '타임라인 재생'}
+          </button>
+        )}
         <button
           type="button"
           className="btn ghost"
-          onClick={() => {
-            setCurrentBeat(0, { syncSelection: true });
-            setPlaying(false);
-          }}
-        >
-          처음으로
-        </button>
-        <button
-          type="button"
-          className="btn ghost"
-          title={selectedLine ? '선택한 대사 박 −1' : '재생헤드 −1'}
+          title="선택한 가사 또는 재생헤드 −1박"
           onClick={() => nudgeSelectedCue(-1)}
         >
           −1박
@@ -132,7 +124,7 @@ export function Timeline() {
         <button
           type="button"
           className="btn ghost"
-          title={selectedLine ? '선택한 대사 박 +1' : '재생헤드 +1'}
+          title="선택한 가사 또는 재생헤드 +1박"
           onClick={() => nudgeSelectedCue(1)}
         >
           +1박
@@ -140,10 +132,10 @@ export function Timeline() {
         <button
           type="button"
           className="btn ghost"
-          title="현재 박에 템포 변경점 추가"
+          title="현재 박에 템포 변경점"
           onClick={() => addTempoPoint(currentBeat, currentBpm, `BPM ${currentBpm}`)}
         >
-          템포 포인트
+          템포
         </button>
         <label className="check">
           <input
@@ -151,21 +143,18 @@ export function Timeline() {
             checked={snapToBeat}
             onChange={(e) => setSnapToBeat(e.target.checked)}
           />
-          박자 스냅
+          박 스냅
         </label>
         <span className="beat-readout">
           {formatBeat(currentBeat, work.beatsPerBar)}
           <small>
             {' '}
-            / BPM {currentBpm}
-            {currentNumber ? ` · ${currentNumber.title}` : ''} · 큐 {cues.length}
+            ♩={currentBpm}
+            {currentNumber ? ` · ${currentNumber.title}` : ''}
+            {drivenByAudio ? ' · 노래 연동' : ''}
           </small>
         </span>
       </div>
-
-      <p className="timeline-hint">
-        노래/재생을 틀고 배역만 옮기면 그 순간에 키프레임이 찍힙니다. 대본은 참고용이고, 대사 구간은 나중에 따로 맞춰도 됩니다.
-      </p>
 
       <div
         ref={trackRef}
@@ -204,7 +193,7 @@ export function Timeline() {
         <div className="timeline-bars">
           {Array.from({ length: Math.ceil(maxBeat / work.beatsPerBar) + 1 }, (_, i) => (
             <div key={i} className="bar-mark" style={{ left: pct(i * work.beatsPerBar) }}>
-              <span>{i + 1}</span>
+              {i % 4 === 0 && <span>{i + 1}</span>}
             </div>
           ))}
         </div>
@@ -264,49 +253,60 @@ export function Timeline() {
         <div className="playhead" style={{ left: pct(currentBeat) }} />
       </div>
 
-      <div className="kf-list cue-list">
-        <p className="list-label">찍힌 동선 키프레임</p>
-        {work.keyframes.length === 0 && (
-          <p className="empty">아직 없음 · 곡/재생 틀고 배역을 옮겨 보세요.</p>
+      <div className="kf-list-wrap">
+        <button
+          type="button"
+          className="list-toggle"
+          onClick={() => setListOpen((v) => !v)}
+          aria-expanded={listOpen}
+        >
+          키프레임 {work.keyframes.length}
+          <span>{listOpen ? '접기' : '펼치기'}</span>
+        </button>
+        {listOpen && (
+          <div className="kf-list cue-list">
+            {work.keyframes.length === 0 && (
+              <p className="empty">아직 없음 · 재생 후 배역을 드래그하세요.</p>
+            )}
+            {[...work.keyframes]
+              .sort((a, b) => a.beat - b.beat)
+              .map((kf) => (
+                <div
+                  key={kf.id}
+                  className={`kf-row has-blocking ${Math.abs(kf.beat - currentBeat) < 0.05 ? 'current' : ''}`}
+                  onClick={() => setCurrentBeat(kf.beat)}
+                >
+                  <label>
+                    박
+                    <input
+                      type="number"
+                      step={snapToBeat ? 1 : 0.25}
+                      min={0}
+                      value={Number(kf.beat.toFixed(2))}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) =>
+                        updateKeyframe(kf.id, { beat: Number(e.target.value) || 0 })
+                      }
+                    />
+                  </label>
+                  <span className="kf-cue">{kf.cueLabel || '(노래 큐)'}</span>
+                  <span className="tempo-chip">
+                    ♩={bpmAtBeat(kf.beat, work.tempoMap ?? [], work.bpm)}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn tiny danger ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteKeyframe(kf.id);
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              ))}
+          </div>
         )}
-        {[...work.keyframes]
-          .sort((a, b) => a.beat - b.beat)
-          .map((kf) => (
-            <div
-              key={kf.id}
-              className={`kf-row has-blocking ${Math.abs(kf.beat - currentBeat) < 0.05 ? 'current' : ''}`}
-              onClick={() => setCurrentBeat(kf.beat)}
-            >
-              <label>
-                박
-                <input
-                  type="number"
-                  step={snapToBeat ? 1 : 0.25}
-                  min={0}
-                  value={Number(kf.beat.toFixed(2))}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) =>
-                    updateKeyframe(kf.id, { beat: Number(e.target.value) || 0 })
-                  }
-                />
-              </label>
-              <span className="kf-cue">{kf.cueLabel || '(노래 큐)'}</span>
-              <span className="tempo-chip">
-                ♩={bpmAtBeat(kf.beat, work.tempoMap ?? [], work.bpm)}
-              </span>
-              <span className="block-status on">동선 ◆</span>
-              <button
-                type="button"
-                className="btn tiny danger"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteKeyframe(kf.id);
-                }}
-              >
-                삭제
-              </button>
-            </div>
-          ))}
       </div>
     </section>
   );
