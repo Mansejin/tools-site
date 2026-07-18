@@ -35,6 +35,11 @@ export function SettingsPanel() {
   const clearScript = useAppStore((s) => s.clearScript);
   const currentBeat = useAppStore((s) => s.currentBeat);
 
+  const reloadPrivateSeed = () => {
+    localStorage.removeItem('stagecue-unlocked-v1');
+    location.reload();
+  };
+
   const [newRole, setNewRole] = useState('');
   const [newWorkTitle, setNewWorkTitle] = useState('');
   const [newNumberTitle, setNewNumberTitle] = useState('');
@@ -114,6 +119,9 @@ export function SettingsPanel() {
             <div className="btn-row">
               <button type="button" className="btn ghost" onClick={() => importScript(SAMPLE_SCRIPT)}>
                 샘플 대본 불러오기
+              </button>
+              <button type="button" className="btn ghost" onClick={reloadPrivateSeed}>
+                비공개 시드 다시 열기
               </button>
               <button type="button" className="btn danger ghost" onClick={clearScript}>
                 대본 비우기

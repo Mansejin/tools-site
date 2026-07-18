@@ -1,17 +1,24 @@
+import { useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { ScriptPanel } from './components/ScriptPanel';
 import { StageCanvas } from './components/StageCanvas';
 import { RoleToggles } from './components/RoleToggles';
 import { Timeline } from './components/Timeline';
 import { SettingsPanel } from './components/settings/SettingsPanel';
+import { UnlockGate, isUnlocked } from './components/UnlockGate';
 import './App.css';
 
 export default function App() {
+  const [ready, setReady] = useState(() => isUnlocked());
   const work = useAppStore((s) => s.activeWork());
   const works = useAppStore((s) => s.works);
   const activeTab = useAppStore((s) => s.activeTab);
   const setTab = useAppStore((s) => s.setTab);
   const setActiveWork = useAppStore((s) => s.setActiveWork);
+
+  if (!ready) {
+    return <UnlockGate onDone={() => setReady(true)} />;
+  }
 
   return (
     <div className="app">
@@ -26,10 +33,7 @@ export default function App() {
 
         <label className="work-switch">
           <span>작품</span>
-          <select
-            value={work.id}
-            onChange={(e) => setActiveWork(e.target.value)}
-          >
+          <select value={work.id} onChange={(e) => setActiveWork(e.target.value)}>
             {works.map((w) => (
               <option key={w.id} value={w.id}>
                 {w.title}

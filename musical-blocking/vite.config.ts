@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// GitHub Pages path on mansejin.com
+const base = process.env.STAGECUE_BASE || '/toys/stagecue/';
+
 export default defineConfig({
+  base,
   plugins: [react()],
   server: {
     host: '0.0.0.0',
@@ -12,5 +16,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4173,
     strictPort: true,
+  },
+  build: {
+    outDir: '../toys/stagecue',
+    emptyOutDir: true,
   },
 });
