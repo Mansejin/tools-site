@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import type { ScriptLine, ScriptLineType } from '../types';
 
 const SPEAKER_RE =
-  /^(?:([A-Z가-힣][A-Z가-힣a-z\s·.\-]{0,24}?)\s*[:：]\s*)(.+)$/;
+  /^(?:([A-Z가-힣][A-Z가-힣a-z\s·.-]{0,24}?)\s*[:：]\s*)(.+)$/;
 const CUE_RE = /^(?:【|\[|\()(.+?)(?:】|\]|\))\s*$/;
 const LYRIC_MARK = /^(?:♪|♫|가사|LYRIC)/i;
 const DIR_MARK = /^(?:※|▶|STAGE|무대지시|#)/i;
