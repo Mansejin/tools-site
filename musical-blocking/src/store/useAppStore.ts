@@ -28,6 +28,7 @@ import {
   scaleScriptBeats,
   setLineDuration,
 } from '../lib/cues';
+import { nearestKeyframe } from '../lib/interpolation';
 import { clampBpm, numberColorAt } from '../lib/tempoMap';
 
 function defaultStage(): StageConfig {
@@ -131,6 +132,9 @@ interface AppState {
   currentBeat: number;
   isPlaying: boolean;
   snapToBeat: boolean;
+  /** When true, audio transport drives playhead (song-based capture). */
+  audioFollow: boolean;
+  audioFileName: string | null;
   selectedRoleId: string | null;
 
   activeWork: () => MusicalWork;
@@ -177,8 +181,11 @@ interface AppState {
   setCurrentBeat: (beat: number, opts?: { syncSelection?: boolean }) => void;
   setPlaying: (playing: boolean) => void;
   setSnapToBeat: (snap: boolean) => void;
+  setAudioFollow: (on: boolean) => void;
+  setAudioFileName: (name: string | null) => void;
 
-  moveRoleAtCurrentCue: (roleId: string, pos: Position) => void;
+  /** Stamp/update a keyframe at playhead (or explicit beat). No dialogue click required. */
+  moveRoleAtCurrentCue: (roleId: string, pos: Position, atBeat?: number) => void;
   updateKeyframe: (id: string, patch: Partial<Keyframe>) => void;
   deleteKeyframe: (id: string) => void;
   deleteBlockingForLine: (lineId: string) => void;
@@ -210,6 +217,8 @@ export const useAppStore = create<AppState>()(
       currentBeat: 0,
       isPlaying: false,
       snapToBeat: true,
+      audioFollow: false,
+      audioFileName: null,
       selectedRoleId: null,
 
       activeWork: () => {
@@ -778,45 +787,44 @@ export const useAppStore = create<AppState>()(
 
       setPlaying: (playing) => set({ isPlaying: playing }),
       setSnapToBeat: (snap) => set({ snapToBeat: snap }),
+      setAudioFollow: (on) => set({ audioFollow: on }),
+      setAudioFileName: (name) => set({ audioFileName: name }),
 
-      moveRoleAtCurrentCue: (roleId, pos) => {
+      moveRoleAtCurrentCue: (roleId, pos, atBeat) => {
         const s = get();
         const work = s.activeWork();
-        const lineId = s.selectedLineIds[0];
-        const line = lineId
-          ? work.script.find((l) => l.id === lineId)
-          : lineAtBeat(work.script, s.currentBeat);
 
-        let beat = line?.beat ?? s.currentBeat;
+        // Playhead-first: dialogue selection is optional (label only)
+        let beat = atBeat ?? s.currentBeat;
         if (s.snapToBeat) beat = Math.round(beat);
 
-        const resolvedLineId = line?.id;
-        const cueLabel = formatCueLabel(line, s.charSelection?.text);
+        const nearLine =
+          s.selectedLineIds[0]
+            ? work.script.find((l) => l.id === s.selectedLineIds[0])
+            : lineAtBeat(work.script, beat);
+        const cueLabel = formatCueLabel(nearLine, s.charSelection?.text);
+        const cueLineId = nearLine?.id;
 
-        // Prefer keyframe bound to this script line
-        const byLine = resolvedLineId
-          ? keyframeForLine(work.keyframes, resolvedLineId)
-          : undefined;
+        // Prefer existing keyframe at this beat; else one glued to same cue line
+        const atBeatKf = nearestKeyframe(work.keyframes, beat, s.snapToBeat ? 0.51 : 0.2);
+        const byLine =
+          !atBeatKf && cueLineId
+            ? keyframeForLine(work.keyframes, cueLineId)
+            : undefined;
+        const existing = atBeatKf ?? byLine;
 
         set({
           works: mapActive(s.works, s.activeWorkId, (w) => {
-            const script = resolvedLineId
-              ? w.script.map((l) =>
-                  l.id === resolvedLineId ? { ...l, beat } : l,
-                )
-              : w.script;
-
-            if (byLine) {
+            if (existing) {
               return {
                 ...w,
-                script,
                 keyframes: w.keyframes.map((kf) =>
-                  kf.id === byLine.id
+                  kf.id === existing.id
                     ? {
                         ...kf,
                         beat,
                         positions: { ...kf.positions, [roleId]: pos },
-                        cueLineId: resolvedLineId ?? kf.cueLineId,
+                        cueLineId: cueLineId ?? kf.cueLineId,
                         cueLabel: cueLabel || kf.cueLabel,
                         charSelection: s.charSelection ?? kf.charSelection,
                       }
@@ -830,17 +838,15 @@ export const useAppStore = create<AppState>()(
             const kf: Keyframe = {
               id: uuid(),
               beat,
-              cueLineId: resolvedLineId,
-              cueLabel,
+              cueLineId,
+              cueLabel: cueLabel || `박 ${beat}`,
               charSelection: s.charSelection ?? undefined,
               positions: seed,
             };
-            return { ...w, script, keyframes: [...w.keyframes, kf] };
+            return { ...w, keyframes: [...w.keyframes, kf] };
           }),
-          currentBeat: beat,
-          selectedLineIds: resolvedLineId
-            ? [resolvedLineId]
-            : s.selectedLineIds,
+          // Keep playhead where the user stamped (don't jump away while listening)
+          currentBeat: atBeat != null ? s.currentBeat : beat,
         });
       },
 

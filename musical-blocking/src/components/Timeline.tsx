@@ -25,8 +25,11 @@ export function Timeline() {
   const selectLine = useAppStore((s) => s.selectLine);
   const setLineBeat = useAppStore((s) => s.setLineBeat);
   const nudgeSelectedCue = useAppStore((s) => s.nudgeSelectedCue);
-  const deleteBlockingForLine = useAppStore((s) => s.deleteBlockingForLine);
+  const deleteKeyframe = useAppStore((s) => s.deleteKeyframe);
+  const updateKeyframe = useAppStore((s) => s.updateKeyframe);
   const addTempoPoint = useAppStore((s) => s.addTempoPoint);
+  const audioFollow = useAppStore((s) => s.audioFollow);
+  const audioFileName = useAppStore((s) => s.audioFileName);
 
   const cues = useMemo(() => timedScriptLines(work.script), [work.script]);
   const maxBeat = useMemo(
@@ -36,8 +39,9 @@ export function Timeline() {
         currentBeat + work.beatsPerBar,
         ...(work.tempoMap ?? []).map((p) => p.beat + work.beatsPerBar),
         ...(work.numbers ?? []).map((n) => n.startBeat + work.beatsPerBar),
+        ...(work.keyframes ?? []).map((k) => k.beat + work.beatsPerBar),
       ),
-    [work.script, work.beatsPerBar, work.tempoMap, work.numbers, currentBeat],
+    [work.script, work.beatsPerBar, work.tempoMap, work.numbers, work.keyframes, currentBeat],
   );
 
   const currentBpm = bpmAtBeat(currentBeat, work.tempoMap ?? [], work.bpm);
@@ -46,8 +50,10 @@ export function Timeline() {
   const [draggingLineId, setDraggingLineId] = useState<string | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
+  // Beat clock only when NOT following uploaded audio (audio drives playhead then)
   useEffect(() => {
     if (!isPlaying) return;
+    if (audioFollow && audioFileName) return;
     let frame = 0;
     let prev: number | null = null;
 
@@ -73,7 +79,7 @@ export function Timeline() {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [isPlaying, maxBeat, work.tempoMap, work.bpm]);
+  }, [isPlaying, maxBeat, work.tempoMap, work.bpm, audioFollow, audioFileName]);
 
   useEffect(() => {
     if (!draggingLineId) return;
@@ -158,7 +164,7 @@ export function Timeline() {
       </div>
 
       <p className="timeline-hint">
-        동선은 박 기준으로 유지됩니다. 넘버·BPM이 바뀌어도 키프레임은 그대로이고, 재생 속도만 템포 맵을 따릅니다.
+        노래/재생을 틀고 배역만 옮기면 그 순간에 키프레임이 찍힙니다. 대본은 참고용이고, 대사 구간은 나중에 따로 맞춰도 됩니다.
       </p>
 
       <div
@@ -239,25 +245,37 @@ export function Timeline() {
           );
         })}
 
+        {[...work.keyframes]
+          .sort((a, b) => a.beat - b.beat)
+          .map((kf) => (
+            <button
+              key={`kf-${kf.id}`}
+              type="button"
+              className={`kf-diamond ${Math.abs(kf.beat - currentBeat) < 0.05 ? 'active' : ''}`}
+              style={{ left: pct(kf.beat) }}
+              title={kf.cueLabel || `박 ${kf.beat}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentBeat(kf.beat);
+              }}
+            />
+          ))}
+
         <div className="playhead" style={{ left: pct(currentBeat) }} />
       </div>
 
       <div className="kf-list cue-list">
-        {cues.length === 0 && (
-          <p className="empty">대본이 있으면 여기에 큐가 나타납니다.</p>
+        <p className="list-label">찍힌 동선 키프레임</p>
+        {work.keyframes.length === 0 && (
+          <p className="empty">아직 없음 · 곡/재생 틀고 배역을 옮겨 보세요.</p>
         )}
-        {cues.map((line) => {
-          const kf = keyframeForLine(work.keyframes, line.id);
-          const active = selectedId === line.id;
-          const lineBpm =
-            line.beat != null
-              ? bpmAtBeat(line.beat, work.tempoMap ?? [], work.bpm)
-              : work.bpm;
-          return (
+        {[...work.keyframes]
+          .sort((a, b) => a.beat - b.beat)
+          .map((kf) => (
             <div
-              key={line.id}
-              className={`kf-row ${active ? 'current' : ''} ${kf ? 'has-blocking' : ''}`}
-              onClick={() => selectLine(line.id)}
+              key={kf.id}
+              className={`kf-row has-blocking ${Math.abs(kf.beat - currentBeat) < 0.05 ? 'current' : ''}`}
+              onClick={() => setCurrentBeat(kf.beat)}
             >
               <label>
                 박
@@ -265,36 +283,30 @@ export function Timeline() {
                   type="number"
                   step={snapToBeat ? 1 : 0.25}
                   min={0}
-                  value={Number((line.beat ?? 0).toFixed(2))}
+                  value={Number(kf.beat.toFixed(2))}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) =>
-                    setLineBeat(line.id, Number(e.target.value) || 0)
+                    updateKeyframe(kf.id, { beat: Number(e.target.value) || 0 })
                   }
                 />
               </label>
-              <span className="kf-cue">
-                {line.speaker ? `${line.speaker}: ` : ''}
-                {line.text}
+              <span className="kf-cue">{kf.cueLabel || '(노래 큐)'}</span>
+              <span className="tempo-chip">
+                ♩={bpmAtBeat(kf.beat, work.tempoMap ?? [], work.bpm)}
               </span>
-              <span className="tempo-chip">♩={lineBpm}</span>
-              <span className={`block-status ${kf ? 'on' : 'off'}`}>
-                {kf ? '동선 ◆' : '동선 없음'}
-              </span>
-              {kf && (
-                <button
-                  type="button"
-                  className="btn tiny danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteBlockingForLine(line.id);
-                  }}
-                >
-                  동선 삭제
-                </button>
-              )}
+              <span className="block-status on">동선 ◆</span>
+              <button
+                type="button"
+                className="btn tiny danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteKeyframe(kf.id);
+                }}
+              >
+                삭제
+              </button>
             </div>
-          );
-        })}
+          ))}
       </div>
     </section>
   );

@@ -57,6 +57,40 @@ export function advanceBeatByMs(
   return beat;
 }
 
+/** Wall-clock ms from beat 0 → target beat (piecewise tempo). */
+export function msAtBeat(
+  beat: number,
+  tempoMap: TempoPoint[],
+  defaultBpm: number,
+): number {
+  if (beat <= 0) return 0;
+  const sorted = [...tempoMap].sort((a, b) => a.beat - b.beat);
+  let t = 0;
+  let cursor = 0;
+  let bpm = defaultBpm;
+  const points = sorted.filter((p) => p.beat > 0);
+
+  for (const point of points) {
+    if (point.beat >= beat) break;
+    const span = point.beat - cursor;
+    t += span * (60_000 / bpm);
+    cursor = point.beat;
+    bpm = point.bpm;
+  }
+  t += (beat - cursor) * (60_000 / bpm);
+  return t;
+}
+
+/** Inverse: audio/timeline seconds → musical beat. */
+export function beatAtMs(
+  ms: number,
+  tempoMap: TempoPoint[],
+  defaultBpm: number,
+): number {
+  if (ms <= 0) return 0;
+  return advanceBeatByMs(0, ms, tempoMap, defaultBpm);
+}
+
 export function numberAtBeat(
   beat: number,
   numbers: MusicalNumber[],

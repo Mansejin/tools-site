@@ -13,10 +13,14 @@ export function StageCanvas() {
   const selectedRoleId = useAppStore((s) => s.selectedRoleId);
   const setSelectedRole = useAppStore((s) => s.setSelectedRole);
   const moveRoleAtCurrentCue = useAppStore((s) => s.moveRoleAtCurrentCue);
-  const selectedLineIds = useAppStore((s) => s.selectedLineIds);
+  const isPlaying = useAppStore((s) => s.isPlaying);
+  const snapToBeat = useAppStore((s) => s.snapToBeat);
+  const audioFollow = useAppStore((s) => s.audioFollow);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  /** Freeze musical time for one drag gesture so playback can keep running. */
+  const stampBeatRef = useRef<number | null>(null);
 
   const roleIds = work.roles.map((r) => r.id);
   const positions = positionsAtBeat(work.keyframes, currentBeat, roleIds);
@@ -35,9 +39,14 @@ export function StageCanvas() {
 
     const onMove = (e: PointerEvent) => {
       const pos = pointerToPos(e.clientX, e.clientY);
-      if (pos) moveRoleAtCurrentCue(dragging, pos);
+      if (!pos) return;
+      const stamp = stampBeatRef.current ?? useAppStore.getState().currentBeat;
+      moveRoleAtCurrentCue(dragging, pos, stamp);
     };
-    const onUp = () => setDragging(null);
+    const onUp = () => {
+      setDragging(null);
+      stampBeatRef.current = null;
+    };
 
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -47,19 +56,17 @@ export function StageCanvas() {
     };
   }, [dragging, moveRoleAtCurrentCue, pointerToPos]);
 
-  const aspect = work.stage.widthM / work.stage.depthM;
-  const hasCue = selectedLineIds.length > 0;
-
   return (
     <div className="stage-wrap">
       <div className="stage-meta">
         <span>
           무대 {work.stage.widthM}m × {work.stage.depthM}m
         </span>
-        <span className={hasCue ? 'hint ok' : 'hint'}>
-          {hasCue
-            ? '선택한 대사(큐)에 동선이 저장됩니다 — 타임라인 박과 자동 연동'
-            : '대본에서 대사를 고르면 타임라인이 그 박으로 이동합니다'}
+        <span className="hint ok">
+          {isPlaying || audioFollow
+            ? '재생 중 · 배역을 옮기면 잡은 순간에 키프레임 저장'
+            : '배역을 드래그하면 현재 재생헤드 위치에 키프레임 저장 (대사 클릭 불필요)'}
+          {snapToBeat ? ' · 박 스냅 ON' : ''}
         </span>
       </div>
 
@@ -68,7 +75,7 @@ export function StageCanvas() {
         <div
           ref={stageRef}
           className="stage-floor"
-          style={{ aspectRatio: `${aspect}` }}
+          style={{ aspectRatio: `${work.stage.widthM / work.stage.depthM}` }}
           onPointerDown={(e) => {
             if (e.target === e.currentTarget) setSelectedRole(null);
           }}
@@ -102,11 +109,15 @@ export function StageCanvas() {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    const beat = useAppStore.getState().currentBeat;
+                    stampBeatRef.current = useAppStore.getState().snapToBeat
+                      ? Math.round(beat)
+                      : beat;
                     setSelectedRole(role.id);
                     setDragging(role.id);
                     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
                   }}
-                  title={`${role.name} — 드래그하여 위치 지정`}
+                  title={`${role.name} — 드래그하면 현재 순간에 동선 저장`}
                 >
                   <span className="actor-dot">{role.shortName}</span>
                   <span className="actor-name">{role.name}</span>
