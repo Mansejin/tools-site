@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { SAMPLE_SCRIPT } from '../../lib/scriptParser';
+import { recoverKeyframesInto, snapshotCurrentState } from '../../lib/recovery';
 import type { SettingsSection } from '../../types';
 
 const SECTIONS: { id: SettingsSection; label: string }[] = [
@@ -38,10 +39,28 @@ export function SettingsPanel() {
   const currentBeat = useAppStore((s) => s.currentBeat);
 
   const reloadPrivateSeed = () => {
+    snapshotCurrentState('before-reopen-seed');
     localStorage.removeItem('stagecue-unlocked-v1');
     localStorage.removeItem('stagecue-unlocked-v2');
     localStorage.removeItem('stagecue-unlocked-v3');
     location.reload();
+  };
+
+  const tryRecoverKeyframes = () => {
+    const current = useAppStore.getState().activeWork();
+    const { work, restored, sourceTitle } = recoverKeyframesInto(current);
+    if (restored <= 0) {
+      alert(
+        '복구할 키프레임을 찾지 못했습니다.\n(다른 기기/시크릿 창이면 데이터가 없을 수 있어요)',
+      );
+      return;
+    }
+    useAppStore.setState((s) => ({
+      works: s.works.map((w) => (w.id === current.id ? work : w)),
+    }));
+    alert(
+      `키프레임 ${restored}개를 복구했습니다.${sourceTitle ? `\n출처: ${sourceTitle}` : ''}`,
+    );
   };
 
   const [newRole, setNewRole] = useState('');
@@ -133,8 +152,15 @@ export function SettingsPanel() {
             </div>
 
             <div className="divider" />
-            <h3>데이터 백업</h3>
+            <h3>데이터 백업 · 복구</h3>
+            <p className="help">
+              시드를 다시 열면 대본이 바뀌어도, 브라우저에 남은 이전 키프레임을 찾아 붙일 수 있습니다.
+              평소에도 JSON으로 자주 내보내 두세요.
+            </p>
             <div className="btn-row">
+              <button type="button" className="btn" onClick={tryRecoverKeyframes}>
+                키프레임 복구 시도
+              </button>
               <button
                 type="button"
                 className="btn ghost"

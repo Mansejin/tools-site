@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { ScriptPanel } from './components/ScriptPanel';
 import { StageCanvas } from './components/StageCanvas';
@@ -6,6 +6,7 @@ import { RoleToggles } from './components/RoleToggles';
 import { Timeline } from './components/Timeline';
 import { SettingsPanel } from './components/settings/SettingsPanel';
 import { UnlockGate, isUnlocked } from './components/UnlockGate';
+import { snapshotCurrentState } from './lib/recovery';
 import './App.css';
 
 export default function App() {
@@ -15,6 +16,18 @@ export default function App() {
   const activeTab = useAppStore((s) => s.activeTab);
   const setTab = useAppStore((s) => s.setTab);
   const setActiveWork = useAppStore((s) => s.setActiveWork);
+  const keyframeCount = work.keyframes.length;
+
+  // Keep rolling backups while keyframes exist
+  useEffect(() => {
+    snapshotCurrentState('app-boot');
+  }, []);
+
+  useEffect(() => {
+    if (!ready || keyframeCount === 0) return;
+    const t = window.setTimeout(() => snapshotCurrentState('auto-keyframes'), 800);
+    return () => window.clearTimeout(t);
+  }, [ready, keyframeCount, work.updatedAt]);
 
   if (!ready) {
     return <UnlockGate onDone={() => setReady(true)} />;

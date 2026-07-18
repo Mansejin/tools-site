@@ -50,6 +50,31 @@
   font-size: 0.85rem;
 }
 
+.unlock-info {
+  margin: 0;
+  color: var(--ok);
+  font-size: 0.85rem;
+}
+
+.unlock-recover {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+  background: rgba(111, 158, 122, 0.12);
+  border: 1px solid rgba(111, 158, 122, 0.35);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+
+.unlock-recover strong {
+  color: var(--ink);
+}
+
+.unlock-recover em {
+  font-style: normal;
+  color: var(--accent-hot);
+}
+
 .app-header {
   display: flex;
   align-items: center;
