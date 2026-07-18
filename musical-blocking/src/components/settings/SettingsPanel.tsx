@@ -37,6 +37,7 @@ export function SettingsPanel() {
 
   const reloadPrivateSeed = () => {
     localStorage.removeItem('stagecue-unlocked-v1');
+    localStorage.removeItem('stagecue-unlocked-v2');
     location.reload();
   };
 

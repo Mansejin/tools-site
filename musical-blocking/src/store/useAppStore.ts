@@ -32,14 +32,13 @@ function defaultStage(): StageConfig {
   return { widthM: 12, depthM: 8, showGrid: true, gridDivisions: 8 };
 }
 
+/** Real cast only. 배무룡=월직 빙의, 화음=기존 배역이 담당. */
 const DEFAULT_ROLE_NAMES = [
   '홍련',
   '바리',
   '강림',
   '월직',
   '일직',
-  '배무룡',
-  '화음',
 ] as const;
 
 function defaultRoles(): Role[] {

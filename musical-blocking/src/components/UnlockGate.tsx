@@ -6,7 +6,7 @@ import { roleColorAt, shortNameFrom } from '../lib/colors';
 import { useAppStore } from '../store/useAppStore';
 import type { MusicalWork, Role } from '../types';
 
-const UNLOCK_FLAG = 'stagecue-unlocked-v1';
+const UNLOCK_FLAG = 'stagecue-unlocked-v2';
 
 export function isUnlocked(): boolean {
   return localStorage.getItem(UNLOCK_FLAG) === '1';
