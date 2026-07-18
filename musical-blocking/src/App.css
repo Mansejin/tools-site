@@ -251,16 +251,61 @@
   height: 0.65rem;
 }
 
+.sticky-hint {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .script-line {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.35rem 0.6rem;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 0.35rem 0.55rem;
   padding: 0.45rem 0.65rem;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
   margin: 0.15rem 0;
   align-items: baseline;
+}
+
+.script-line.has-kf {
+  background: rgba(212, 162, 76, 0.06);
+}
+
+.beat-chip {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--accent-hot);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  min-width: 2.4rem;
+  text-align: center;
+}
+
+.script-line.selected .beat-chip {
+  border-color: var(--accent);
+  background: rgba(212, 162, 76, 0.2);
+}
+
+.beat-edit {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  margin-top: 0.15rem;
+}
+
+.beat-edit input {
+  width: 4.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
 }
 
 .script-line:hover {
@@ -617,18 +662,41 @@
   font-family: var(--font-mono);
 }
 
-.kf-diamond {
+.timeline-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+}
+
+.cue-mark {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
-  border: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 2px solid var(--ink-muted);
   padding: 0;
-  background: var(--accent);
-  transform: rotate(45deg);
+  background: var(--bg-elev);
+  border-radius: 50%;
   box-shadow: 0 0 0 2px var(--bg);
   z-index: 2;
+  cursor: grab;
+}
+
+.cue-mark.blocked {
+  background: var(--accent);
+  border-color: var(--accent-hot);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.cue-mark.active {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 10px rgba(212, 162, 76, 0.45);
+  z-index: 4;
 }
 
 .playhead {
@@ -653,7 +721,7 @@
 
 .kf-row {
   display: grid;
-  grid-template-columns: 5.5rem 1fr 1fr auto;
+  grid-template-columns: 5.5rem 1fr auto auto;
   gap: 0.5rem;
   align-items: center;
   padding: 0.4rem 0.55rem;
@@ -666,6 +734,28 @@
 .kf-row.current {
   border-color: rgba(212, 162, 76, 0.45);
   background: rgba(212, 162, 76, 0.08);
+}
+
+.kf-row.has-blocking .kf-cue {
+  color: var(--ink);
+}
+
+.block-status {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.block-status.on {
+  color: var(--accent-hot);
+}
+
+.block-status.off {
+  color: var(--ink-dim);
+}
+
+.cue-list {
+  max-height: 220px;
 }
 
 .kf-row label {

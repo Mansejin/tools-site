@@ -13,7 +13,12 @@ import type {
 } from '../types';
 import { roleColorAt, shortNameFrom } from '../lib/colors';
 import { formatCueLabel, parseScript, SAMPLE_SCRIPT } from '../lib/scriptParser';
-import { nearestKeyframe } from '../lib/interpolation';
+import {
+  assignBeatsToScript,
+  ensureScriptBeats,
+  keyframeForLine,
+  lineAtBeat,
+} from '../lib/cues';
 
 function defaultStage(): StageConfig {
   return { widthM: 12, depthM: 8, showGrid: true, gridDivisions: 8 };
@@ -40,6 +45,22 @@ function createWork(title = '새 작품'): MusicalWork {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function seedPositions(work: MusicalWork, beat: number): Record<string, Position> {
+  const seed: Record<string, Position> = {};
+  work.roles.forEach((role, i) => {
+    const near = [...work.keyframes]
+      .sort((a, b) => Math.abs(a.beat - beat) - Math.abs(b.beat - beat))
+      .find((kf) => kf.positions[role.id]);
+    seed[role.id] = near
+      ? { ...near.positions[role.id] }
+      : {
+          x: 0.2 + (i % 5) * 0.15,
+          y: 0.55 + Math.floor(i / 5) * 0.15,
+        };
+  });
+  return seed;
 }
 
 interface AppState {
@@ -76,18 +97,21 @@ interface AppState {
 
   importScript: (raw: string) => void;
   clearScript: () => void;
+  retimeScript: () => void;
   selectLine: (lineId: string, multi?: boolean) => void;
   clearSelection: () => void;
   setCharSelection: (sel: CharSelection | null) => void;
+  setLineBeat: (lineId: string, beat: number) => void;
+  nudgeSelectedCue: (delta: number) => void;
 
-  setCurrentBeat: (beat: number) => void;
+  setCurrentBeat: (beat: number, opts?: { syncSelection?: boolean }) => void;
   setPlaying: (playing: boolean) => void;
   setSnapToBeat: (snap: boolean) => void;
 
   moveRoleAtCurrentCue: (roleId: string, pos: Position) => void;
   updateKeyframe: (id: string, patch: Partial<Keyframe>) => void;
   deleteKeyframe: (id: string) => void;
-  addKeyframeAtBeat: (beat: number) => void;
+  deleteBlockingForLine: (lineId: string) => void;
 }
 
 function touch(work: MusicalWork): MusicalWork {
@@ -176,15 +200,19 @@ export const useAppStore = create<AppState>()(
           script: src.script.map((l) => ({ ...l, id: uuid() })),
           keyframes: src.keyframes.map((k) => ({ ...k, id: uuid() })),
         };
-        // Remap role ids in keyframes
         const roleMap = new Map(src.roles.map((r, i) => [r.id, copy.roles[i].id]));
+        const lineMap = new Map(src.script.map((l, i) => [l.id, copy.script[i].id]));
         copy.keyframes = copy.keyframes.map((kf) => {
           const positions: Record<string, Position> = {};
           for (const [oldId, pos] of Object.entries(kf.positions)) {
             const newId = roleMap.get(oldId);
             if (newId) positions[newId] = pos;
           }
-          return { ...kf, positions };
+          return {
+            ...kf,
+            positions,
+            cueLineId: kf.cueLineId ? lineMap.get(kf.cueLineId) : kf.cueLineId,
+          };
         });
         set((s) => ({
           works: [...s.works, copy],
@@ -281,9 +309,11 @@ export const useAppStore = create<AppState>()(
           works: mapActive(s.works, s.activeWorkId, (w) => ({
             ...w,
             script: parseScript(raw),
+            keyframes: [],
           })),
           selectedLineIds: [],
           charSelection: null,
+          currentBeat: 0,
         })),
 
       clearScript: () =>
@@ -291,13 +321,40 @@ export const useAppStore = create<AppState>()(
           works: mapActive(s.works, s.activeWorkId, (w) => ({
             ...w,
             script: [],
+            keyframes: [],
           })),
           selectedLineIds: [],
           charSelection: null,
+          currentBeat: 0,
+        })),
+
+      retimeScript: () =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const script = assignBeatsToScript(w.script);
+            const beatByOld = new Map(
+              w.script.filter((l) => l.beat != null).map((l) => [l.id, l.beat as number]),
+            );
+            const keyframes = w.keyframes.map((kf) => {
+              if (!kf.cueLineId) return kf;
+              const line = script.find((l) => l.id === kf.cueLineId);
+              if (!line || line.beat == null) return kf;
+              // Keep relative offset if keyframe wasn't exactly on old beat
+              const oldBeat = beatByOld.get(kf.cueLineId);
+              const offset =
+                oldBeat != null ? kf.beat - oldBeat : 0;
+              return { ...kf, beat: Math.max(0, line.beat + offset) };
+            });
+            return { ...w, script, keyframes };
+          }),
         })),
 
       selectLine: (lineId, multi = false) =>
         set((s) => {
+          const work = s.activeWork();
+          const line = work.script.find((l) => l.id === lineId);
+          const beat = line?.beat ?? s.currentBeat;
+
           if (multi) {
             const has = s.selectedLineIds.includes(lineId);
             return {
@@ -305,49 +362,120 @@ export const useAppStore = create<AppState>()(
                 ? s.selectedLineIds.filter((id) => id !== lineId)
                 : [...s.selectedLineIds, lineId],
               charSelection: null,
+              currentBeat: has ? s.currentBeat : beat,
+              isPlaying: false,
             };
           }
-          return { selectedLineIds: [lineId], charSelection: null };
+          return {
+            selectedLineIds: [lineId],
+            charSelection: null,
+            currentBeat: beat,
+            isPlaying: false,
+          };
         }),
 
       clearSelection: () => set({ selectedLineIds: [], charSelection: null }),
 
-      setCharSelection: (sel) =>
+      setCharSelection: (sel) => {
+        const work = get().activeWork();
+        const line = sel ? work.script.find((l) => l.id === sel.lineId) : undefined;
         set({
           charSelection: sel,
           selectedLineIds: sel ? [sel.lineId] : [],
-        }),
+          currentBeat: line?.beat ?? get().currentBeat,
+          isPlaying: false,
+        });
+      },
 
-      setCurrentBeat: (beat) => set({ currentBeat: Math.max(0, beat) }),
+      setLineBeat: (lineId, beat) => {
+        const s = get();
+        let nextBeat = Math.max(0, beat);
+        if (s.snapToBeat) nextBeat = Math.round(nextBeat);
+
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
+            ...w,
+            script: w.script.map((l) =>
+              l.id === lineId ? { ...l, beat: nextBeat } : l,
+            ),
+            keyframes: w.keyframes.map((kf) =>
+              kf.cueLineId === lineId ? { ...kf, beat: nextBeat } : kf,
+            ),
+          })),
+          currentBeat:
+            s.selectedLineIds[0] === lineId ? nextBeat : s.currentBeat,
+        });
+      },
+
+      nudgeSelectedCue: (delta) => {
+        const s = get();
+        const lineId = s.selectedLineIds[0];
+        if (!lineId) {
+          s.setCurrentBeat(Math.max(0, s.currentBeat + delta));
+          return;
+        }
+        const line = s.activeWork().script.find((l) => l.id === lineId);
+        const base = line?.beat ?? s.currentBeat;
+        s.setLineBeat(lineId, base + delta);
+      },
+
+      setCurrentBeat: (beat, opts) => {
+        const next = Math.max(0, beat);
+        const sync = opts?.syncSelection ?? false;
+        if (!sync) {
+          set({ currentBeat: next });
+          return;
+        }
+        const work = get().activeWork();
+        const line = lineAtBeat(work.script, next);
+        set({
+          currentBeat: next,
+          selectedLineIds: line ? [line.id] : get().selectedLineIds,
+          charSelection: null,
+        });
+      },
+
       setPlaying: (playing) => set({ isPlaying: playing }),
       setSnapToBeat: (snap) => set({ snapToBeat: snap }),
 
       moveRoleAtCurrentCue: (roleId, pos) => {
         const s = get();
         const work = s.activeWork();
-        let beat = s.currentBeat;
+        const lineId = s.selectedLineIds[0];
+        const line = lineId
+          ? work.script.find((l) => l.id === lineId)
+          : lineAtBeat(work.script, s.currentBeat);
+
+        let beat = line?.beat ?? s.currentBeat;
         if (s.snapToBeat) beat = Math.round(beat);
 
-        const lineId = s.selectedLineIds[0];
-        const line = work.script.find((l) => l.id === lineId);
+        const resolvedLineId = line?.id;
         const cueLabel = formatCueLabel(line, s.charSelection?.text);
 
-        // If a line has an assigned beat, prefer that
-        if (line?.beat != null) beat = line.beat;
-
-        const existing = nearestKeyframe(work.keyframes, beat, 0.01);
+        // Prefer keyframe bound to this script line
+        const byLine = resolvedLineId
+          ? keyframeForLine(work.keyframes, resolvedLineId)
+          : undefined;
 
         set({
           works: mapActive(s.works, s.activeWorkId, (w) => {
-            if (existing) {
+            const script = resolvedLineId
+              ? w.script.map((l) =>
+                  l.id === resolvedLineId ? { ...l, beat } : l,
+                )
+              : w.script;
+
+            if (byLine) {
               return {
                 ...w,
+                script,
                 keyframes: w.keyframes.map((kf) =>
-                  kf.id === existing.id
+                  kf.id === byLine.id
                     ? {
                         ...kf,
+                        beat,
                         positions: { ...kf.positions, [roleId]: pos },
-                        cueLineId: lineId ?? kf.cueLineId,
+                        cueLineId: resolvedLineId ?? kf.cueLineId,
                         cueLabel: cueLabel || kf.cueLabel,
                         charSelection: s.charSelection ?? kf.charSelection,
                       }
@@ -356,43 +484,41 @@ export const useAppStore = create<AppState>()(
               };
             }
 
-            // Seed positions from neighbors / defaults
-            const seed: Record<string, Position> = {};
-            for (const role of w.roles) {
-              const fromExisting = [...w.keyframes]
-                .sort((a, b) => Math.abs(a.beat - beat) - Math.abs(b.beat - beat))
-                .find((kf) => kf.positions[role.id]);
-              seed[role.id] = fromExisting
-                ? { ...fromExisting.positions[role.id] }
-                : {
-                    x: 0.2 + (w.roles.indexOf(role) % 5) * 0.15,
-                    y: 0.55 + Math.floor(w.roles.indexOf(role) / 5) * 0.15,
-                  };
-            }
+            const seed = seedPositions(w, beat);
             seed[roleId] = pos;
-
             const kf: Keyframe = {
               id: uuid(),
               beat,
-              cueLineId: lineId,
+              cueLineId: resolvedLineId,
               cueLabel,
               charSelection: s.charSelection ?? undefined,
               positions: seed,
             };
-            return { ...w, keyframes: [...w.keyframes, kf] };
+            return { ...w, script, keyframes: [...w.keyframes, kf] };
           }),
           currentBeat: beat,
+          selectedLineIds: resolvedLineId
+            ? [resolvedLineId]
+            : s.selectedLineIds,
         });
       },
 
       updateKeyframe: (id, patch) =>
         set((s) => ({
-          works: mapActive(s.works, s.activeWorkId, (w) => ({
-            ...w,
-            keyframes: w.keyframes.map((kf) =>
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const target = w.keyframes.find((kf) => kf.id === id);
+            const keyframes = w.keyframes.map((kf) =>
               kf.id === id ? { ...kf, ...patch } : kf,
-            ),
-          })),
+            );
+            // Keep script line beat in sync when keyframe beat changes
+            let script = w.script;
+            if (target?.cueLineId && patch.beat != null) {
+              script = w.script.map((l) =>
+                l.id === target.cueLineId ? { ...l, beat: patch.beat } : l,
+              );
+            }
+            return { ...w, keyframes, script };
+          }),
         })),
 
       deleteKeyframe: (id) =>
@@ -403,40 +529,35 @@ export const useAppStore = create<AppState>()(
           })),
         })),
 
-      addKeyframeAtBeat: (beat) => {
-        const s = get();
-        const work = s.activeWork();
-        const b = s.snapToBeat ? Math.round(beat) : beat;
-        if (nearestKeyframe(work.keyframes, b, 0.01)) {
-          set({ currentBeat: b });
-          return;
-        }
-        const positions: Record<string, Position> = {};
-        work.roles.forEach((role, i) => {
-          const near = [...work.keyframes]
-            .sort((a, c) => Math.abs(a.beat - b) - Math.abs(c.beat - b))
-            .find((kf) => kf.positions[role.id]);
-          positions[role.id] = near
-            ? { ...near.positions[role.id] }
-            : { x: 0.2 + (i % 5) * 0.15, y: 0.55 };
-        });
-        const kf: Keyframe = { id: uuid(), beat: b, positions };
-        set((st) => ({
-          works: mapActive(st.works, st.activeWorkId, (w) => ({
+      deleteBlockingForLine: (lineId) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => ({
             ...w,
-            keyframes: [...w.keyframes, kf],
+            keyframes: w.keyframes.filter((kf) => kf.cueLineId !== lineId),
           })),
-          currentBeat: b,
-        }));
-      },
+        })),
     }),
     {
-      name: 'musical-blocking-v1',
+      name: 'musical-blocking-v2',
       partialize: (s) => ({
         works: s.works,
         activeWorkId: s.activeWorkId,
         snapToBeat: s.snapToBeat,
       }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<AppState> | undefined;
+        if (!p?.works) return current;
+        const works = p.works.map((w) => ({
+          ...w,
+          script: ensureScriptBeats(w.script ?? []),
+        }));
+        return {
+          ...current,
+          ...p,
+          works,
+          activeWorkId: p.activeWorkId ?? works[0]?.id ?? current.activeWorkId,
+        };
+      },
     },
   ),
 );

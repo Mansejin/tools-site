@@ -58,8 +58,8 @@ export function StageCanvas() {
         </span>
         <span className={hasCue ? 'hint ok' : 'hint'}>
           {hasCue
-            ? '대사를 선택한 뒤 배역을 드래그하면 키프레임이 저장됩니다'
-            : '대본에서 대사·큐를 선택한 뒤 배역을 옮기세요'}
+            ? '선택한 대사(큐)에 동선이 저장됩니다 — 타임라인 박과 자동 연동'
+            : '대본에서 대사를 고르면 타임라인이 그 박으로 이동합니다'}
         </span>
       </div>
 

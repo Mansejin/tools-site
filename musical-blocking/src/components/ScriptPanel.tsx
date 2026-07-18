@@ -1,10 +1,13 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { formatBeat } from '../lib/interpolation';
+import { keyframeForLine } from '../lib/cues';
 import type { ScriptLine } from '../types';
 
-function lineClass(line: ScriptLine, selected: boolean): string {
+function lineClass(line: ScriptLine, selected: boolean, hasKf: boolean): string {
   const parts = ['script-line', `type-${line.type}`];
   if (selected) parts.push('selected');
+  if (hasKf) parts.push('has-kf');
   return parts.join(' ');
 }
 
@@ -12,12 +15,15 @@ export function ScriptPanel() {
   const work = useAppStore((s) => s.activeWork());
   const selectedLineIds = useAppStore((s) => s.selectedLineIds);
   const charSelection = useAppStore((s) => s.charSelection);
+  const currentBeat = useAppStore((s) => s.currentBeat);
   const selectLine = useAppStore((s) => s.selectLine);
   const setCharSelection = useAppStore((s) => s.setCharSelection);
   const clearSelection = useAppStore((s) => s.clearSelection);
   const importScript = useAppStore((s) => s.importScript);
-  const setCurrentBeat = useAppStore((s) => s.setCurrentBeat);
+  const setLineBeat = useAppStore((s) => s.setLineBeat);
+  const retimeScript = useAppStore((s) => s.retimeScript);
   const fileRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const onUpload = async (file: File) => {
     const text = await file.text();
@@ -39,18 +45,31 @@ export function ScriptPanel() {
     });
   };
 
-  const jumpToCueKeyframe = (lineId: string) => {
-    const kf = work.keyframes.find((k) => k.cueLineId === lineId);
-    if (kf) setCurrentBeat(kf.beat);
-  };
+  // Keep selected line visible while playhead / selection moves
+  useEffect(() => {
+    const id = selectedLineIds[0];
+    if (!id || !listRef.current) return;
+    const el = listRef.current.querySelector(`[data-line-id="${id}"]`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [selectedLineIds, currentBeat]);
 
   return (
     <aside className="script-panel">
       <header className="panel-head">
-        <h2>대본</h2>
+        <h2>대본 · 큐</h2>
         <div className="panel-actions">
           <button type="button" className="btn ghost" onClick={() => fileRef.current?.click()}>
             업로드
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            title="대사 길이에 맞춰 박을 다시 배정합니다"
+            onClick={retimeScript}
+          >
+            박 재배정
           </button>
           <button type="button" className="btn ghost" onClick={clearSelection}>
             선택 해제
@@ -69,20 +88,24 @@ export function ScriptPanel() {
         </div>
       </header>
 
-      {(selectedLineIds.length > 0 || charSelection) && (
-        <div className="selection-banner">
-          {charSelection ? (
-            <>
-              글자 선택: <em>“{charSelection.text}”</em>
-            </>
-          ) : (
-            <>대사 {selectedLineIds.length}줄 선택됨</>
-          )}
-          <span> → 무대에서 배역을 옮기면 키프레임 추가</span>
-        </div>
-      )}
+      <div className="selection-banner sticky-hint">
+        {selectedLineIds.length > 0 || charSelection ? (
+          <>
+            {charSelection ? (
+              <>
+                글자 선택: <em>“{charSelection.text}”</em>
+              </>
+            ) : (
+              <>선택한 대사가 현재 큐</>
+            )}
+            <span> · 무대에서 옮기면 이 줄에 동선 저장</span>
+          </>
+        ) : (
+          <span>대사를 고르면 타임라인 박이 같이 이동합니다</span>
+        )}
+      </div>
 
-      <div className="script-body">
+      <div className="script-body" ref={listRef}>
         {work.script.length === 0 && (
           <p className="empty">대본을 업로드하거나 설정에서 샘플을 불러오세요.</p>
         )}
@@ -91,15 +114,13 @@ export function ScriptPanel() {
             return <div key={line.id} className="script-blank" />;
           }
           const selected = selectedLineIds.includes(line.id);
-          const hasKf = work.keyframes.some((k) => k.cueLineId === line.id);
+          const hasKf = Boolean(keyframeForLine(work.keyframes, line.id));
           return (
             <div
               key={line.id}
-              className={lineClass(line, selected)}
-              onClick={(e) => {
-                selectLine(line.id, e.metaKey || e.ctrlKey);
-                jumpToCueKeyframe(line.id);
-              }}
+              data-line-id={line.id}
+              className={lineClass(line, selected, hasKf)}
+              onClick={(e) => selectLine(line.id, e.metaKey || e.ctrlKey)}
               onMouseUp={() => onTextMouseUp(line)}
               role="button"
               tabIndex={0}
@@ -107,13 +128,42 @@ export function ScriptPanel() {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   selectLine(line.id);
-                  jumpToCueKeyframe(line.id);
                 }
               }}
             >
+              <button
+                type="button"
+                className="beat-chip"
+                title="이 대사의 박 — 클릭 후 수정하거나 타임라인에서 드래그"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectLine(line.id);
+                }}
+              >
+                {line.beat != null
+                  ? formatBeat(line.beat, work.beatsPerBar)
+                  : '—'}
+              </button>
               {line.speaker && <span className="speaker">{line.speaker}</span>}
               <span className="line-text">{line.text}</span>
-              {hasKf && <span className="kf-mark" title="키프레임 있음">◆</span>}
+              {hasKf && <span className="kf-mark" title="동선 키프레임 있음">◆</span>}
+              {selected && (
+                <label
+                  className="beat-edit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  박
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={line.beat ?? 0}
+                    onChange={(e) =>
+                      setLineBeat(line.id, Number(e.target.value) || 0)
+                    }
+                  />
+                </label>
+              )}
             </div>
           );
         })}
@@ -123,7 +173,7 @@ export function ScriptPanel() {
         <label className="paste-label">
           텍스트 붙여넣기
           <textarea
-            placeholder="대본을 붙여넣고 Ctrl+Enter로 적용…"
+            placeholder="대본을 붙여넣고 Ctrl+Enter로 적용… (박이 자동 배정됩니다)"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();

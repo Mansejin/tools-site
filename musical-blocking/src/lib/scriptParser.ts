@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import type { ScriptLine, ScriptLineType } from '../types';
+import { assignBeatsToScript } from './cues';
 
 const SPEAKER_RE =
   /^(?:([A-Z가-힣][A-Z가-힣a-z\s·.-]{0,24}?)\s*[:：]\s*)(.+)$/;
@@ -34,13 +35,13 @@ function classify(raw: string): Omit<ScriptLine, 'id'> {
   return { type: 'dialogue', text: trimmed };
 }
 
-/** Parse plain-text script into interactive lines. */
+/** Parse plain-text script into interactive lines with auto-assigned beats. */
 export function parseScript(raw: string): ScriptLine[] {
-  const lines = raw.replace(/\r\n/g, '\n').split('\n');
-  return lines.map((line) => {
+  const lines = raw.replace(/\r\n/g, '\n').split('\n').map((line) => {
     const parsed = classify(line);
     return { id: uuid(), ...parsed };
   });
+  return assignBeatsToScript(lines);
 }
 
 export function formatCueLabel(
