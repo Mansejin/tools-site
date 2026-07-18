@@ -25,6 +25,8 @@ export function SettingsPanel() {
   const removeRole = useAppStore((s) => s.removeRole);
   const setStage = useAppStore((s) => s.setStage);
   const setTempo = useAppStore((s) => s.setTempo);
+  const setCueSpacing = useAppStore((s) => s.setCueSpacing);
+  const scaleAllTiming = useAppStore((s) => s.scaleAllTiming);
   const addTempoPoint = useAppStore((s) => s.addTempoPoint);
   const updateTempoPoint = useAppStore((s) => s.updateTempoPoint);
   const removeTempoPoint = useAppStore((s) => s.removeTempoPoint);
@@ -38,6 +40,7 @@ export function SettingsPanel() {
   const reloadPrivateSeed = () => {
     localStorage.removeItem('stagecue-unlocked-v1');
     localStorage.removeItem('stagecue-unlocked-v2');
+    localStorage.removeItem('stagecue-unlocked-v3');
     location.reload();
   };
 
@@ -357,6 +360,35 @@ export function SettingsPanel() {
                   <option value={6}>6/8</option>
                 </select>
               </label>
+            </div>
+
+            <div className="divider" />
+            <h3>대사 타이밍</h3>
+            <p className="help">
+              재생이 너무 빠르면 간격을 늘리세요. <strong>간격 ×2</strong>는 지금 배치를 그대로 두 배로 늘리고,
+              <strong>배율 + 재배정</strong>은 대사 길이 기준으로 다시 깝니다.
+            </p>
+            <div className="form-grid">
+              <label>
+                자동 배정 배율
+                <select
+                  value={work.cueSpacing ?? 2}
+                  onChange={(e) => setCueSpacing(Number(e.target.value), true)}
+                >
+                  <option value={1}>1× (타이트)</option>
+                  <option value={2}>2× (기본)</option>
+                  <option value={3}>3×</option>
+                  <option value={4}>4× (넉넉)</option>
+                </select>
+              </label>
+            </div>
+            <div className="btn-row">
+              <button type="button" className="btn" onClick={() => scaleAllTiming(2)}>
+                전체 간격 ×2
+              </button>
+              <button type="button" className="btn ghost" onClick={() => scaleAllTiming(0.5)}>
+                전체 간격 ÷2
+              </button>
             </div>
 
             <div className="divider" />

@@ -6,7 +6,7 @@ import { roleColorAt, shortNameFrom } from '../lib/colors';
 import { useAppStore } from '../store/useAppStore';
 import type { MusicalWork, Role } from '../types';
 
-const UNLOCK_FLAG = 'stagecue-unlocked-v2';
+const UNLOCK_FLAG = 'stagecue-unlocked-v3';
 
 export function isUnlocked(): boolean {
   return localStorage.getItem(UNLOCK_FLAG) === '1';
@@ -22,7 +22,8 @@ export function UnlockGate({ onDone }: { onDone: () => void }) {
     setError('');
     try {
       const seed = await unlockSeed(pin);
-      const bundle = parseScriptBundle(seed.script, seed.bpm);
+      const cueSpacing = 2;
+      const bundle = parseScriptBundle(seed.script, seed.bpm, cueSpacing);
       const roles: Role[] = seed.roles.map((name, i) => ({
         id: uuid(),
         name,
@@ -36,6 +37,7 @@ export function UnlockGate({ onDone }: { onDone: () => void }) {
         title: seed.title,
         bpm: seed.bpm,
         beatsPerBar: seed.beatsPerBar,
+        cueSpacing,
         tempoMap: bundle.tempoMap,
         numbers: bundle.numbers,
         stage: {

@@ -336,14 +336,20 @@
   background: rgba(212, 162, 76, 0.2);
 }
 
-.beat-edit {
+.beat-edit-row {
   grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.beat-edit {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
   color: var(--ink-dim);
-  margin-top: 0.15rem;
 }
 
 .beat-edit input {

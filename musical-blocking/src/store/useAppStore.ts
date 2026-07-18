@@ -25,6 +25,8 @@ import {
   ensureScriptBeats,
   keyframeForLine,
   lineAtBeat,
+  scaleScriptBeats,
+  setLineDuration,
 } from '../lib/cues';
 import { clampBpm, numberColorAt } from '../lib/tempoMap';
 
@@ -53,7 +55,8 @@ function defaultRoles(): Role[] {
 
 function normalizeWork(raw: MusicalWork): MusicalWork {
   const bpm = clampBpm(raw.bpm || 120);
-  let script = ensureScriptBeats(raw.script ?? []);
+  const cueSpacing = Math.max(0.25, raw.cueSpacing ?? 2);
+  let script = ensureScriptBeats(raw.script ?? [], cueSpacing);
   let numbers = raw.numbers ?? [];
   let tempoMap = raw.tempoMap ?? [];
 
@@ -72,6 +75,7 @@ function normalizeWork(raw: MusicalWork): MusicalWork {
     ...raw,
     bpm,
     beatsPerBar: raw.beatsPerBar || 4,
+    cueSpacing,
     script,
     numbers,
     tempoMap: [...tempoMap].sort((a, b) => a.beat - b.beat),
@@ -82,12 +86,14 @@ function normalizeWork(raw: MusicalWork): MusicalWork {
 function createWork(title = '새 작품'): MusicalWork {
   const now = Date.now();
   const defaultBpm = 120;
-  const bundle = parseScriptBundle(SAMPLE_SCRIPT, defaultBpm);
+  const cueSpacing = 2;
+  const bundle = parseScriptBundle(SAMPLE_SCRIPT, defaultBpm, cueSpacing);
   return normalizeWork({
     id: uuid(),
     title,
     bpm: defaultBpm,
     beatsPerBar: 4,
+    cueSpacing,
     tempoMap: bundle.tempoMap,
     numbers: bundle.numbers,
     stage: defaultStage(),
@@ -146,6 +152,9 @@ interface AppState {
 
   setStage: (patch: Partial<StageConfig>) => void;
   setTempo: (bpm: number, beatsPerBar?: number) => void;
+  setCueSpacing: (spacing: number, retime?: boolean) => void;
+  scaleAllTiming: (factor: number) => void;
+  setSelectedLineDuration: (durationBeats: number) => void;
   addTempoPoint: (beat: number, bpm: number, label?: string) => void;
   updateTempoPoint: (id: string, patch: Partial<TempoPoint>) => void;
   removeTempoPoint: (id: string) => void;
@@ -389,6 +398,100 @@ export const useAppStore = create<AppState>()(
           }),
         })),
 
+      setCueSpacing: (spacing, retime = true) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const cueSpacing = Math.max(0.25, Math.min(8, spacing));
+            if (!retime) return { ...w, cueSpacing };
+            const oldBeats = new Map(
+              w.script
+                .filter((l) => l.beat != null)
+                .map((l) => [l.id, l.beat as number]),
+            );
+            const script = assignBeatsToScript(w.script, { spacing: cueSpacing });
+            const keyframes = w.keyframes.map((kf) => {
+              if (!kf.cueLineId) return kf;
+              const line = script.find((l) => l.id === kf.cueLineId);
+              if (!line || line.beat == null) return kf;
+              const oldBeat = oldBeats.get(kf.cueLineId);
+              const offset = oldBeat != null ? kf.beat - oldBeat : 0;
+              return { ...kf, beat: Math.max(0, line.beat + offset) };
+            });
+            const tempoMap = w.tempoMap.map((p) => {
+              if (!p.sourceLineId) return p;
+              const line = script.find((l) => l.id === p.sourceLineId);
+              return line?.beat != null ? { ...p, beat: line.beat } : p;
+            });
+            const numbers = w.numbers.map((n) => {
+              if (!n.sourceLineId) return n;
+              const line = script.find((l) => l.id === n.sourceLineId);
+              return line?.beat != null ? { ...n, startBeat: line.beat } : n;
+            });
+            return {
+              ...w,
+              cueSpacing,
+              script,
+              keyframes,
+              tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
+              numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
+            };
+          }),
+        })),
+
+      scaleAllTiming: (factor) =>
+        set((s) => ({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const f = Math.max(0.25, Math.min(8, factor));
+            const script = scaleScriptBeats(w.script, f);
+            const keyframes = w.keyframes.map((kf) => ({
+              ...kf,
+              beat: Math.round(kf.beat * f * 100) / 100,
+            }));
+            const tempoMap = w.tempoMap.map((p) => ({
+              ...p,
+              beat: Math.round(p.beat * f * 100) / 100,
+            }));
+            const numbers = w.numbers.map((n) => ({
+              ...n,
+              startBeat: Math.round(n.startBeat * f * 100) / 100,
+              endBeat:
+                n.endBeat != null
+                  ? Math.round(n.endBeat * f * 100) / 100
+                  : undefined,
+            }));
+            return {
+              ...w,
+              script,
+              keyframes,
+              tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
+              numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
+            };
+          }),
+          currentBeat: Math.max(
+            0,
+            Math.round(s.currentBeat * Math.max(0.25, Math.min(8, factor)) * 100) /
+              100,
+          ),
+        })),
+
+      setSelectedLineDuration: (durationBeats) => {
+        const s = get();
+        const lineId = s.selectedLineIds[0];
+        if (!lineId) return;
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const script = setLineDuration(w.script, lineId, durationBeats);
+            // Keep keyframes glued to their cue lines
+            const keyframes = w.keyframes.map((kf) => {
+              if (!kf.cueLineId) return kf;
+              const line = script.find((l) => l.id === kf.cueLineId);
+              return line?.beat != null ? { ...kf, beat: line.beat } : kf;
+            });
+            return { ...w, script, keyframes };
+          }),
+        });
+      },
+
       addTempoPoint: (beat, bpm, label) =>
         set((s) => ({
           works: mapActive(s.works, s.activeWorkId, (w) => {
@@ -553,7 +656,8 @@ export const useAppStore = create<AppState>()(
       importScript: (raw) =>
         set((s) => ({
           works: mapActive(s.works, s.activeWorkId, (w) => {
-            const bundle = parseScriptBundle(raw, w.bpm);
+            const spacing = w.cueSpacing ?? 2;
+            const bundle = parseScriptBundle(raw, w.bpm, spacing);
             return {
               ...w,
               script: bundle.script,
@@ -581,45 +685,10 @@ export const useAppStore = create<AppState>()(
           currentBeat: 0,
         })),
 
-      retimeScript: () =>
-        set((s) => ({
-          works: mapActive(s.works, s.activeWorkId, (w) => {
-            const oldBeats = new Map(
-              w.script
-                .filter((l) => l.beat != null)
-                .map((l) => [l.id, l.beat as number]),
-            );
-            const script = assignBeatsToScript(w.script);
-            const keyframes = w.keyframes.map((kf) => {
-              if (!kf.cueLineId) return kf;
-              const line = script.find((l) => l.id === kf.cueLineId);
-              if (!line || line.beat == null) return kf;
-              const oldBeat = oldBeats.get(kf.cueLineId);
-              const offset = oldBeat != null ? kf.beat - oldBeat : 0;
-              return { ...kf, beat: Math.max(0, line.beat + offset) };
-            });
-
-            // Remap tempo / number beats via source lines when possible
-            const tempoMap = w.tempoMap.map((p) => {
-              if (!p.sourceLineId) return p;
-              const line = script.find((l) => l.id === p.sourceLineId);
-              return line?.beat != null ? { ...p, beat: line.beat } : p;
-            });
-            const numbers = w.numbers.map((n) => {
-              if (!n.sourceLineId) return n;
-              const line = script.find((l) => l.id === n.sourceLineId);
-              return line?.beat != null ? { ...n, startBeat: line.beat } : n;
-            });
-
-            return {
-              ...w,
-              script,
-              keyframes,
-              tempoMap: tempoMap.sort((a, b) => a.beat - b.beat),
-              numbers: numbers.sort((a, b) => a.startBeat - b.startBeat),
-            };
-          }),
-        })),
+      retimeScript: () => {
+        const w = get().activeWork();
+        get().setCueSpacing(w.cueSpacing ?? 2, true);
+      },
 
       selectLine: (lineId, multi = false) =>
         set((s) => {

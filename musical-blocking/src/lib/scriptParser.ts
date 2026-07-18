@@ -150,12 +150,13 @@ export function extractTimingFromScript(
 export function parseScriptBundle(
   raw: string,
   defaultBpm = 120,
+  cueSpacing = 2,
 ): ParsedScriptBundle {
   const lines = raw.replace(/\r\n/g, '\n').split('\n').map((line) => {
     const parsed = classify(line);
     return { id: uuid(), ...parsed };
   });
-  const script = assignBeatsToScript(lines);
+  const script = assignBeatsToScript(lines, { spacing: cueSpacing });
   return extractTimingFromScript(script, defaultBpm);
 }
 

@@ -75,6 +75,11 @@ export interface MusicalWork {
   /** Default BPM before the first tempo-map point. */
   bpm: number;
   beatsPerBar: number;
+  /**
+   * Multiplier for auto-assigned cue spacing.
+   * 1 ≈ tight rehearsal map, 2–4 for singable line gaps.
+   */
+  cueSpacing: number;
   tempoMap: TempoPoint[];
   numbers: MusicalNumber[];
   stage: StageConfig;

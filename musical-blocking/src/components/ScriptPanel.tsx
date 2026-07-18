@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { formatBeat } from '../lib/interpolation';
-import { keyframeForLine } from '../lib/cues';
+import { keyframeForLine, lineDurationBeats } from '../lib/cues';
 import type { ScriptLine } from '../types';
 
 function lineClass(line: ScriptLine, selected: boolean, hasKf: boolean): string {
@@ -22,8 +22,13 @@ export function ScriptPanel() {
   const importScript = useAppStore((s) => s.importScript);
   const setLineBeat = useAppStore((s) => s.setLineBeat);
   const retimeScript = useAppStore((s) => s.retimeScript);
+  const scaleAllTiming = useAppStore((s) => s.scaleAllTiming);
+  const setSelectedLineDuration = useAppStore((s) => s.setSelectedLineDuration);
   const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const selectedId = selectedLineIds[0];
+  const selectedDuration =
+    selectedId != null ? lineDurationBeats(work.script, selectedId) : undefined;
 
   const onUpload = async (file: File) => {
     const text = await file.text();
@@ -66,10 +71,18 @@ export function ScriptPanel() {
           <button
             type="button"
             className="btn ghost"
-            title="대사 길이에 맞춰 박을 다시 배정합니다"
+            title="대사 간격 설정값으로 박을 다시 배정"
             onClick={retimeScript}
           >
             박 재배정
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            title="모든 큐·키프레임 박을 2배로 (재생이 두 배 길어짐)"
+            onClick={() => scaleAllTiming(2)}
+          >
+            간격 ×2
           </button>
           <button type="button" className="btn ghost" onClick={clearSelection}>
             선택 해제
@@ -148,21 +161,32 @@ export function ScriptPanel() {
               <span className="line-text">{line.text}</span>
               {hasKf && <span className="kf-mark" title="동선 키프레임 있음">◆</span>}
               {selected && (
-                <label
-                  className="beat-edit"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  박
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={line.beat ?? 0}
-                    onChange={(e) =>
-                      setLineBeat(line.id, Number(e.target.value) || 0)
-                    }
-                  />
-                </label>
+                <div className="beat-edit-row" onClick={(e) => e.stopPropagation()}>
+                  <label className="beat-edit">
+                    시작 박
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={line.beat ?? 0}
+                      onChange={(e) =>
+                        setLineBeat(line.id, Number(e.target.value) || 0)
+                      }
+                    />
+                  </label>
+                  <label className="beat-edit">
+                    이 줄 길이(박)
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={selectedDuration ?? 8}
+                      onChange={(e) =>
+                        setSelectedLineDuration(Number(e.target.value) || 1)
+                      }
+                    />
+                  </label>
+                </div>
               )}
             </div>
           );
