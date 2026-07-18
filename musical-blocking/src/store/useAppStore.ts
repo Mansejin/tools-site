@@ -29,7 +29,12 @@ import {
   scaleScriptBeats,
   setLineDuration,
 } from '../lib/cues';
-import { nearestKeyframe } from '../lib/interpolation';
+import {
+  nearestKeyframe,
+  neighborKeyframeBeat,
+  positionsAtBeat,
+  previousKeyframe,
+} from '../lib/interpolation';
 import { clampBpm, numberColorAt } from '../lib/tempoMap';
 import { tempoMapFromAnchors } from '../lib/audioSync';
 
@@ -150,6 +155,12 @@ interface AppState {
   lastStamp: { beat: number; label: string; at: number } | null;
   /** Lyrics monitor open (desktop/mobile). */
   lyricsOpen: boolean;
+  /** Stage Write–style traffic paths between keyframes. */
+  showPaths: boolean;
+  /** Onion-skin previous keyframe positions. */
+  showGhosts: boolean;
+  /** Downstage number line (SL↔SR). */
+  showNumberLine: boolean;
 
   activeWork: () => MusicalWork;
   setTab: (tab: AppTab) => void;
@@ -199,6 +210,14 @@ interface AppState {
   setAudioFileName: (name: string | null) => void;
   clearLastStamp: () => void;
   setLyricsOpen: (open: boolean) => void;
+  setShowPaths: (on: boolean) => void;
+  setShowGhosts: (on: boolean) => void;
+  setShowNumberLine: (on: boolean) => void;
+  jumpToNeighborKeyframe: (dir: -1 | 1) => void;
+  /** Copy positions from previous KF onto the playhead (selected role or all). */
+  copyFromPreviousKeyframe: (roleId?: string | null) => void;
+  /** Mirror role across center line at playhead. */
+  mirrorRoleAtPlayhead: (roleId: string, axis?: 'x' | 'y') => void;
 
   setAudioOffsetMs: (ms: number) => void;
   setSyncStartBeat: (beat: number) => void;
@@ -252,6 +271,9 @@ export const useAppStore = create<AppState>()(
       selectedRoleId: null,
       lastStamp: null,
       lyricsOpen: true,
+      showPaths: true,
+      showGhosts: true,
+      showNumberLine: true,
 
       activeWork: () => {
         const { works, activeWorkId } = get();
@@ -836,6 +858,97 @@ export const useAppStore = create<AppState>()(
       setAudioFileName: (name) => set({ audioFileName: name }),
       clearLastStamp: () => set({ lastStamp: null }),
       setLyricsOpen: (open) => set({ lyricsOpen: open }),
+      setShowPaths: (on) => set({ showPaths: on }),
+      setShowGhosts: (on) => set({ showGhosts: on }),
+      setShowNumberLine: (on) => set({ showNumberLine: on }),
+
+      jumpToNeighborKeyframe: (dir) => {
+        const s = get();
+        const work = s.activeWork();
+        const next = neighborKeyframeBeat(work.keyframes, s.currentBeat, dir);
+        if (next == null) return;
+        s.setCurrentBeat(next, { syncSelection: true });
+        s.setPlaying(false);
+      },
+
+      copyFromPreviousKeyframe: (roleId) => {
+        const s = get();
+        const work = s.activeWork();
+        const targetRole = roleId === undefined ? s.selectedRoleId : roleId;
+        const prev = previousKeyframe(work.keyframes, s.currentBeat, targetRole);
+        if (!prev) return;
+
+        let beat = s.currentBeat;
+        if (s.snapToBeat) beat = Math.round(beat);
+
+        const roles =
+          targetRole != null
+            ? work.roles.filter((r) => r.id === targetRole)
+            : work.roles.filter((r) => r.visible);
+
+        const roleName =
+          targetRole != null
+            ? (work.roles.find((r) => r.id === targetRole)?.name ?? '배역')
+            : '전체';
+
+        set({
+          works: mapActive(s.works, s.activeWorkId, (w) => {
+            const atBeatKf = nearestKeyframe(
+              w.keyframes,
+              beat,
+              s.snapToBeat ? 0.51 : 0.2,
+            );
+            const basePositions = atBeatKf
+              ? { ...atBeatKf.positions }
+              : seedPositions(w, beat);
+
+            for (const role of roles) {
+              const p = prev.positions[role.id];
+              if (p) basePositions[role.id] = { ...p };
+            }
+
+            if (atBeatKf) {
+              return {
+                ...w,
+                keyframes: w.keyframes.map((kf) =>
+                  kf.id === atBeatKf.id
+                    ? { ...kf, beat, positions: basePositions }
+                    : kf,
+                ),
+              };
+            }
+
+            const kf: Keyframe = {
+              id: uuid(),
+              beat,
+              cueLabel: prev.cueLabel || `박 ${beat}`,
+              cueLineId: prev.cueLineId,
+              positions: basePositions,
+            };
+            return { ...w, keyframes: [...w.keyframes, kf] };
+          }),
+          lastStamp: {
+            beat,
+            label: `복사 · ${roleName} ← 이전 KF`,
+            at: Date.now(),
+          },
+        });
+      },
+
+      mirrorRoleAtPlayhead: (roleId, axis = 'x') => {
+        const s = get();
+        const work = s.activeWork();
+        const pos =
+          positionsAtBeat(work.keyframes, s.currentBeat, [roleId])[roleId] ?? {
+            x: 0.5,
+            y: 0.5,
+          };
+        const mirrored =
+          axis === 'x'
+            ? { x: 1 - pos.x, y: pos.y }
+            : { x: pos.x, y: 1 - pos.y };
+        s.moveRoleAtCurrentCue(roleId, mirrored);
+      },
 
       setAudioOffsetMs: (ms) =>
         set((s) => ({
@@ -1040,6 +1153,9 @@ export const useAppStore = create<AppState>()(
         activeWorkId: s.activeWorkId,
         snapToBeat: s.snapToBeat,
         lyricsOpen: s.lyricsOpen,
+        showPaths: s.showPaths,
+        showGhosts: s.showGhosts,
+        showNumberLine: s.showNumberLine,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<AppState> | undefined;

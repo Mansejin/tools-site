@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from './store/useAppStore';
 import { ScriptPanel } from './components/ScriptPanel';
 import { StageCanvas } from './components/StageCanvas';
+import { StageTools } from './components/StageTools';
 import { RoleToggles } from './components/RoleToggles';
 import { Timeline } from './components/Timeline';
 import { CaptureDock } from './components/CaptureDock';
@@ -31,11 +32,10 @@ export default function App() {
     return () => window.clearTimeout(t);
   }, [ready, keyframeCount, work.updatedAt]);
 
-  // Space = play/pause (not while typing)
+  // Capture shortcuts: Space play, [ ] KF jump, C copy previous
   useEffect(() => {
     if (!ready || activeTab !== 'stage') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' && e.key !== ' ') return;
       const t = e.target as HTMLElement | null;
       if (
         t &&
@@ -46,9 +46,26 @@ export default function App() {
       ) {
         return;
       }
-      e.preventDefault();
       const s = useAppStore.getState();
-      s.setPlaying(!s.isPlaying);
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        s.setPlaying(!s.isPlaying);
+        return;
+      }
+      if (e.key === '[' || e.code === 'BracketLeft') {
+        e.preventDefault();
+        s.jumpToNeighborKeyframe(-1);
+        return;
+      }
+      if (e.key === ']' || e.code === 'BracketRight') {
+        e.preventDefault();
+        s.jumpToNeighborKeyframe(1);
+        return;
+      }
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        s.copyFromPreviousKeyframe();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -102,6 +119,7 @@ export default function App() {
         <main className={`stage-layout ${lyricsOpen ? 'lyrics-open' : 'lyrics-closed'}`}>
           <CaptureDock />
           <div className="stage-column">
+            <StageTools />
             <StageCanvas />
             <RoleToggles />
             <Timeline />
