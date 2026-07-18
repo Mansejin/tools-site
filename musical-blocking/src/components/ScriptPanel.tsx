@@ -1,13 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { formatBeat } from '../lib/interpolation';
-import { keyframeForLine, lineDurationBeats } from '../lib/cues';
+import { keyframeForLine, lineAtBeat, lineDurationBeats } from '../lib/cues';
+import { numberAtBeat } from '../lib/tempoMap';
 import type { ScriptLine } from '../types';
 
-function lineClass(line: ScriptLine, selected: boolean, hasKf: boolean): string {
+function lineClass(
+  line: ScriptLine,
+  selected: boolean,
+  hasKf: boolean,
+  current: boolean,
+): string {
   const parts = ['script-line', `type-${line.type}`];
   if (selected) parts.push('selected');
   if (hasKf) parts.push('has-kf');
+  if (current) parts.push('current-lyric');
   return parts.join(' ');
 }
 
@@ -30,6 +37,9 @@ export function ScriptPanel() {
   const selectedDuration =
     selectedId != null ? lineDurationBeats(work.script, selectedId) : undefined;
 
+  const liveLine = lineAtBeat(work.script, currentBeat);
+  const liveNumber = numberAtBeat(currentBeat, work.numbers ?? []);
+
   const onUpload = async (file: File) => {
     const text = await file.text();
     importScript(text);
@@ -50,28 +60,28 @@ export function ScriptPanel() {
     });
   };
 
-  // Keep selected line visible while playhead / selection moves
+  // Follow the song / playhead — not a click requirement for keyframes
   useEffect(() => {
-    const id = selectedLineIds[0];
+    const id = liveLine?.id ?? selectedLineIds[0];
     if (!id || !listRef.current) return;
     const el = listRef.current.querySelector(`[data-line-id="${id}"]`);
     if (el instanceof HTMLElement) {
       el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
-  }, [selectedLineIds, currentBeat]);
+  }, [liveLine?.id, selectedLineIds, currentBeat]);
 
   return (
     <aside className="script-panel">
       <header className="panel-head">
-        <h2>대본 · 큐</h2>
+        <h2>가사 모니터</h2>
         <div className="panel-actions">
           <button type="button" className="btn ghost" onClick={() => fileRef.current?.click()}>
-            업로드
+            대본
           </button>
           <button
             type="button"
             className="btn ghost"
-            title="대사 간격 설정값으로 박을 다시 배정"
+            title="가사 줄 간격을 다시 배정 (노래 싱크 보정용)"
             onClick={retimeScript}
           >
             박 재배정
@@ -79,7 +89,7 @@ export function ScriptPanel() {
           <button
             type="button"
             className="btn ghost"
-            title="모든 큐·키프레임 박을 2배로 (재생이 두 배 길어짐)"
+            title="가사 타임라인만 늘림 (키프레임은 비율 유지하려면 설정에서 전체 ×2)"
             onClick={() => scaleAllTiming(2)}
           >
             간격 ×2
@@ -102,25 +112,16 @@ export function ScriptPanel() {
       </header>
 
       <div className="selection-banner sticky-hint">
-        {selectedLineIds.length > 0 || charSelection ? (
-          <>
-            {charSelection ? (
-              <>
-                글자 선택: <em>“{charSelection.text}”</em>
-              </>
-            ) : (
-              <>선택한 대사가 현재 큐</>
-            )}
-            <span> · 무대에서 옮기면 이 줄에 동선 저장</span>
-          </>
-        ) : (
-          <span>대사를 고르면 타임라인 박이 같이 이동합니다</span>
-        )}
+        <span>
+          키프레임은 <em>노래 재생 + 배역 드래그</em>로 찍습니다.
+          {liveNumber ? ` · 지금 넘버: ${liveNumber.title}` : ''}
+          {' '}가사는 따라가기/점프용입니다.
+        </span>
       </div>
 
       <div className="script-body" ref={listRef}>
         {work.script.length === 0 && (
-          <p className="empty">대본을 업로드하거나 설정에서 샘플을 불러오세요.</p>
+          <p className="empty">대본을 넣으면 노래에 맞춰 가사가 하이라이트됩니다.</p>
         )}
         {work.script.map((line) => {
           if (line.type === 'blank') {
@@ -128,11 +129,12 @@ export function ScriptPanel() {
           }
           const selected = selectedLineIds.includes(line.id);
           const hasKf = Boolean(keyframeForLine(work.keyframes, line.id));
+          const current = liveLine?.id === line.id;
           return (
             <div
               key={line.id}
               data-line-id={line.id}
-              className={lineClass(line, selected, hasKf)}
+              className={lineClass(line, selected, hasKf, current)}
               onClick={(e) => selectLine(line.id, e.metaKey || e.ctrlKey)}
               onMouseUp={() => onTextMouseUp(line)}
               role="button"
@@ -147,7 +149,7 @@ export function ScriptPanel() {
               <button
                 type="button"
                 className="beat-chip"
-                title="이 대사의 박 — 클릭 후 수정하거나 타임라인에서 드래그"
+                title="이 가사로 점프"
                 onClick={(e) => {
                   e.stopPropagation();
                   selectLine(line.id);
@@ -159,7 +161,7 @@ export function ScriptPanel() {
               </button>
               {line.speaker && <span className="speaker">{line.speaker}</span>}
               <span className="line-text">{line.text}</span>
-              {hasKf && <span className="kf-mark" title="동선 키프레임 있음">◆</span>}
+              {hasKf && <span className="kf-mark" title="근처 키프레임">◆</span>}
               {selected && (
                 <div className="beat-edit-row" onClick={(e) => e.stopPropagation()}>
                   <label className="beat-edit">
@@ -186,6 +188,7 @@ export function ScriptPanel() {
                       }
                     />
                   </label>
+                  <span className="beat-edit-hint">가사↔노래 어긋날 때 보정</span>
                 </div>
               )}
             </div>
@@ -195,9 +198,9 @@ export function ScriptPanel() {
 
       <footer className="script-foot">
         <label className="paste-label">
-          텍스트 붙여넣기
+          대본 붙여넣기 (가사·넘버 표시용)
           <textarea
-            placeholder="대본을 붙여넣고 Ctrl+Enter로 적용… (박이 자동 배정됩니다)"
+            placeholder="【넘버: … / BPM …】 포함 대본을 Ctrl+Enter로 적용"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();

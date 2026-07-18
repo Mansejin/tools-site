@@ -498,6 +498,62 @@
   white-space: nowrap;
 }
 
+.now-playing {
+  background:
+    linear-gradient(120deg, rgba(212, 162, 76, 0.16), transparent 55%),
+    var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.now-playing.live {
+  border-color: rgba(212, 162, 76, 0.45);
+  box-shadow: 0 0 0 1px rgba(212, 162, 76, 0.12);
+}
+
+.now-playing-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.now-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--accent-hot);
+}
+
+.now-beat {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+.now-lyric {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  min-height: 1.6em;
+}
+
+.script-line.current-lyric {
+  background: rgba(212, 162, 76, 0.22);
+  box-shadow: inset 3px 0 0 var(--accent-hot);
+}
+
+.beat-edit-hint {
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  align-self: center;
+}
+
 .stage-wrap {
   display: flex;
   flex-direction: column;

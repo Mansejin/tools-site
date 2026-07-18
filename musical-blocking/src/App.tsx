@@ -5,6 +5,7 @@ import { StageCanvas } from './components/StageCanvas';
 import { RoleToggles } from './components/RoleToggles';
 import { Timeline } from './components/Timeline';
 import { AudioTransport } from './components/AudioTransport';
+import { NowPlaying } from './components/NowPlaying';
 import { SettingsPanel } from './components/settings/SettingsPanel';
 import { UnlockGate, isUnlocked } from './components/UnlockGate';
 import { snapshotCurrentState } from './lib/recovery';
@@ -79,6 +80,7 @@ export default function App() {
           <ScriptPanel />
           <div className="stage-column">
             <AudioTransport />
+            <NowPlaying />
             <StageCanvas />
             <RoleToggles />
             <Timeline />
