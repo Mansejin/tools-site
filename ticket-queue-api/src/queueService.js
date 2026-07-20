@@ -277,10 +277,44 @@ export class QueueService {
     return listBookings(eventId, limit);
   }
 
-  async reset(eventId) {
+  async setSeats(eventId, seatsTotal) {
+    await this.initEvent(eventId);
+    const n = Number(seatsTotal);
+    if (!Number.isInteger(n) || n < 0 || n > 100000) {
+      const err = new Error("invalid_seats");
+      err.status = 400;
+      throw err;
+    }
+    const k = keys(eventId);
+    await this.redis.set(k.seats, String(n));
+    await this.redis.hset(k.meta, {
+      seatsTotal: String(n),
+      seatsUpdatedAt: String(Date.now()),
+    });
+    return this.stats(eventId);
+  }
+
+  async reset(eventId, seatsTotal) {
     const k = keys(eventId);
     await this.redis.del(k.wait, k.active, k.seats, k.booked, k.seq, k.meta);
     clearBookings(eventId);
+    if (seatsTotal != null) {
+      const n = Number(seatsTotal);
+      if (!Number.isInteger(n) || n < 0 || n > 100000) {
+        const err = new Error("invalid_seats");
+        err.status = 400;
+        throw err;
+      }
+      await this.redis.set(k.seats, String(n));
+      await this.redis.hset(k.meta, {
+        seatsTotal: String(n),
+        createdAt: String(Date.now()),
+      });
+      if (!this.bookSha) {
+        this.bookSha = await this.redis.script("LOAD", BOOK_LUA);
+      }
+      return this.stats(eventId);
+    }
     await this.initEvent(eventId);
     return this.stats(eventId);
   }

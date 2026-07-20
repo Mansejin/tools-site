@@ -131,8 +131,8 @@ mansejin.com   ohola-server :8790
 - `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
 - 실행: `sh ticket-queue-api/scripts/login-and-apply-cloudflare-via-ssh.sh`
 
-### C. 기능 이어서 (여유 시)
-- 관리자: 좌석수 조정 / 리셋 UI
+### C. 기능 이어서 (다음)
+- ~~관리자: 좌석수 조정 / 리셋 UI~~ → `/ticket-queue/` 관리자 패널 + `admin/seats`
 - 로그인 연동
 - 모니터링(대기 인원·에러)
 

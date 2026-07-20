@@ -50,7 +50,8 @@ HTTPS Tunnel: [`docs/deploy-cloudflare-tunnel.md`](docs/deploy-cloudflare-tunnel
 | POST | `/v1/events/:eventId/join` | 대기열 입장 |
 | GET | `/v1/events/:eventId/status?userId=&token=` | 순번/상태 폴링 |
 | POST | `/v1/events/:eventId/book` | `{ userId, token, seats }` 예매 |
-| POST | `/v1/events/:eventId/admin/reset` | 테스트용 초기화 |
+| POST | `/v1/events/:eventId/admin/seats` | `{ seats }` 남은 좌석 설정 (`x-admin-secret`) |
+| POST | `/v1/events/:eventId/admin/reset` | 대기열 초기화 (선택 `{ seats }`, `x-admin-secret`) |
 
 ## 기본 설정 (1천 명용)
 
