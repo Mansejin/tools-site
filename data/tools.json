@@ -36,8 +36,8 @@
       "en": "Holiday ticketing queue architecture demo"
     },
     "description": {
-      "ko": "수백만 동시접속 예매를 DB 앞에서 버티는 흐름을 브라우저에서 체험합니다. 대기열(ZSET)·폴링 TTL·Active 입장·좌석 원자 차감까지 러프하게 흉내 냅니다. 실제 Redis/서버는 없습니다.",
-      "en": "A rough in-browser demo of a high-traffic ticketing wait queue: ZSET ranking, polling TTL, Active admission, and atomic seat deduction. No real Redis or backend."
+      "ko": "선착순 예매 대기열. 브라우저 시뮬 + 별도 Redis 백엔드(ticket-queue-api, 1천 명 규모부터). 라이브 연결: /ticket-queue/?api=http://서버:8787",
+      "en": "FCFS ticketing wait-queue. Browser sim plus a real Redis backend (ticket-queue-api, starting ~1k waiters). Live: /ticket-queue/?api=http://host:8787"
     },
     "tags": {
       "ko": ["웹", "학습", "아키텍처"],

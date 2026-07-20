@@ -2,6 +2,18 @@
   max-width: 480px;
 }
 
+.live-banner {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--green-bg);
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  padding: 8px 12px;
+  margin: 0 0 14px;
+}
+
 .pipe {
   list-style: none;
   display: grid;
