@@ -29,6 +29,26 @@ const FALLBACK_TOOLS = [
     platform: "Windows 10/11",
     status: "stable",
   },
+  {
+    id: "ticket-queue",
+    name: "ticket-queue",
+    tagline: {
+      ko: "명절 예매 대기열 원리 시뮬",
+      en: "Holiday ticketing queue architecture demo",
+    },
+    description: {
+      ko: "수백만 동시접속 예매를 DB 앞에서 버티는 흐름을 브라우저에서 체험합니다. 대기열(ZSET)·폴링 TTL·Active 입장·좌석 원자 차감까지 러프하게 흉내 냅니다. 실제 Redis/서버는 없습니다.",
+      en: "A rough in-browser demo of a high-traffic ticketing wait queue: ZSET ranking, polling TTL, Active admission, and atomic seat deduction. No real Redis or backend.",
+    },
+    tags: {
+      ko: ["웹", "학습", "아키텍처"],
+      en: ["Web", "Learning", "Architecture"],
+    },
+    url: "/ticket-queue/",
+    github: "https://github.com/Mansejin/tools-site/tree/main/ticket-queue",
+    platform: "브라우저",
+    status: "beta",
+  },
 ];
 
 /** Shown only in offline/file preview — not on the live site. */

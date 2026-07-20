@@ -15,6 +15,7 @@ const UI = {
     install: "설치",
     installAdvanced: "개발자용 설치",
     download: "다운로드",
+    open: "열기",
     platform: "플랫폼",
     shortcut: "단축키",
     copyInstall: "설치 명령 복사",
@@ -32,6 +33,7 @@ const UI = {
     install: "Install",
     installAdvanced: "Developer install",
     download: "Download",
+    open: "Open",
     platform: "Platform",
     shortcut: "Shortcut",
     copyInstall: "Copy install command",
@@ -180,9 +182,13 @@ function renderCard(tool) {
       </details>`
     : "";
 
+  const openUrl = tool.url || tool.open;
   const actions = [
+    openUrl
+      ? `<a class="btn btn-primary" href="${escapeHtml(openUrl)}">${escapeHtml(t.open)}</a>`
+      : "",
     tool.download
-      ? `<a class="btn btn-primary" href="${escapeHtml(tool.download)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.download)}</a>`
+      ? `<a class="btn ${openUrl ? "btn-secondary" : "btn-primary"}" href="${escapeHtml(tool.download)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t.download)}</a>`
       : "",
     tool.github
       ? `<a class="btn btn-secondary" href="${escapeHtml(tool.github)}" target="_blank" rel="noopener noreferrer">GitHub</a>`

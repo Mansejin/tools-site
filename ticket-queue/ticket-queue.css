@@ -1,5 +1,5 @@
-.tq-card {
-  max-width: 440px;
+.tq-page {
+  max-width: 480px;
 }
 
 .pipe {
@@ -7,9 +7,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto 16px;
+  margin: 0 0 16px;
   padding: 0;
 }
 
@@ -17,36 +15,82 @@
   text-align: center;
   font-size: 0.68rem;
   font-weight: 700;
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-tertiary);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 8px 4px;
   transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 .pipe-step.is-on {
-  color: var(--accent2);
-  border-color: rgba(255, 209, 102, 0.45);
-  background: rgba(255, 209, 102, 0.12);
+  color: var(--blue);
+  border-color: var(--blue);
+  background: var(--blue-light);
   transform: translateY(-1px);
 }
 
 .pipe-step.is-done {
-  color: #7dcea0;
-  border-color: rgba(125, 206, 160, 0.35);
-  background: rgba(125, 206, 160, 0.1);
+  color: var(--green);
+  border-color: var(--green);
+  background: var(--green-bg);
+}
+
+.tq-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 24px 20px;
+  margin-bottom: 14px;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+
+.tabs-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tab {
+  flex: 1;
+  min-width: calc(40% - 4px);
+  min-height: 44px;
+  padding: 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab.active {
+  background: var(--blue-light);
+  border-color: var(--blue);
+  color: var(--blue);
 }
 
 .tq-blurb {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 16px 18px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
   font-size: 0.92rem;
   line-height: 1.65;
-  color: var(--text);
   word-break: keep-all;
+  margin-bottom: 4px;
 }
 
 .tq-blurb p + p {
@@ -58,38 +102,46 @@
 .tip code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.85em;
-  color: var(--accent2);
-  background: rgba(255, 209, 102, 0.1);
+  color: var(--blue);
+  background: var(--blue-light);
   padding: 1px 6px;
   border-radius: 6px;
 }
 
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-group .btn {
+  width: 100%;
+}
+
 .rank-box {
   text-align: center;
-  padding: 12px 8px 20px;
+  padding: 8px 8px 18px;
 }
 
 .rank-num {
-  font-size: clamp(2.8rem, 12vw, 3.6rem);
+  font-size: clamp(2.6rem, 12vw, 3.4rem);
   font-weight: 800;
   letter-spacing: -1.5px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  background: linear-gradient(135deg, #fff, var(--accent2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--blue);
   animation: rankPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes rankPulse {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.15); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
 }
 
 .rank-label {
   margin-top: 6px;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -101,17 +153,16 @@
   margin-bottom: 16px;
 }
 
-.meta {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
+.meta-cell {
+  background: var(--bg);
+  border-radius: var(--radius-md);
   padding: 10px 12px;
 }
 
 .meta-k {
   font-size: 0.7rem;
-  color: var(--muted);
+  color: var(--text-tertiary);
   font-weight: 700;
-  letter-spacing: 0.3px;
 }
 
 .meta-v {
@@ -124,7 +175,7 @@
 .progress-wrap {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--border);
   overflow: hidden;
   margin-bottom: 18px;
 }
@@ -133,17 +184,17 @@
   height: 100%;
   width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  background: linear-gradient(90deg, var(--blue), var(--green));
   transition: width 0.35s ease;
 }
 
 .tip {
   margin-top: 8px;
   padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(100, 180, 255, 0.08);
-  border: 1px solid rgba(100, 180, 255, 0.18);
-  color: #c8dff5;
+  border-radius: var(--radius-md);
+  background: var(--blue-light);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   font-size: 0.82rem;
   line-height: 1.55;
   word-break: keep-all;
@@ -153,7 +204,7 @@
   margin-top: 14px;
   text-align: center;
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--text-tertiary);
   word-break: break-all;
 }
 
@@ -163,7 +214,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
-  color: var(--accent);
+  color: var(--orange);
   margin-bottom: 4px;
 }
 
@@ -178,7 +229,7 @@
 
 .ttl-hint {
   text-align: center;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 0.8rem;
   margin-bottom: 18px;
 }
@@ -198,7 +249,7 @@
 
 .result-body {
   text-align: center;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
   word-break: keep-all;
@@ -206,7 +257,6 @@
 }
 
 .glossary {
-  margin-top: 14px;
   padding-top: 20px;
   padding-bottom: 20px;
 }
@@ -219,31 +269,15 @@
 .gloss-list dt {
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--accent2);
+  color: var(--blue);
   margin-bottom: 2px;
 }
 
 .gloss-list dd {
   font-size: 0.8rem;
-  color: var(--muted);
+  color: var(--text-secondary);
   line-height: 1.5;
   word-break: keep-all;
-}
-
-html[data-theme="light"] .pipe-step {
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
-}
-
-html[data-theme="light"] .tip {
-  color: #2a4a6a;
-  background: rgba(100, 180, 255, 0.12);
-}
-
-html[data-theme="light"] .rank-num {
-  background: linear-gradient(135deg, #1a1a24, var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
 }
 
 @media (max-width: 380px) {
