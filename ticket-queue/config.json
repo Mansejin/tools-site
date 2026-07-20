@@ -1,4 +1,4 @@
 {
-  "apiBase": "",
+  "apiBase": "http://ohola.synology.me:8790",
   "eventId": "demo"
 }

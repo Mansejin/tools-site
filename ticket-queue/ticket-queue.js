@@ -40,6 +40,8 @@
     setupErr: document.getElementById("setupErr"),
     joinBtn: document.getElementById("joinBtn"),
     settingsBtn: document.getElementById("settingsBtn"),
+    refreshBtn: document.getElementById("refreshBtn"),
+    bookingsList: document.getElementById("bookingsList"),
     bookBtn: document.getElementById("bookBtn"),
     retryBtn: document.getElementById("retryBtn"),
     statsBlurb: document.getElementById("statsBlurb"),
@@ -150,11 +152,51 @@
       "</strong> · 예매완료 <strong>" +
       fmt(stats.booked) +
       "</strong></p>" +
-      "<p>입장 " +
+      "<p>영속 저장 <strong>" +
+      fmt(stats.persistedBookings || 0) +
+      "</strong> · 입장 " +
       fmt(stats.admitPerSec) +
-      "명/초 · Active TTL " +
+      "명/초 · TTL " +
       fmt(stats.activeTtlSec) +
       "초</p>";
+    await refreshBookings();
+  }
+
+  async function refreshBookings() {
+    if (!el.bookingsList) return;
+    try {
+      var data = await api(
+        "/v1/events/" + encodeURIComponent(state.eventId) + "/bookings?limit=20"
+      );
+      var items = data.items || [];
+      if (!items.length) {
+        el.bookingsList.textContent = "아직 저장된 예매가 없습니다.";
+        return;
+      }
+      el.bookingsList.innerHTML = items
+        .map(function (b) {
+          var when = new Date(b.createdAt).toLocaleString("ko-KR");
+          return (
+            '<div class="booking-row"><div><code>' +
+            String(b.userId).slice(0, 8) +
+            "…</code> · " +
+            fmt(b.seats) +
+            "장</div><div class=\"booking-meta\">" +
+            when +
+            "</div></div>"
+          );
+        })
+        .join("");
+    } catch (err) {
+      el.bookingsList.textContent = "목록 로드 실패: " + err.message;
+    }
+  }
+
+  function withJitter(sec) {
+    var base = Math.max(0.3, Number(sec) || 1);
+    // ±20% so polls don't align across clients
+    var factor = 0.8 + Math.random() * 0.4;
+    return base * factor;
   }
 
   async function loadConfigFile() {
@@ -196,8 +238,12 @@
       setPipe("queue");
       showToast("서버 연결됨");
     } catch (err) {
-      el.setupErr.textContent =
-        "연결 실패: " + err.message + " (서버가 켜져 있고 CORS가 열려 있는지 확인)";
+      var hint = err.message;
+      if (location.protocol === "https:" && base.indexOf("http://") === 0) {
+        hint +=
+          " · HTTPS 페이지에서 HTTP API는 브라우저가 막을 수 있어요. Tailscale/터널 HTTPS 또는 LAN에서 열어보세요.";
+      }
+      el.setupErr.textContent = "연결 실패: " + hint;
       el.setupErr.hidden = false;
     }
   }
@@ -242,9 +288,10 @@
 
   function pollSoon(delaySec) {
     clearTimeout(state.pollTimer);
-    state.nextPollAt = Date.now() + delaySec * 1000;
+    var wait = withJitter(delaySec);
+    state.nextPollAt = Date.now() + wait * 1000;
     renderQueue();
-    state.pollTimer = setTimeout(poll, Math.max(0, delaySec * 1000));
+    state.pollTimer = setTimeout(poll, Math.max(0, wait * 1000));
   }
 
   async function poll() {
@@ -404,10 +451,21 @@
   el.connectBtn.addEventListener("click", connect);
   el.joinBtn.addEventListener("click", join);
   el.settingsBtn.addEventListener("click", openSetup);
+  if (el.refreshBtn) {
+    el.refreshBtn.addEventListener("click", function () {
+      refreshStats()
+        .then(function () {
+          showToast("현황 갱신");
+        })
+        .catch(function (err) {
+          showToast("갱신 실패: " + err.message);
+        });
+    });
+  }
   el.bookBtn.addEventListener("click", book);
   el.retryBtn.addEventListener("click", backToStart);
 
-  el.apiInput.value = state.apiBase || "http://127.0.0.1:8787";
+  el.apiInput.value = state.apiBase || "http://ohola.synology.me:8790";
   el.eventInput.value = state.eventId || "demo";
 
   loadConfigFile().then(function () {
