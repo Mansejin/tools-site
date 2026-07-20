@@ -27,6 +27,11 @@ services:
       ADMIT_PER_SEC: ${ADMIT_PER_SEC:-40}
       ACTIVE_TTL_SEC: ${ACTIVE_TTL_SEC:-180}
       MAX_QUEUE: ${MAX_QUEUE:-5000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://mansejin.com}
+      RATE_JOIN_PER_MIN: ${RATE_JOIN_PER_MIN:-20}
+      RATE_BOOK_PER_MIN: ${RATE_BOOK_PER_MIN:-30}
+      RATE_STATUS_PER_MIN: ${RATE_STATUS_PER_MIN:-180}
+      RATE_ADMIN_PER_MIN: ${RATE_ADMIN_PER_MIN:-10}
       DATA_DIR: /app/data
     volumes:
       - ticket_queue_data:/app/data

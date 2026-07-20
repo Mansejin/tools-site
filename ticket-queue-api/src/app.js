@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { config } from "./config.js";
 import { verifyToken } from "./queueService.js";
+import { createRateLimiter } from "./rateLimit.js";
 
 function eventIdParam(req) {
   return req.params.eventId || config.eventId;
@@ -15,14 +16,50 @@ function requireAdmin(req, res) {
   return true;
 }
 
+function corsOriginOption() {
+  if (config.corsOrigin === "*") {
+    // Browsers only: still allow * in local/dev. Prefer locking in production .env.
+    return true;
+  }
+  const allowed = config.corsOrigin.split(",").map((s) => s.trim()).filter(Boolean);
+  return (origin, cb) => {
+    if (!origin || allowed.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  };
+}
+
 export function createApp(queue) {
   const app = express();
+  // Cloudflare Tunnel / reverse proxies
+  app.set("trust proxy", 1);
+
   app.use(
     cors({
-      origin: config.corsOrigin === "*" ? true : config.corsOrigin.split(","),
+      origin: corsOriginOption(),
     })
   );
   app.use(express.json({ limit: "32kb" }));
+
+  const limitJoin = createRateLimiter({
+    windowMs: 60_000,
+    max: config.rateJoinPerMin,
+    name: "join",
+  });
+  const limitBook = createRateLimiter({
+    windowMs: 60_000,
+    max: config.rateBookPerMin,
+    name: "book",
+  });
+  const limitStatus = createRateLimiter({
+    windowMs: 60_000,
+    max: config.rateStatusPerMin,
+    name: "status",
+  });
+  const limitAdmin = createRateLimiter({
+    windowMs: 60_000,
+    max: config.rateAdminPerMin,
+    name: "admin",
+  });
 
   app.get("/health", async (_req, res) => {
     try {
@@ -53,7 +90,7 @@ export function createApp(queue) {
     }
   });
 
-  app.post("/v1/events/:eventId/join", async (req, res) => {
+  app.post("/v1/events/:eventId/join", limitJoin, async (req, res) => {
     try {
       const clientId = req.body?.clientId || req.query.clientId;
       const out = await queue.join(eventIdParam(req), clientId);
@@ -63,7 +100,7 @@ export function createApp(queue) {
     }
   });
 
-  app.get("/v1/events/:eventId/status", async (req, res) => {
+  app.get("/v1/events/:eventId/status", limitStatus, async (req, res) => {
     try {
       const eventId = eventIdParam(req);
       const { userId, token } = req.query;
@@ -76,7 +113,7 @@ export function createApp(queue) {
     }
   });
 
-  app.post("/v1/events/:eventId/book", async (req, res) => {
+  app.post("/v1/events/:eventId/book", limitBook, async (req, res) => {
     try {
       const eventId = eventIdParam(req);
       const { userId, token, seats } = req.body || {};
@@ -97,7 +134,7 @@ export function createApp(queue) {
     }
   });
 
-  app.post("/v1/events/:eventId/admin/seats", async (req, res) => {
+  app.post("/v1/events/:eventId/admin/seats", limitAdmin, async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
       const seats = req.body?.seats ?? req.body?.seatsTotal;
@@ -107,7 +144,7 @@ export function createApp(queue) {
     }
   });
 
-  app.post("/v1/events/:eventId/admin/reset", async (req, res) => {
+  app.post("/v1/events/:eventId/admin/reset", limitAdmin, async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
       const seats = req.body?.seats ?? req.body?.seatsTotal;
