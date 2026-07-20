@@ -37,7 +37,8 @@ Docker:
 docker compose up --build
 ```
 
-NAS 자동 배포(works-site와 동일 패턴): [`docs/deploy-nas-auto.md`](docs/deploy-nas-auto.md)
+NAS 자동 배포(works-site와 동일 패턴): [`docs/deploy-nas-auto.md`](docs/deploy-nas-auto.md)  
+Cloud Agent → NAS SSH: [`docs/nas-ssh-via-tailscale.md`](docs/nas-ssh-via-tailscale.md)
 
 ## API
 
