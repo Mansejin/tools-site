@@ -1,0 +1,34 @@
+# Cloudflare Tunnel — HTTPS public API without port-forwarding
+#
+# Usage (NAS):
+#   cd /volume1/docker/tools-site/ticket-queue-api
+#   # put CLOUDFLARE_TUNNEL_TOKEN in .env
+#   docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d --build
+#
+# Setup steps: docs/deploy-cloudflare-tunnel.md
+# Public hostname example: ticket-queue-api.mansejin.com → http://api:8787
+
+services:
+  api:
+    networks:
+      - tq-net
+
+  redis:
+    networks:
+      - tq-net
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ticket-queue-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - api
+    networks:
+      - tq-net
+
+networks:
+  tq-net:
+    driver: bridge

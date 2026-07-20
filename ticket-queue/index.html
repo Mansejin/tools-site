@@ -48,11 +48,11 @@
       <section class="view" id="viewSetup" data-view="setup">
         <p class="section-label">API 서버</p>
         <label class="field-label" for="apiInput">서버 주소</label>
-        <input class="field-input" id="apiInput" type="url" placeholder="http://ohola.synology.me:8790" autocomplete="off" spellcheck="false">
+        <input class="field-input" id="apiInput" type="url" placeholder="https://ticket-queue-api.mansejin.com" autocomplete="off" spellcheck="false">
         <label class="field-label" for="eventInput">이벤트 ID</label>
         <input class="field-input" id="eventInput" type="text" value="demo" autocomplete="off" spellcheck="false">
         <div class="tq-blurb">
-          <p>NAS에 올린 <code>ticket-queue-api</code>에 연결합니다. 기본값: <code>ohola.synology.me:8790</code></p>
+          <p>NAS에 올린 <code>ticket-queue-api</code>에 연결합니다. 기본값: <code>https://ticket-queue-api.mansejin.com</code> (Cloudflare Tunnel)</p>
           <pre class="install-pre"># NAS 자동 배포 (main push)
 # ticket-queue-api/ 변경 → DSM/Actions가 pull + rebuild</pre>
         </div>

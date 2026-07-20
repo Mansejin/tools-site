@@ -277,9 +277,16 @@ fi
 
 if [ "$FORCE_BUILD" = "1" ] || api_changed "$OLD_REV" "$NEW_REV"; then
   ensure_docker_access
-  log "==> docker compose up -d --build (ticket-queue-api/)"
   cd "$COMPOSE_DIR" || exit 1
-  $DOCKER compose up -d --build --remove-orphans
+  COMPOSE_FILES="-f docker-compose.yml"
+  if [ -n "$(read_env_value CLOUDFLARE_TUNNEL_TOKEN "")" ] && [ -f "$COMPOSE_DIR/docker-compose.cloudflare.yml" ]; then
+    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.cloudflare.yml"
+    log "==> docker compose $COMPOSE_FILES up -d --build (with Cloudflare Tunnel)"
+  else
+    log "==> docker compose up -d --build (ticket-queue-api/)"
+  fi
+  # shellcheck disable=SC2086
+  $DOCKER compose $COMPOSE_FILES up -d --build --remove-orphans
 else
   log "==> ticket-queue-api/ unchanged — skip docker build"
 fi
