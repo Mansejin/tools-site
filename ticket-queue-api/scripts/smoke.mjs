@@ -5,7 +5,25 @@ async function main() {
   const health = await fetch(`${BASE}/health`).then((r) => r.json());
   console.log("health", health);
 
-  await fetch(`${BASE}/v1/events/${EVENT}/admin/reset`, { method: "POST" });
+  await fetch(`${BASE}/v1/events/${EVENT}/admin/reset`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ seats: 50 }),
+  });
+
+  const seatsSet = await fetch(`${BASE}/v1/events/${EVENT}/admin/seats`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ seats: 12 }),
+  }).then((r) => r.json());
+  console.log("admin seats", seatsSet);
+  if (seatsSet.seatsLeft !== 12) throw new Error("admin seats failed");
+
+  await fetch(`${BASE}/v1/events/${EVENT}/admin/reset`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ seats: 200 }),
+  });
 
   const clientId = crypto.randomUUID();
   const join1 = await fetch(`${BASE}/v1/events/${EVENT}/join`, {

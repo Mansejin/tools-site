@@ -7,6 +7,14 @@ function eventIdParam(req) {
   return req.params.eventId || config.eventId;
 }
 
+function requireAdmin(req, res) {
+  if (process.env.NODE_ENV === "production" && req.get("x-admin-secret") !== config.tokenSecret) {
+    res.status(403).json({ error: "forbidden" });
+    return false;
+  }
+  return true;
+}
+
 export function createApp(queue) {
   const app = express();
   app.use(
@@ -89,14 +97,23 @@ export function createApp(queue) {
     }
   });
 
-  app.post("/v1/events/:eventId/admin/reset", async (req, res) => {
-    if (process.env.NODE_ENV === "production" && req.get("x-admin-secret") !== config.tokenSecret) {
-      return res.status(403).json({ error: "forbidden" });
-    }
+  app.post("/v1/events/:eventId/admin/seats", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     try {
-      res.json(await queue.reset(eventIdParam(req)));
+      const seats = req.body?.seats ?? req.body?.seatsTotal;
+      res.json(await queue.setSeats(eventIdParam(req), seats));
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(err.status || 500).json({ error: err.message });
+    }
+  });
+
+  app.post("/v1/events/:eventId/admin/reset", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+      const seats = req.body?.seats ?? req.body?.seatsTotal;
+      res.json(await queue.reset(eventIdParam(req), seats));
+    } catch (err) {
+      res.status(err.status || 500).json({ error: err.message });
     }
   });
 

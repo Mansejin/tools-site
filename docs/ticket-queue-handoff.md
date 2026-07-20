@@ -138,7 +138,11 @@ mansejin.com   ohola-server :8790
 - `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
 
 ### C. 기능 이어서 (다음)
+<<<<<<< HEAD
+- ~~관리자: 좌석수 조정 / 리셋 UI~~ → `/ticket-queue/` 관리자 패널 + `admin/seats`
+=======
 - 관리자: 좌석수 조정 / 리셋 UI
+>>>>>>> origin/main
 - 로그인 연동
 - 모니터링(대기 인원·에러)
 

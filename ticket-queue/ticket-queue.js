@@ -4,6 +4,7 @@
   var STORAGE_API = "tq-api";
   var STORAGE_EVENT = "tq-event";
   var STORAGE_CLIENT = "tq-client-id";
+  var STORAGE_ADMIN = "tq-admin-secret";
   var params = new URLSearchParams(location.search);
 
   function ensureClientId() {
@@ -63,6 +64,11 @@
     pipe: document.getElementById("pipe"),
     headerSubtitle: document.getElementById("headerSubtitle"),
     liveBanner: document.getElementById("liveBanner"),
+    adminSecretInput: document.getElementById("adminSecretInput"),
+    adminSeatsInput: document.getElementById("adminSeatsInput"),
+    adminSeatsBtn: document.getElementById("adminSeatsBtn"),
+    adminResetBtn: document.getElementById("adminResetBtn"),
+    adminErr: document.getElementById("adminErr"),
   };
 
   var views = {
@@ -122,6 +128,78 @@
     return data;
   }
 
+  function adminHeaders() {
+    var headers = { "content-type": "application/json" };
+    var secret = (el.adminSecretInput && el.adminSecretInput.value) || "";
+    if (secret) headers["x-admin-secret"] = secret;
+    return headers;
+  }
+
+  function showAdminErr(msg) {
+    if (!el.adminErr) return;
+    if (!msg) {
+      el.adminErr.hidden = true;
+      el.adminErr.textContent = "";
+      return;
+    }
+    el.adminErr.textContent = msg;
+    el.adminErr.hidden = false;
+  }
+
+  async function adminSeats() {
+    showAdminErr("");
+    var seats = Number(el.adminSeatsInput.value);
+    if (!Number.isInteger(seats) || seats < 0) {
+      showAdminErr("좌석 수는 0 이상의 정수여야 합니다.");
+      return;
+    }
+    try {
+      if (el.adminSecretInput && el.adminSecretInput.value) {
+        sessionStorage.setItem(STORAGE_ADMIN, el.adminSecretInput.value);
+      }
+      var stats = await api("/v1/events/" + encodeURIComponent(state.eventId) + "/admin/seats", {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ seats: seats }),
+      });
+      el.adminSeatsInput.value = String(stats.seatsLeft);
+      await refreshStats();
+      showToast("좌석 " + fmt(stats.seatsLeft) + "석으로 설정");
+    } catch (err) {
+      showAdminErr("좌석 적용 실패: " + err.message);
+    }
+  }
+
+  async function adminReset() {
+    showAdminErr("");
+    if (!window.confirm("대기열·Active·예매 기록을 모두 초기화할까요?")) return;
+    var seatsRaw = el.adminSeatsInput.value;
+    var body = {};
+    if (seatsRaw !== "") {
+      var seats = Number(seatsRaw);
+      if (!Number.isInteger(seats) || seats < 0) {
+        showAdminErr("좌석 수는 0 이상의 정수여야 합니다.");
+        return;
+      }
+      body.seats = seats;
+    }
+    try {
+      if (el.adminSecretInput && el.adminSecretInput.value) {
+        sessionStorage.setItem(STORAGE_ADMIN, el.adminSecretInput.value);
+      }
+      var stats = await api("/v1/events/" + encodeURIComponent(state.eventId) + "/admin/reset", {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(body),
+      });
+      el.adminSeatsInput.value = String(stats.seatsLeft);
+      await refreshStats();
+      showToast("초기화 완료 · 좌석 " + fmt(stats.seatsLeft));
+    } catch (err) {
+      showAdminErr("초기화 실패: " + err.message);
+    }
+  }
+
   function renderQueue() {
     el.rankNum.textContent = fmt(state.ahead);
     el.behindNum.textContent = fmt(state.behind);
@@ -159,6 +237,9 @@
       "명/초 · TTL " +
       fmt(stats.activeTtlSec) +
       "초</p>";
+    if (el.adminSeatsInput && document.activeElement !== el.adminSeatsInput) {
+      el.adminSeatsInput.value = String(stats.seatsLeft);
+    }
     await refreshBookings();
   }
 
@@ -464,6 +545,11 @@
   }
   el.bookBtn.addEventListener("click", book);
   el.retryBtn.addEventListener("click", backToStart);
+  if (el.adminSeatsBtn) el.adminSeatsBtn.addEventListener("click", adminSeats);
+  if (el.adminResetBtn) el.adminResetBtn.addEventListener("click", adminReset);
+  if (el.adminSecretInput) {
+    el.adminSecretInput.value = sessionStorage.getItem(STORAGE_ADMIN) || "";
+  }
 
   el.apiInput.value = state.apiBase || "https://ticket-queue-api.mansejin.com";
   el.eventInput.value = state.eventId || "demo";
