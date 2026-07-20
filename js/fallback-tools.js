@@ -37,8 +37,8 @@ const FALLBACK_TOOLS = [
       en: "FCFS ticketing wait-queue (Redis, ~1k)",
     },
     description: {
-      ko: "명절 예매처럼 몰리는 트래픽을 DB 앞에서 버티는 대기열 서버입니다. Redis ZSET 줄서기, 순번 폴링, Active TTL 입장, Lua 좌석 원자 차감까지 포함합니다. 웹 클라이언트는 열기로 들어가 서버 주소를 연결하세요.",
-      en: "A real wait-queue API for bursty first-come ticketing: Redis ZSET ranking, polling TTL, Active admission, and Lua seat deduction. Open the web client and point it at your API server.",
+      ko: "Redis 선착순 예매 대기열 서버. 줄서기 멱등(clientId), Active TTL, Lua 좌석 차감, SQLite 예매 영속 저장. NAS Docker로 띄운 뒤 열기에서 API 주소를 연결하세요.",
+      en: "Redis FCFS wait-queue API with idempotent clientId join, Active TTL, Lua seat deduction, and SQLite booking persistence. Run on NAS Docker, then connect the web client to your API URL.",
     },
     tags: {
       ko: ["백엔드", "Redis", "예매"],
@@ -47,8 +47,8 @@ const FALLBACK_TOOLS = [
     url: "/ticket-queue/",
     github: "https://github.com/Mansejin/tools-site/tree/main/ticket-queue-api",
     install: {
-      ko: "1. 저장소 clone\n2. cd ticket-queue-api\n3. cp .env.example .env\n4. Redis 실행 후 npm install && npm start\n5. 브라우저에서 열기 → 서버 주소(http://127.0.0.1:8787) 연결",
-      en: "1. Clone the repo\n2. cd ticket-queue-api\n3. cp .env.example .env\n4. Start Redis, then npm install && npm start\n5. Open the client and connect to http://127.0.0.1:8787",
+      ko: "1. ticket-queue-api에서 docker compose up -d --build\n2. https://mansejin.com/ticket-queue/ 열기\n3. API 주소(예: http://나스IP:8787) 연결\n4. (선택) ticket-queue/config.json 에 apiBase 적어 두면 기본 연결",
+      en: "1. In ticket-queue-api: docker compose up -d --build\n2. Open https://mansejin.com/ticket-queue/\n3. Connect API URL (e.g. http://NAS-IP:8787)\n4. Optional: set apiBase in ticket-queue/config.json",
     },
     installAdvanced: {
       ko: "Docker:\ncd ticket-queue-api\ndocker compose up --build\n\n부하 테스트:\nUSERS=1000 npm run loadtest",

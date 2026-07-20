@@ -3,11 +3,22 @@
 
   var STORAGE_API = "tq-api";
   var STORAGE_EVENT = "tq-event";
+  var STORAGE_CLIENT = "tq-client-id";
   var params = new URLSearchParams(location.search);
+
+  function ensureClientId() {
+    var existing = localStorage.getItem(STORAGE_CLIENT);
+    if (existing) return existing;
+    var id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random();
+    // uuid package validates RFC; keep browser crypto UUID
+    localStorage.setItem(STORAGE_CLIENT, id);
+    return id;
+  }
 
   var state = {
     apiBase: (params.get("api") || localStorage.getItem(STORAGE_API) || "").replace(/\/$/, ""),
     eventId: params.get("event") || localStorage.getItem(STORAGE_EVENT) || "demo",
+    clientId: ensureClientId(),
     userId: "",
     token: "",
     ahead: 0,
@@ -146,6 +157,22 @@
       "초</p>";
   }
 
+  async function loadConfigFile() {
+    try {
+      var res = await fetch("config.json", { cache: "no-store" });
+      if (!res.ok) return;
+      var cfg = await res.json();
+      if (!state.apiBase && cfg.apiBase) {
+        state.apiBase = String(cfg.apiBase).replace(/\/$/, "");
+      }
+      if (cfg.eventId && !params.get("event") && !localStorage.getItem(STORAGE_EVENT)) {
+        state.eventId = String(cfg.eventId);
+      }
+    } catch (_) {
+      /* optional */
+    }
+  }
+
   async function connect() {
     el.setupErr.hidden = true;
     var base = (el.apiInput.value || "").trim().replace(/\/$/, "");
@@ -183,6 +210,8 @@
     try {
       var out = await api("/v1/events/" + encodeURIComponent(state.eventId) + "/join", {
         method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ clientId: state.clientId }),
       });
       state.userId = out.userId;
       state.token = out.token;
@@ -192,7 +221,18 @@
       document.querySelectorAll(".seat-tab").forEach(function (b, i) {
         b.classList.toggle("active", i === 0);
       });
-      showToast("대기열 등록");
+      showToast(out.resumed ? "기존 대기열 재개" : "대기열 등록");
+      if (out.phase === "active") {
+        enterActive({
+          seatsLeft: state.seatsLeft,
+          activeExpiresAt: out.activeExpiresAt,
+        });
+        return;
+      }
+      if (out.phase === "booked") {
+        finish(true, out.seatsTaken || 1, state.seatsLeft);
+        return;
+      }
       pollSoon(0);
     } catch (err) {
       showToast("접수 실패: " + err.message);
@@ -370,9 +410,10 @@
   el.apiInput.value = state.apiBase || "http://127.0.0.1:8787";
   el.eventInput.value = state.eventId || "demo";
 
-  if (state.apiBase) {
-    connect();
-  } else {
-    openSetup();
-  }
+  loadConfigFile().then(function () {
+    el.apiInput.value = state.apiBase || el.apiInput.value;
+    el.eventInput.value = state.eventId || "demo";
+    if (state.apiBase) connect();
+    else openSetup();
+  });
 })();

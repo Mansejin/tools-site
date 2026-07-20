@@ -15,4 +15,5 @@ export const config = {
   tokenSecret: process.env.TOKEN_SECRET || "dev-secret",
   corsOrigin: process.env.CORS_ORIGIN || "*",
   maxQueue: envInt("MAX_QUEUE", 5000),
+  dataDir: process.env.DATA_DIR || new URL("../data", import.meta.url).pathname,
 };
