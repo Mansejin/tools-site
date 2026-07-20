@@ -138,12 +138,12 @@ git_sync_deploy() {
     "$GIT_IMAGE" \
     -ec "
       git config --global --add safe.directory /git
-      git fetch origin '$BRANCH' || git fetch origin
-      git clean -fd -e ticket-queue-api/.env -e ticket-queue-api/logs
+      git fetch origin '$BRANCH' >/dev/null 2>&1 || git fetch origin >/dev/null 2>&1
+      git clean -fd -e ticket-queue-api/.env -e ticket-queue-api/logs >/dev/null 2>&1
       if git rev-parse --verify 'origin/$BRANCH' >/dev/null 2>&1; then
-        git reset --hard 'origin/$BRANCH'
+        git reset --hard 'origin/$BRANCH' >/dev/null
       else
-        git reset --hard FETCH_HEAD
+        git reset --hard FETCH_HEAD >/dev/null
       fi
       git rev-parse --short HEAD
     ")
