@@ -119,7 +119,12 @@ git_sync_deploy() {
     "$GIT" -C "$REPO_DIR" clean -fd \
       -e ticket-queue-api/.env \
       -e ticket-queue-api/logs
-    "$GIT" -C "$REPO_DIR" reset --hard "origin/$BRANCH"
+    if "$GIT" -C "$REPO_DIR" rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+      "$GIT" -C "$REPO_DIR" reset --hard "origin/$BRANCH"
+    else
+      # Shallow fetch may only update FETCH_HEAD
+      "$GIT" -C "$REPO_DIR" reset --hard FETCH_HEAD
+    fi
     log "==> git at $("$GIT" -C "$REPO_DIR" rev-parse --short HEAD)"
     return
   fi
@@ -133,9 +138,13 @@ git_sync_deploy() {
     "$GIT_IMAGE" \
     -ec "
       git config --global --add safe.directory /git
-      git fetch origin '$BRANCH'
+      git fetch origin '$BRANCH' || git fetch origin
       git clean -fd -e ticket-queue-api/.env -e ticket-queue-api/logs
-      git reset --hard 'origin/$BRANCH'
+      if git rev-parse --verify 'origin/$BRANCH' >/dev/null 2>&1; then
+        git reset --hard 'origin/$BRANCH'
+      else
+        git reset --hard FETCH_HEAD
+      fi
       git rev-parse --short HEAD
     ")
   log "==> git at $short"
