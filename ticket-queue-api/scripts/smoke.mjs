@@ -7,15 +7,28 @@ async function main() {
 
   await fetch(`${BASE}/v1/events/${EVENT}/admin/reset`, { method: "POST" });
 
-  const join = await fetch(`${BASE}/v1/events/${EVENT}/join`, { method: "POST" }).then((r) =>
-    r.json()
-  );
-  console.log("join", join);
+  const clientId = crypto.randomUUID();
+  const join1 = await fetch(`${BASE}/v1/events/${EVENT}/join`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ clientId }),
+  }).then((r) => r.json());
+  console.log("join1", join1);
+
+  const join2 = await fetch(`${BASE}/v1/events/${EVENT}/join`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ clientId }),
+  }).then((r) => r.json());
+  console.log("join2", join2);
+  if (join2.userId !== join1.userId || !join2.resumed) {
+    throw new Error("idempotent join failed");
+  }
 
   let status;
   for (let i = 0; i < 30; i++) {
     status = await fetch(
-      `${BASE}/v1/events/${EVENT}/status?userId=${encodeURIComponent(join.userId)}&token=${encodeURIComponent(join.token)}`
+      `${BASE}/v1/events/${EVENT}/status?userId=${encodeURIComponent(join1.userId)}&token=${encodeURIComponent(join1.token)}`
     ).then((r) => r.json());
     console.log("status", status);
     if (status.phase === "active") break;
@@ -29,11 +42,19 @@ async function main() {
   const book = await fetch(`${BASE}/v1/events/${EVENT}/book`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ userId: join.userId, token: join.token, seats: 2 }),
+    body: JSON.stringify({ userId: join1.userId, token: join1.token, seats: 2 }),
   }).then((r) => r.json());
   console.log("book", book);
+  if (!book.ok || !book.booking) throw new Error("book/persist failed");
 
-  if (!book.ok) throw new Error("book failed");
+  const bookings = await fetch(`${BASE}/v1/events/${EVENT}/bookings`).then((r) => r.json());
+  console.log("bookings", bookings);
+  if (!bookings.items?.length) throw new Error("no persisted bookings");
+
+  const stats = await fetch(`${BASE}/v1/events/${EVENT}/stats`).then((r) => r.json());
+  console.log("stats", stats);
+  if (stats.persistedBookings < 1) throw new Error("persistedBookings missing");
+
   console.log("smoke ok");
 }
 

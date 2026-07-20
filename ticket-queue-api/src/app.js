@@ -33,10 +33,23 @@ export function createApp(queue) {
     }
   });
 
+  app.get("/v1/events/:eventId/bookings", async (req, res) => {
+    try {
+      const limit = Number(req.query.limit || 100);
+      res.json({
+        eventId: eventIdParam(req),
+        items: queue.listBookings(eventIdParam(req), limit),
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/v1/events/:eventId/join", async (req, res) => {
     try {
-      const out = await queue.join(eventIdParam(req));
-      res.status(201).json(out);
+      const clientId = req.body?.clientId || req.query.clientId;
+      const out = await queue.join(eventIdParam(req), clientId);
+      res.status(out.resumed ? 200 : 201).json(out);
     } catch (err) {
       res.status(err.status || 500).json({ error: err.message });
     }

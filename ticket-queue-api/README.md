@@ -6,10 +6,11 @@ GitHub Pages 프론트(`/ticket-queue/`)와 따로 둡니다. Redis + Node API.
 
 ## 구조
 
-1. `POST /join` → Redis ZSET 대기열 등록 (UUID + HMAC 토큰)
+1. `POST /join` `{ clientId }` → Redis ZSET 대기열 (같은 clientId면 재입장, 줄 유지)
 2. `GET /status` → `ZRANK`/`ZCARD`로 순번, 서버가 `pollTtlSec` 내려줌
 3. 스케줄러(1초) → `ZPOPMIN` N명 → Active (TTL)
-4. `POST /book` → Lua로 잔여 좌석 원자 차감
+4. `POST /book` → Lua 좌석 원자 차감 + **SQLite 영속 저장**
+5. `GET /bookings` → 저장된 예매 목록
 
 ## 빠른 시작
 

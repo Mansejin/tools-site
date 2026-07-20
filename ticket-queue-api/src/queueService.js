@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 import { config } from "./config.js";
 import { BOOK_LUA, keys } from "./redis.js";
+import { clearBookings, countBookings, insertBooking, listBookings } from "./db.js";
 
 function sign(userId, eventId) {
   return crypto
@@ -26,6 +27,11 @@ function pollTtlSec(ahead) {
   return 1;
 }
 
+function resolveUserId(clientId) {
+  if (clientId && uuidValidate(String(clientId))) return String(clientId);
+  return uuidv4();
+}
+
 export class QueueService {
   constructor(redis) {
     this.redis = redis;
@@ -47,9 +53,51 @@ export class QueueService {
     }
   }
 
-  async join(eventId) {
+  async join(eventId, clientId) {
     await this.initEvent(eventId);
     const k = keys(eventId);
+    const userId = resolveUserId(clientId);
+    const token = sign(userId, eventId);
+
+    const booked = await this.redis.hget(k.booked, userId);
+    if (booked) {
+      return {
+        eventId,
+        userId,
+        token,
+        phase: "booked",
+        seatsTaken: Number(booked),
+        resumed: true,
+      };
+    }
+
+    const activeScore = await this.redis.zscore(k.active, userId);
+    if (activeScore != null) {
+      const expiresAt = Number(activeScore) + config.activeTtlSec * 1000;
+      if (Date.now() <= expiresAt) {
+        return {
+          eventId,
+          userId,
+          token,
+          phase: "active",
+          activeExpiresAt: expiresAt,
+          resumed: true,
+        };
+      }
+      await this.redis.zrem(k.active, userId);
+    }
+
+    const existingRank = await this.redis.zrank(k.wait, userId);
+    if (existingRank != null) {
+      return {
+        eventId,
+        userId,
+        token,
+        phase: "waiting",
+        resumed: true,
+      };
+    }
+
     const size = await this.redis.zcard(k.wait);
     const activeCount = await this.redis.zcard(k.active);
     if (size + activeCount >= config.maxQueue) {
@@ -58,17 +106,16 @@ export class QueueService {
       throw err;
     }
 
-    const userId = uuidv4();
     const seq = await this.redis.incr(k.seq);
-    // score = ms + tiny seq fraction so same-ms ties stay FIFO-ish
     const score = Date.now() + seq / 1e9;
-    await this.redis.zadd(k.wait, score, userId);
-
+    // NX: same clientId cannot create a second line
+    const added = await this.redis.zadd(k.wait, "NX", score, userId);
     return {
       eventId,
       userId,
-      token: sign(userId, eventId),
+      token,
       phase: "waiting",
+      resumed: added === 0,
     };
   }
 
@@ -129,7 +176,6 @@ export class QueueService {
   async admitBatch(eventId, n) {
     const k = keys(eventId);
     if (n <= 0) return 0;
-    // ZPOPMIN returns [member, score, ...]
     const popped = await this.redis.zpopmin(k.wait, n);
     if (!popped.length) return 0;
     const now = Date.now();
@@ -181,16 +227,27 @@ export class QueueService {
     const seatsLeft = Number(result[2]);
     if (!ok) {
       const err = new Error(reason);
-      err.status = reason === "already" ? 409 : 409;
+      err.status = 409;
       err.seatsLeft = seatsLeft;
       throw err;
     }
 
+    const seatsTaken = Number(result[3]);
     await this.redis.zrem(k.active, userId);
+
+    // Durable record (survives Redis flush / restart)
+    const record = insertBooking({
+      eventId,
+      userId,
+      seats: seatsTaken,
+      seatsLeft,
+    });
+
     return {
       ok: true,
-      seatsTaken: Number(result[3]),
+      seatsTaken,
       seatsLeft,
+      booking: record,
     };
   }
 
@@ -209,15 +266,21 @@ export class QueueService {
       active,
       seatsLeft: Number(seatsLeft || 0),
       booked,
+      persistedBookings: countBookings(eventId),
       admitPerSec: config.admitPerSec,
       activeTtlSec: config.activeTtlSec,
       maxQueue: config.maxQueue,
     };
   }
 
+  listBookings(eventId, limit) {
+    return listBookings(eventId, limit);
+  }
+
   async reset(eventId) {
     const k = keys(eventId);
     await this.redis.del(k.wait, k.active, k.seats, k.booked, k.seq, k.meta);
+    clearBookings(eventId);
     await this.initEvent(eventId);
     return this.stats(eventId);
   }
