@@ -1,0 +1,29 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: "8787"
+      REDIS_URL: redis://redis:6379
+      EVENT_ID: demo
+      SEATS_TOTAL: "200"
+      ADMIT_PER_SEC: "40"
+      ACTIVE_TTL_SEC: "180"
+      TOKEN_SECRET: change-me-in-production
+      CORS_ORIGIN: "*"
+      MAX_QUEUE: "5000"
+    depends_on:
+      redis:
+        condition: service_healthy

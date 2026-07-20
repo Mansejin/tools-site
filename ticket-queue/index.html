@@ -32,8 +32,10 @@
       </div>
       <p class="hero-emoji">🚄</p>
       <h1>명절 예매 대기열</h1>
-      <p class="subtitle">진짜 Redis는 없고, 원리를 브라우저에서 흉내 냅니다</p>
+      <p class="subtitle" id="headerSubtitle">시뮬 기본 · 실제 API는 ?api=주소 로 연결</p>
     </header>
+
+    <p class="live-banner" id="liveBanner" hidden>실제 Redis 백엔드에 연결됨</p>
 
     <ol class="pipe" id="pipe" aria-label="처리 단계">
       <li class="pipe-step is-on" data-stage="queue">1. 대기열</li>
