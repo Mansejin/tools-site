@@ -73,6 +73,23 @@ async function main() {
   console.log("stats", stats);
   if (stats.persistedBookings < 1) throw new Error("persistedBookings missing");
 
+  // Rate limit: burn join quota quickly, expect 429
+  const joinLimit = Number(process.env.RATE_JOIN_PER_MIN || 20);
+  let limited = false;
+  for (let i = 0; i < joinLimit + 5; i++) {
+    const r = await fetch(`${BASE}/v1/events/${EVENT}/join`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ clientId: crypto.randomUUID() }),
+    });
+    if (r.status === 429) {
+      limited = true;
+      break;
+    }
+  }
+  if (!limited) throw new Error("expected join rate limit 429");
+  console.log("rate limit ok");
+
   console.log("smoke ok");
 }
 

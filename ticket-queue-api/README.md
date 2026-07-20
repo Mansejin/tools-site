@@ -61,7 +61,12 @@ HTTPS Tunnel: [`docs/deploy-cloudflare-tunnel.md`](docs/deploy-cloudflare-tunnel
 | `ADMIT_PER_SEC` | 40 | 초당 Active 입장 수 |
 | `ACTIVE_TTL_SEC` | 180 | 입장 후 예매 제한(초) |
 | `MAX_QUEUE` | 5000 | 대기+Active 상한 |
-| `TOKEN_SECRET` | (필수 변경) | 토큰 HMAC 비밀키 |
+| `TOKEN_SECRET` | (필수 변경) | 토큰 HMAC 비밀키 + admin `x-admin-secret` |
+| `CORS_ORIGIN` | Pages 도메인 | 브라우저 CORS 허용 origin (쉼표 구분) |
+| `RATE_JOIN_PER_MIN` | 20 | IP당 join/분 |
+| `RATE_BOOK_PER_MIN` | 30 | IP당 book/분 |
+| `RATE_STATUS_PER_MIN` | 180 | IP당 status/분 |
+| `RATE_ADMIN_PER_MIN` | 10 | IP당 admin/분 |
 
 ## 프론트 연결
 

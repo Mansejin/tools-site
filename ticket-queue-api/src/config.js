@@ -16,4 +16,9 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN || "*",
   maxQueue: envInt("MAX_QUEUE", 5000),
   dataDir: process.env.DATA_DIR || new URL("../data", import.meta.url).pathname,
+  // Per-IP fixed windows (Cloudflare CF-Connecting-IP when behind Tunnel)
+  rateJoinPerMin: envInt("RATE_JOIN_PER_MIN", 20),
+  rateBookPerMin: envInt("RATE_BOOK_PER_MIN", 30),
+  rateStatusPerMin: envInt("RATE_STATUS_PER_MIN", 180),
+  rateAdminPerMin: envInt("RATE_ADMIN_PER_MIN", 10),
 };
