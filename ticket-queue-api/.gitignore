@@ -4,3 +4,5 @@ node_modules/
 logs/
 .DS_Store
 data/
+cloudflared/credentials.json
+cloudflared/config.yml

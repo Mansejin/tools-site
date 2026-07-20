@@ -106,10 +106,10 @@ mansejin.com   ohola-server :8790
 - `ohola.synology.me:8790` → Cloud/해외에서 `Connection reset` (NAS 방화벽 KR/TW 위주)
 - Pages HTTPS → API HTTP 는 **mixed content** → Tunnel HTTPS로 해소 예정
 
-### 5-2. Cloudflare Tunnel 토큰 (사람 작업 1회)
-- Compose/문서는 준비됨: `docker-compose.cloudflare.yml`, [`deploy-cloudflare-tunnel.md`](../ticket-queue-api/docs/deploy-cloudflare-tunnel.md)
-- Zero Trust에서 터널 + Public Hostname `ticket-queue-api.mansejin.com` → `http://api:8787` 생성 후  
-  NAS `.env`에 `CLOUDFLARE_TUNNEL_TOKEN=…` 넣고 오버레이 compose up
+### 5-2. Cloudflare Tunnel (브라우저 로그인 1회)
+- 스크립트 준비됨: `login-and-apply-cloudflare-via-ssh.sh` (API 토큰 수동 생성 불필요)
+- 실행 후 나온 `dash.cloudflare.com/argotunnel?...` URL만 브라우저에서 승인
+- 상세: [`deploy-cloudflare-tunnel.md`](../ticket-queue-api/docs/deploy-cloudflare-tunnel.md)
 
 ### 5-3. Actions 배포
 - 워크플로 YAML 수정 머지 완료
@@ -125,11 +125,11 @@ mansejin.com   ohola-server :8790
 - DSM 스케줄러 `ticket-queue-api-auto-pull` (id=22, 10분) enabled
 - `main`에 남아 있던 `docker-compose.yml` / `.env.example` **머지 충돌 마커** 발견 → 수정 PR
 
-### B. Cloudflare Tunnel — **자동화 스크립트 준비, API 토큰만 대기**
-- `scripts/provision-cloudflare-tunnel.mjs` — 터널 생성 + DNS + token
-- `scripts/apply-cloudflare-tunnel-nas.sh` — NAS `.env` 기록 + overlay compose up
+### B. Cloudflare Tunnel — **브라우저 로그인 한 번으로 자동화**
+- `login-and-apply-cloudflare-via-ssh.sh` — URL 열기 → tunnel/DNS → NAS compose (API 토큰 불필요)
+- `provision-cloudflare-tunnel.mjs` — API 토큰이 있을 때 대안 경로
 - `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
-- 사람 작업: Cursor/NAS에 `CLOUDFLARE_API_TOKEN` 한 번만 넣기 (Tunnel Edit + DNS Edit)
+- 실행: `sh ticket-queue-api/scripts/login-and-apply-cloudflare-via-ssh.sh`
 
 ### C. 기능 이어서 (여유 시)
 - 관리자: 좌석수 조정 / 리셋 UI
@@ -165,8 +165,8 @@ data/tools.json
 ## 8. 한 줄 상태
 
 > **NAS health·스케줄러·자동배포는 동작 중.**  
-> **남은 것: `CLOUDFLARE_API_TOKEN` 시크릿 1개 → `apply-cloudflare-tunnel-nas.sh` 한 방.**  
-> (대시보드에서 터널 토큰을 손으로 복사할 필요 없음)
+> **남은 것: `login-and-apply-cloudflare-via-ssh.sh` 실행 → 브라우저에서 Cloudflare URL 한 번 승인.**  
+> (API 토큰을 손으로 만들 필요 없음)
 
 ---
 

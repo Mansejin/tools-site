@@ -279,9 +279,13 @@ if [ "$FORCE_BUILD" = "1" ] || api_changed "$OLD_REV" "$NEW_REV"; then
   ensure_docker_access
   cd "$COMPOSE_DIR" || exit 1
   COMPOSE_FILES="-f docker-compose.yml"
-  if [ -n "$(read_env_value CLOUDFLARE_TUNNEL_TOKEN "")" ] && [ -f "$COMPOSE_DIR/docker-compose.cloudflare.yml" ]; then
+  if [ -f "$COMPOSE_DIR/cloudflared/credentials.json" ] && [ -f "$COMPOSE_DIR/cloudflared/config.yml" ] \
+    && [ -f "$COMPOSE_DIR/docker-compose.cloudflare-login.yml" ]; then
+    COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.cloudflare-login.yml"
+    log "==> docker compose $COMPOSE_FILES up -d --build (Cloudflare login credentials)"
+  elif [ -n "$(read_env_value CLOUDFLARE_TUNNEL_TOKEN "")" ] && [ -f "$COMPOSE_DIR/docker-compose.cloudflare.yml" ]; then
     COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.cloudflare.yml"
-    log "==> docker compose $COMPOSE_FILES up -d --build (with Cloudflare Tunnel)"
+    log "==> docker compose $COMPOSE_FILES up -d --build (with Cloudflare Tunnel token)"
   else
     log "==> docker compose up -d --build (ticket-queue-api/)"
   fi
