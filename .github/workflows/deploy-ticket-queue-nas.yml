@@ -76,24 +76,22 @@ jobs:
           username: ${{ secrets.NAS_SSH_USER }}
           key: ${{ secrets.NAS_SSH_KEY }}
           passphrase: ${{ secrets.NAS_SSH_PASSPHRASE }}
-          port: ${{ secrets.NAS_SSH_PORT || 22 }}
+          port: ${{ secrets.NAS_SSH_PORT }}
           command_timeout: 15m
-          envs: TQ_BRANCH,NAS_REPO_PATH,TQ_DOCKER_SUDO
           script: |
             set -e
             REPO="${NAS_REPO_PATH:-/volume1/docker/tools-site}"
             export PATH="/usr/local/bin:/var/packages/ContainerManager/target/usr/bin:/var/packages/Docker/target/usr/bin:/var/packages/Git/target/usr/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
-            export TQ_BRANCH
+            export TQ_BRANCH="${TQ_BRANCH:-main}"
             export TQ_DOCKER_SUDO="${TQ_DOCKER_SUDO:-1}"
             curl -fsSL "https://raw.githubusercontent.com/Mansejin/tools-site/${TQ_BRANCH}/ticket-queue-api/scripts/nas-docker-update.sh" -o /tmp/ticket-queue-api-deploy.sh
             sed -i 's/\r$//' /tmp/ticket-queue-api-deploy.sh 2>/dev/null || true
             cd "$REPO"
             sh /tmp/ticket-queue-api-deploy.sh --full-build
-          env:
-            TQ_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
-            NAS_REPO_PATH: ${{ secrets.NAS_REPO_PATH }}
-            TQ_DOCKER_SUDO: "1"
-
+        env:
+          TQ_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+          NAS_REPO_PATH: ${{ secrets.NAS_REPO_PATH }}
+          TQ_DOCKER_SUDO: "1"
       - name: Summary
         if: steps.check.outputs.skip != 'true'
         run: echo "ticket-queue-api NAS deploy finished for branch ${{ github.event.inputs.branch || github.ref_name }}"
