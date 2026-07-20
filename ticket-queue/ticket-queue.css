@@ -62,6 +62,34 @@
   word-break: keep-all;
 }
 
+.bookings {
+  max-height: 180px;
+  overflow: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  font-size: 0.78rem;
+}
+
+.booking-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  word-break: break-all;
+}
+
+.booking-row:last-child {
+  border-bottom: none;
+}
+
+.booking-meta {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
 .pipe {
   list-style: none;
   display: grid;

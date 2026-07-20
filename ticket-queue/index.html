@@ -48,14 +48,13 @@
       <section class="view" id="viewSetup" data-view="setup">
         <p class="section-label">API 서버</p>
         <label class="field-label" for="apiInput">서버 주소</label>
-        <input class="field-input" id="apiInput" type="url" placeholder="http://127.0.0.1:8787" autocomplete="off" spellcheck="false">
+        <input class="field-input" id="apiInput" type="url" placeholder="http://ohola.synology.me:8790" autocomplete="off" spellcheck="false">
         <label class="field-label" for="eventInput">이벤트 ID</label>
         <input class="field-input" id="eventInput" type="text" value="demo" autocomplete="off" spellcheck="false">
         <div class="tq-blurb">
-          <p>이 페이지는 시뮬이 아닙니다. <code>ticket-queue-api</code>를 먼저 띄운 뒤 연결하세요.</p>
-          <pre class="install-pre">cd ticket-queue-api
-cp .env.example .env
-npm install &amp;&amp; npm start</pre>
+          <p>NAS에 올린 <code>ticket-queue-api</code>에 연결합니다. 기본값: <code>ohola.synology.me:8790</code></p>
+          <pre class="install-pre"># NAS 자동 배포 (main push)
+# ticket-queue-api/ 변경 → DSM/Actions가 pull + rebuild</pre>
         </div>
         <div class="btn-group">
           <button type="button" class="btn btn-primary" id="connectBtn">서버 연결</button>
@@ -67,8 +66,11 @@ npm install &amp;&amp; npm start</pre>
         <div class="tq-blurb" id="statsBlurb">
           <p>서버에 연결되면 대기열·좌석 현황이 여기에 표시됩니다.</p>
         </div>
+        <p class="section-label">최근 예매 (SQLite)</p>
+        <div class="bookings" id="bookingsList">불러오는 중…</div>
         <div class="btn-group">
           <button type="button" class="btn btn-primary" id="joinBtn">예매 접수하기</button>
+          <button type="button" class="btn btn-secondary" id="refreshBtn">현황 새로고침</button>
           <button type="button" class="btn btn-secondary" id="settingsBtn">서버 설정</button>
         </div>
       </section>
