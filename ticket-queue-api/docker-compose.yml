@@ -1,8 +1,8 @@
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    container_name: ticket-queue-redis
+    restart: unless-stopped
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -12,18 +12,21 @@ services:
 
   api:
     build: .
+    container_name: ticket-queue-api
+    restart: unless-stopped
+    env_file:
+      - .env
     ports:
-      - "8787:8787"
+      # Host 8787 is used by saenggibu-gateway on this NAS — default 8790 for deploy.
+      - "${TICKET_QUEUE_HOST_PORT:-8790}:8787"
     environment:
       PORT: "8787"
       REDIS_URL: redis://redis:6379
-      EVENT_ID: demo
-      SEATS_TOTAL: "200"
-      ADMIT_PER_SEC: "40"
-      ACTIVE_TTL_SEC: "180"
-      TOKEN_SECRET: change-me-in-production
-      CORS_ORIGIN: "*"
-      MAX_QUEUE: "5000"
+      EVENT_ID: ${EVENT_ID:-demo}
+      SEATS_TOTAL: ${SEATS_TOTAL:-200}
+      ADMIT_PER_SEC: ${ADMIT_PER_SEC:-40}
+      ACTIVE_TTL_SEC: ${ACTIVE_TTL_SEC:-180}
+      MAX_QUEUE: ${MAX_QUEUE:-5000}
     depends_on:
       redis:
         condition: service_healthy
