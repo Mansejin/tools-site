@@ -45,11 +45,11 @@ KTX/SRT식 **선착순 예매 대기열**:
 - 스케줄러 **Redis 락** (API 여러 대여도 입장 1리더)
 - `GET /bookings` + 프론트에 최근 예매 목록
 - Cloudflare Tunnel HTTPS (`ticket-queue-api.mansejin.com`)
+- 관리자 패널 (`admin/seats`, `admin/reset`)
 
 아직 없는 것 (실무 다음 단계):
 - MQ → RDB (지금은 SQLite)
 - 로그인 연동
-- 관리자 UI (좌석수 조정 / 리셋)
 - 본격 모니터링/알림
 
 ---
@@ -66,7 +66,8 @@ Base: `https://ticket-queue-api.mansejin.com` (컨테이너 내부는 `8787`, NA
 | POST | `/v1/events/:eventId/join` | body `{ clientId }` — 멱등 |
 | GET | `/v1/events/:eventId/status?userId=&token=` | 순번/phase |
 | POST | `/v1/events/:eventId/book` | `{ userId, token, seats }` |
-| POST | `/v1/events/:eventId/admin/reset` | 테스트 초기화 (prod는 시크릿 헤더) |
+| POST | `/v1/events/:eventId/admin/seats` | `{ seats }` 남은 좌석 설정 (`x-admin-secret`) |
+| POST | `/v1/events/:eventId/admin/reset` | 테스트 초기화 (선택 `{ seats }`, prod는 시크릿 헤더) |
 
 로컬 검증:
 ```bash
@@ -137,14 +138,10 @@ mansejin.com   ohola-server :8790
 - 컨테이너 `ticket-queue-tunnel` Up
 - `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
 
-### C. 기능 이어서 (다음)
-<<<<<<< HEAD
+### C. 기능
 - ~~관리자: 좌석수 조정 / 리셋 UI~~ → `/ticket-queue/` 관리자 패널 + `admin/seats`
-=======
-- 관리자: 좌석수 조정 / 리셋 UI
->>>>>>> origin/main
-- 로그인 연동
-- 모니터링(대기 인원·에러)
+- 로그인 연동 (다음)
+- 모니터링(대기 인원·에러) (다음)
 
 ---
 
@@ -176,9 +173,9 @@ data/tools.json
 
 ## 8. 한 줄 상태
 
-> **NAS health·스케줄러·자동배포·Cloudflare Tunnel HTTPS 모두 동작 중.**  
+> **NAS health·스케줄러·자동배포·Cloudflare Tunnel HTTPS·관리자 UI 모두 동작 중.**  
 > **공개 API:** https://ticket-queue-api.mansejin.com/health  
-> **다음 기능:** 관리자 UI / 로그인 / 모니터링
+> **다음 기능:** 로그인 / 모니터링
 
 ---
 
