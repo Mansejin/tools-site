@@ -1,5 +1,5 @@
 #!/bin/sh
-# Cloud Agent helper: browser Cloudflare login → SCP credentials to NAS → compose up.
+# Cloud Agent helper: browser Cloudflare login → upload credentials to NAS → compose up.
 #
 # Prerequisites: Tailscale SOCKS SSH already working (see docs/nas-ssh-via-tailscale.md)
 #   Host alias `nas` in ~/.ssh/config, SSHPASS or key auth.
@@ -24,12 +24,14 @@ if [ ! -f "$BUNDLE/credentials.json" ] || [ ! -f "$BUNDLE/config.yml" ]; then
 fi
 
 echo "==> uploading cloudflared bundle to $SSH_HOST_ALIAS:$COMPOSE_DIR/cloudflared/"
-ssh "$SSH_HOST_ALIAS" "mkdir -p $COMPOSE_DIR/cloudflared"
-scp "$BUNDLE/config.yml" "$BUNDLE/credentials.json" "$SSH_HOST_ALIAS:$COMPOSE_DIR/cloudflared/"
-ssh "$SSH_HOST_ALIAS" "chmod 600 $COMPOSE_DIR/cloudflared/credentials.json $COMPOSE_DIR/cloudflared/config.yml"
+ssh -T -o RequestTTY=no "$SSH_HOST_ALIAS" "mkdir -p $COMPOSE_DIR/cloudflared"
+# Avoid scp PTY issues on some Cloud Agent environments
+tar -C "$BUNDLE" -czf - config.yml credentials.json \
+  | ssh -T -o RequestTTY=no "$SSH_HOST_ALIAS" \
+    "tar -xzf - -C $COMPOSE_DIR/cloudflared && chmod 644 $COMPOSE_DIR/cloudflared/config.yml $COMPOSE_DIR/cloudflared/credentials.json"
 
 echo "==> starting tunnel compose on NAS"
-ssh "$SSH_HOST_ALIAS" "bash -s" <<REMOTE
+ssh -T -o RequestTTY=no "$SSH_HOST_ALIAS" "bash -s" <<REMOTE
 set -e
 export PATH="/usr/local/bin:\$PATH"
 cd $COMPOSE_DIR
