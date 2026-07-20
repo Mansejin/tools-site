@@ -1,4 +1,4 @@
 {
-  "apiBase": "http://ohola.synology.me:8790",
+  "apiBase": "https://ticket-queue-api.mansejin.com",
   "eventId": "demo"
 }

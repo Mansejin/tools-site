@@ -22,24 +22,14 @@ services:
     environment:
       PORT: "8787"
       REDIS_URL: redis://redis:6379
-<<<<<<< HEAD
       EVENT_ID: ${EVENT_ID:-demo}
       SEATS_TOTAL: ${SEATS_TOTAL:-200}
       ADMIT_PER_SEC: ${ADMIT_PER_SEC:-40}
       ACTIVE_TTL_SEC: ${ACTIVE_TTL_SEC:-180}
       MAX_QUEUE: ${MAX_QUEUE:-5000}
-=======
-      EVENT_ID: demo
-      SEATS_TOTAL: "200"
-      ADMIT_PER_SEC: "40"
-      ACTIVE_TTL_SEC: "180"
-      TOKEN_SECRET: change-me-in-production
-      CORS_ORIGIN: "https://mansejin.com,http://localhost:8080,http://127.0.0.1:8080"
-      MAX_QUEUE: "5000"
       DATA_DIR: /app/data
     volumes:
       - ticket_queue_data:/app/data
->>>>>>> c72cddd (Persist bookings to SQLite and make join idempotent)
     depends_on:
       redis:
         condition: service_healthy

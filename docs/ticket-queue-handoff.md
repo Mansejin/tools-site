@@ -102,47 +102,32 @@ mansejin.com   ohola-server :8790
 
 ## 5. 현재 막힌 것 (중요)
 
-### 5-1. 집/해외에서 공인 URL
+### 5-1. 집/해외에서 공인 HTTP
 - `ohola.synology.me:8790` → Cloud/해외에서 `Connection reset` (NAS 방화벽 KR/TW 위주)
-- https://mansejin.com (HTTPS) → http://API (HTTP) 는 **mixed content**로 브라우저가 막을 수 있음
+- Pages HTTPS → API HTTP 는 **mixed content** → Tunnel HTTPS로 해소 예정
 
-### 5-2. 사용자 PC에서 `ohola-server:8790` 타임아웃
-- Tailscale “실행 중”이어도 NAS가 같은 tailnet에 **online**이 아니면 실패
-- 확인: `tailscale status`에 `ohola-server` online + `http://100.x.x.x:8790/health`
+### 5-2. Cloudflare Tunnel 토큰 (사람 작업 1회)
+- Compose/문서는 준비됨: `docker-compose.cloudflare.yml`, [`deploy-cloudflare-tunnel.md`](../ticket-queue-api/docs/deploy-cloudflare-tunnel.md)
+- Zero Trust에서 터널 + Public Hostname `ticket-queue-api.mansejin.com` → `http://api:8787` 생성 후  
+  NAS `.env`에 `CLOUDFLARE_TUNNEL_TOKEN=…` 넣고 오버레이 compose up
 
-### 5-3. 이전 Cloud Agent 세션
-- 시크릿 미주입 (`GEMINI_API_KEY`만 존재)
-- SSH로 NAS 상태를 직접 확인하지 못함
-
-### 5-4. Actions 배포
-- 워크플로 YAML 오류로 0초 실패 → **수정 머지 완료** (`fix-nas-deploy-workflow`)
+### 5-3. Actions 배포
+- 워크플로 YAML 수정 머지 완료
 - GitHub Secrets (`NAS_SSH_*`, `TAILSCALE_AUTHKEY`)가 저장소에 있어야 Actions 경로가 동작
 
 ---
 
-## 6. 새 에이전트가 할 일 (우선순위)
+## 6. 진행 상태 (이 세션)
 
-### A. Tailscale SSH로 NAS 상태 확인 (문서대로)
+### A. Tailscale SSH로 NAS 확인 — **완료**
+- health `{"ok":true,"redis":true}`
+- 컨테이너 `ticket-queue-api` / `ticket-queue-redis` Up
+- DSM 스케줄러 `ticket-queue-api-auto-pull` (id=22, 10분) enabled
+- `main`에 남아 있던 `docker-compose.yml` / `.env.example` **머지 충돌 마커** 발견 → 수정 PR
 
-시크릿 필요: `SSH_HOST`, `SSH_USER`, `SSH_PASSWORD` 또는 `SSH_PRIVATE_KEY`, `TS_AUTHKEY`  
-절차: [`nas-ssh-via-tailscale.md`](../ticket-queue-api/docs/nas-ssh-via-tailscale.md)
-
-접속 후:
-```bash
-curl -s http://127.0.0.1:8790/health
-sudo docker ps | grep ticket
-cd /volume1/docker/tools-site && git log -1 --oneline
-# 필요 시
-sh ticket-queue-api/scripts/nas-docker-update.sh --full-build
-```
-
-기대: `{"ok":true,"redis":true}`
-
-### B. 집/도구함에서 쓸 수 있게 (권장)
-works-api처럼 **Cloudflare Tunnel**로 HTTPS API 공개  
-예: `https://ticket-queue-api.mansejin.com`  
-→ `ticket-queue/config.json`의 `apiBase`를 HTTPS로 변경  
-→ mixed content 해소
+### B. Cloudflare Tunnel — **코드/문서 준비, 토큰 대기**
+- `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
+- NAS `.env`에 `CLOUDFLARE_TUNNEL_TOKEN` 넣으면 `nas-docker-update.sh`가 오버레이 compose까지 기동
 
 ### C. 기능 이어서 (여유 시)
 - 관리자: 좌석수 조정 / 리셋 UI
@@ -175,9 +160,9 @@ data/tools.json
 
 ## 8. 한 줄 상태
 
-> **코드·자동배포 골격은 main에 있음.**  
-> **지금 필요한 건 Tailscale/SSH로 NAS에서 health 확인 + (가능하면) HTTPS Tunnel.**  
-> 시뮬은 끝났고, 실서버 연결만 뚫리면 도구함에서 바로 쓸 수 있다.
+> **NAS health·스케줄러·자동배포는 동작 중.**  
+> **남은 한 방: Cloudflare Tunnel 토큰 1회 설정 → `https://ticket-queue-api.mansejin.com/health`.**  
+> 그다음부터 도구함(Pages)에서 mixed content 없이 바로 쓸 수 있다.
 
 ---
 

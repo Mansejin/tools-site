@@ -465,7 +465,7 @@
   el.bookBtn.addEventListener("click", book);
   el.retryBtn.addEventListener("click", backToStart);
 
-  el.apiInput.value = state.apiBase || "http://ohola.synology.me:8790";
+  el.apiInput.value = state.apiBase || "https://ticket-queue-api.mansejin.com";
   el.eventInput.value = state.eventId || "demo";
 
   loadConfigFile().then(function () {
