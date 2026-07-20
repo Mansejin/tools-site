@@ -125,9 +125,11 @@ mansejin.com   ohola-server :8790
 - DSM 스케줄러 `ticket-queue-api-auto-pull` (id=22, 10분) enabled
 - `main`에 남아 있던 `docker-compose.yml` / `.env.example` **머지 충돌 마커** 발견 → 수정 PR
 
-### B. Cloudflare Tunnel — **코드/문서 준비, 토큰 대기**
+### B. Cloudflare Tunnel — **자동화 스크립트 준비, API 토큰만 대기**
+- `scripts/provision-cloudflare-tunnel.mjs` — 터널 생성 + DNS + token
+- `scripts/apply-cloudflare-tunnel-nas.sh` — NAS `.env` 기록 + overlay compose up
 - `config.json` 기본값 → `https://ticket-queue-api.mansejin.com`
-- NAS `.env`에 `CLOUDFLARE_TUNNEL_TOKEN` 넣으면 `nas-docker-update.sh`가 오버레이 compose까지 기동
+- 사람 작업: Cursor/NAS에 `CLOUDFLARE_API_TOKEN` 한 번만 넣기 (Tunnel Edit + DNS Edit)
 
 ### C. 기능 이어서 (여유 시)
 - 관리자: 좌석수 조정 / 리셋 UI
@@ -148,8 +150,10 @@ ticket-queue-api/
   src/db.js                   # SQLite bookings
   src/scheduler.js            # Redis leader lock
   docker-compose.yml          # host 8790, data volume
+  docker-compose.cloudflare.yml
   docs/deploy-nas-auto.md
   docs/nas-ssh-via-tailscale.md
+  docs/deploy-cloudflare-tunnel.md
   scripts/nas-docker-update.sh
   scripts/nas-dsm-task.sh
 .github/workflows/deploy-ticket-queue-nas.yml
@@ -161,8 +165,8 @@ data/tools.json
 ## 8. 한 줄 상태
 
 > **NAS health·스케줄러·자동배포는 동작 중.**  
-> **남은 한 방: Cloudflare Tunnel 토큰 1회 설정 → `https://ticket-queue-api.mansejin.com/health`.**  
-> 그다음부터 도구함(Pages)에서 mixed content 없이 바로 쓸 수 있다.
+> **남은 것: `CLOUDFLARE_API_TOKEN` 시크릿 1개 → `apply-cloudflare-tunnel-nas.sh` 한 방.**  
+> (대시보드에서 터널 토큰을 손으로 복사할 필요 없음)
 
 ---
 
