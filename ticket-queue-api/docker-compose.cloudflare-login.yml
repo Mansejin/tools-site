@@ -16,6 +16,8 @@ services:
       - tq-net
 
   cloudflared:
+    # Synology ACL mounts are often unreadable by the image nonroot user
+    user: "0:0"
     image: cloudflare/cloudflared:latest
     container_name: ticket-queue-tunnel
     restart: unless-stopped
