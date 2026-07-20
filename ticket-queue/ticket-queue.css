@@ -12,6 +12,54 @@
   border-radius: 999px;
   padding: 8px 12px;
   margin: 0 0 14px;
+  word-break: break-all;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.field-input {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.field-input:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.install-pre {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.hint-err {
+  margin-top: 12px;
+  color: #e5534b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .pipe {

@@ -30,22 +30,30 @@
   },
   {
     "id": "ticket-queue",
-    "name": "ticket-queue",
+    "name": "ticket-queue-api",
     "tagline": {
-      "ko": "명절 예매 대기열 원리 시뮬",
-      "en": "Holiday ticketing queue architecture demo"
+      "ko": "선착순 예매 대기열 (Redis, ~1천 명)",
+      "en": "FCFS ticketing wait-queue (Redis, ~1k)"
     },
     "description": {
-      "ko": "선착순 예매 대기열. 브라우저 시뮬 + 별도 Redis 백엔드(ticket-queue-api, 1천 명 규모부터). 라이브 연결: /ticket-queue/?api=http://서버:8787",
-      "en": "FCFS ticketing wait-queue. Browser sim plus a real Redis backend (ticket-queue-api, starting ~1k waiters). Live: /ticket-queue/?api=http://host:8787"
+      "ko": "명절 예매처럼 몰리는 트래픽을 DB 앞에서 버티는 대기열 서버입니다. Redis ZSET 줄서기, 순번 폴링, Active TTL 입장, Lua 좌석 원자 차감까지 포함합니다. 웹 클라이언트는 열기로 들어가 서버 주소를 연결하세요.",
+      "en": "A real wait-queue API for bursty first-come ticketing: Redis ZSET ranking, polling TTL, Active admission, and Lua seat deduction. Open the web client and point it at your API server."
     },
     "tags": {
-      "ko": ["웹", "학습", "아키텍처"],
-      "en": ["Web", "Learning", "Architecture"]
+      "ko": ["백엔드", "Redis", "예매"],
+      "en": ["Backend", "Redis", "Ticketing"]
     },
     "url": "/ticket-queue/",
-    "github": "https://github.com/Mansejin/tools-site/tree/main/ticket-queue",
-    "platform": "브라우저",
+    "github": "https://github.com/Mansejin/tools-site/tree/main/ticket-queue-api",
+    "install": {
+      "ko": "1. 저장소 clone\n2. cd ticket-queue-api\n3. cp .env.example .env\n4. Redis 실행 후 npm install && npm start\n5. 브라우저에서 열기 → 서버 주소(http://127.0.0.1:8787) 연결",
+      "en": "1. Clone the repo\n2. cd ticket-queue-api\n3. cp .env.example .env\n4. Start Redis, then npm install && npm start\n5. Open the client and connect to http://127.0.0.1:8787"
+    },
+    "installAdvanced": {
+      "ko": "Docker:\ncd ticket-queue-api\ndocker compose up --build\n\n부하 테스트:\nUSERS=1000 npm run loadtest",
+      "en": "Docker:\ncd ticket-queue-api\ndocker compose up --build\n\nLoad test:\nUSERS=1000 npm run loadtest"
+    },
+    "platform": "Node 20+ · Redis 7",
     "status": "beta"
   }
 ]
