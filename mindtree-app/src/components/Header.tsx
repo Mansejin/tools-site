@@ -12,6 +12,7 @@ export default function Header() {
   const loadSampleMap = useThoughtStore((s) => s.loadSampleMap);
   const setMap = useThoughtStore((s) => s.setMap);
   const updateMapTitle = useThoughtStore((s) => s.updateMapTitle);
+  const openWelcome = useThoughtStore((s) => s.openWelcome);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +46,9 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="header-left">
-        <h1 className="app-logo">PhilosTree</h1>
+        <button type="button" className="app-logo" onClick={openWelcome} title="소개 보기">
+          Mindtree
+        </button>
         <input
           className="map-title-input"
           value={map.title}
@@ -56,13 +59,16 @@ export default function Header() {
       <InboxPanel />
 
       <div className="header-right">
+        <button type="button" className="ai-btn" disabled title="AI 정리 기능 준비 중">
+          ✦ AI 정리
+        </button>
         <button
           type="button"
           className={`toggle-btn ${calmMode ? 'active' : ''}`}
           onClick={toggleCalmMode}
           title="선택한 생각 주변만 강조"
         >
-          Calm {calmMode ? 'ON' : 'OFF'}
+          집중 {calmMode ? 'ON' : 'OFF'}
         </button>
         <button type="button" onClick={() => persist()} disabled={isSaving}>
           {isSaving ? '저장 중...' : '저장'}

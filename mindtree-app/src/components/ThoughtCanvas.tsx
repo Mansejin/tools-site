@@ -74,13 +74,13 @@ export default function ThoughtCanvas() {
           animated: edge.relation === 'implies',
           label: edge.label || undefined,
           style: {
-            stroke: dimmed ? '#2a3344' : '#4a5f7a',
+            stroke: dimmed ? '#2a221c' : '#5a4a3a',
             strokeWidth: dimmed ? 1 : 1.5,
             opacity: dimmed ? 0.25 : 0.8,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: dimmed ? '#2a3344' : '#6b7f9e',
+            color: dimmed ? '#2a221c' : '#8a7260',
           },
         };
       });
@@ -101,11 +101,11 @@ export default function ThoughtCanvas() {
   return (
     <div className="thought-canvas">
       <div className="depth-axis">
-        <span>전제</span>
+        <span>시작</span>
         <div className="depth-line" />
         <span>핵심</span>
         <div className="depth-line" />
-        <span>결론</span>
+        <span>다음</span>
       </div>
       <ReactFlow
         nodes={nodes}
@@ -121,7 +121,7 @@ export default function ThoughtCanvas() {
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#2a3344" gap={24} size={1} />
+        <Background color="#2a221c" gap={24} size={1} />
         <Controls showInteractive={false} />
         <MiniMap
           nodeColor={(n) => {

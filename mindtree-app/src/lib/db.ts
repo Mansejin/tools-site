@@ -1,18 +1,18 @@
 import Dexie, { type Table } from 'dexie';
 import type { ThoughtMap } from '../types';
 
-class PhilosTreeDB extends Dexie {
+class MindtreeDB extends Dexie {
   maps!: Table<ThoughtMap, string>;
 
   constructor() {
-    super('philostree');
+    super('mindtree');
     this.version(1).stores({
       maps: 'id, title, updatedAt',
     });
   }
 }
 
-export const db = new PhilosTreeDB();
+export const db = new MindtreeDB();
 
 export async function saveMap(map: ThoughtMap): Promise<void> {
   await db.maps.put(map);

@@ -25,7 +25,7 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
       <div className="thought-node-title">{thought.title}</div>
       <div className="thought-node-meta">
         깊이 {thought.depth}
-        {thought.importance >= 0.9 && <span className="importance-badge">핵심</span>}
+        {thought.importance >= 0.9 && <span className="importance-badge">중요</span>}
       </div>
       <Handle type="source" position={Position.Right} className="thought-handle" />
     </div>

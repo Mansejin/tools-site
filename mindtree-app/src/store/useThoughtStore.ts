@@ -6,20 +6,26 @@ import {
   createEmptyMap,
   createNode,
   createSampleMap,
+  createTopicMap,
   defaultCategoryForDepth,
   nextDepth,
 } from '../lib/sampleTemplate';
 import { saveMap } from '../lib/db';
+
+const WELCOME_KEY = 'mindtree-welcome-dismissed';
 
 type ThoughtStore = {
   map: ThoughtMap;
   selectedNodeId: string | null;
   calmMode: boolean;
   isSaving: boolean;
+  showWelcome: boolean;
 
   setMap: (map: ThoughtMap) => void;
   selectNode: (id: string | null) => void;
   toggleCalmMode: () => void;
+  dismissWelcome: () => void;
+  openWelcome: () => void;
 
   addInboxThought: (title: string) => void;
   placeInboxThought: (inboxId: string, parentId: string | null, direction: ThoughtDirection) => void;
@@ -33,6 +39,8 @@ type ThoughtStore = {
   addEdge: (sourceId: string, targetId: string, relation?: ThoughtRelation) => void;
   deleteEdge: (id: string) => void;
   loadSampleMap: () => void;
+  startWithTopic: (topic: string) => void;
+  startBlank: () => void;
   newMap: (title?: string) => void;
   updateMapTitle: (title: string) => void;
   persist: () => Promise<void>;
@@ -42,18 +50,36 @@ function touchMap(map: ThoughtMap) {
   map.updatedAt = new Date().toISOString();
 }
 
+function readWelcomeState(): boolean {
+  try {
+    return localStorage.getItem(WELCOME_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
 export const useThoughtStore = create<ThoughtStore>()(
   immer((set, get) => ({
     map: createSampleMap(),
-    selectedNodeId: 'n-value-1',
+    selectedNodeId: 'n-core',
     calmMode: true,
     isSaving: false,
+    showWelcome: readWelcomeState(),
 
     setMap: (map) => set({ map, selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null }),
 
     selectNode: (id) => set({ selectedNodeId: id }),
 
     toggleCalmMode: () => set((s) => ({ calmMode: !s.calmMode })),
+
+    dismissWelcome: () => {
+      try {
+        localStorage.setItem(WELCOME_KEY, '1');
+      } catch { /* ignore */ }
+      set({ showWelcome: false });
+    },
+
+    openWelcome: () => set({ showWelcome: true }),
 
     addInboxThought: (title) =>
       set((s) => {
@@ -136,7 +162,27 @@ export const useThoughtStore = create<ThoughtStore>()(
         touchMap(s.map);
       }),
 
-    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-value-1' }),
+    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-core', showWelcome: false }),
+
+    startWithTopic: (topic) => {
+      const map = createTopicMap(topic);
+      set({
+        map,
+        selectedNodeId: map.nodes[0]?.id ?? null,
+        showWelcome: false,
+      });
+      try {
+        localStorage.setItem(WELCOME_KEY, '1');
+      } catch { /* ignore */ }
+    },
+
+    startBlank: () => {
+      const map = createEmptyMap('나의 생각');
+      set({ map, selectedNodeId: null, showWelcome: false });
+      try {
+        localStorage.setItem(WELCOME_KEY, '1');
+      } catch { /* ignore */ }
+    },
 
     newMap: (title) => set({ map: createEmptyMap(title), selectedNodeId: null }),
 
@@ -157,5 +203,3 @@ export const useThoughtStore = create<ThoughtStore>()(
     },
   })),
 );
-
-// Fix newMap to not use require - I'll update this

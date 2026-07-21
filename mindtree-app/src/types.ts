@@ -1,3 +1,15 @@
+export const LIFE_TOPICS = [
+  '꿈',
+  '미래',
+  '업무',
+  '가족',
+  '대인관계',
+  '깊은 생각',
+  '철학',
+] as const;
+
+export type LifeTopic = (typeof LIFE_TOPICS)[number];
+
 export type ThoughtDirection = 'up' | 'down' | 'center';
 
 export type ThoughtCategory =
@@ -50,37 +62,37 @@ export type ThoughtMap = {
 };
 
 export const CATEGORY_LABELS: Record<ThoughtCategory, string> = {
-  premise: '전제',
+  premise: '배경',
   question: '질문',
-  argument: '논증',
-  objection: '반론',
+  argument: '생각',
+  objection: '걱정',
   synthesis: '종합',
   conclusion: '결론',
-  value: '가치',
-  intuition: '직관',
+  value: '핵심',
+  intuition: '직감',
 };
 
 export const CATEGORY_COLORS: Record<ThoughtCategory, string> = {
-  premise: '#6b8cae',
-  question: '#9b8ec4',
-  argument: '#7ea88a',
-  objection: '#c48b8b',
-  synthesis: '#c4a882',
-  conclusion: '#8b9cb3',
-  value: '#d4b896',
-  intuition: '#8ba8c4',
+  premise: '#7a8e9e',
+  question: '#9a8ab0',
+  argument: '#8a9e88',
+  objection: '#b89088',
+  synthesis: '#c9895a',
+  conclusion: '#9a8e82',
+  value: '#d4a574',
+  intuition: '#b8a088',
 };
 
 export const RELATION_LABELS: Record<ThoughtRelation, string> = {
   supports: '뒷받침',
-  opposes: '반박',
-  implies: '함의',
+  opposes: '걱정',
+  implies: '이어짐',
   questions: '의문',
-  analogous: '유사',
+  analogous: '비슷함',
 };
 
 export const DIRECTION_LABELS: Record<ThoughtDirection, string> = {
-  up: '위 (상위 개념)',
-  down: '아래 (하위 개념)',
+  up: '위 (큰 그림)',
+  down: '아래 (구체적)',
   center: '중앙 (핵심)',
 };

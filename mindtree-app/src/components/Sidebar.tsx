@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-section">
-        <h2 className="sidebar-title">사유 맵</h2>
+        <h2 className="sidebar-title">생각 맵</h2>
         <p className="sidebar-map-name">{map.title}</p>
       </div>
 

@@ -30,7 +30,7 @@ export default function InboxPanel() {
       <div className="inbox-capture">
         <input
           type="text"
-          placeholder="생각을 빠르게 캡처..."
+          placeholder="떠오른 생각을 적어보세요..."
           value={capture}
           onChange={(e) => setCapture(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCapture()}
