@@ -22,7 +22,6 @@ export default function WelcomeScreen() {
         <p className="welcome-desc">
           꿈, 미래, 업무, 가족, 대인관계, 깊은 생각, 철학 —
           머릿속에 떠다니는 것들을 트리로 펼치면 구조가 보입니다.
-          AI가 생각을 정리해 드립니다. <span className="coming-soon">(준비 중)</span>
         </p>
 
         <div className="topic-chips">

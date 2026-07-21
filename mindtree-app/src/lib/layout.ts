@@ -1,15 +1,15 @@
 import type { ThoughtNode } from '../types';
 
 export const LAYOUT = {
-  horizontalGap: 140,
-  verticalGap: 40,
+  horizontalGap: 120,
+  verticalGap: 36,
   leftAnchor: 48,
   canvasCenterY: 320,
 } as const;
 
 export const LAYOUT_MOBILE = {
-  horizontalGap: 72,
-  verticalGap: 32,
+  horizontalGap: 64,
+  verticalGap: 28,
   leftAnchor: 12,
   canvasCenterY: 260,
 } as const;
@@ -27,62 +27,124 @@ export type LayoutPosition = {
   y: number;
 };
 
-/** 깊이별 세로 컬럼 — LLM/신경망 트리처럼 좌→우로만 뻗음 */
-export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string, LayoutPosition> {
-  const cfg = mobile ? LAYOUT_MOBILE : LAYOUT;
-  const positions = new Map<string, LayoutPosition>();
-  if (nodes.length === 0) return positions;
+function sortNodes(nodes: ThoughtNode[]): ThoughtNode[] {
+  return [...nodes].sort(
+    (a, b) =>
+      b.importance - a.importance ||
+      a.createdAt.localeCompare(b.createdAt) ||
+      a.title.localeCompare(b.title, 'ko'),
+  );
+}
 
-  const byDepth = new Map<number, ThoughtNode[]>();
+export function buildChildrenMap(nodes: ThoughtNode[]): Map<string, ThoughtNode[]> {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const children = new Map<string, ThoughtNode[]>();
+
   for (const node of nodes) {
-    if (node.inInbox) continue;
-    const group = byDepth.get(node.depth) ?? [];
-    group.push(node);
-    byDepth.set(node.depth, group);
+    if (node.parentId && byId.has(node.parentId)) {
+      const kids = children.get(node.parentId) ?? [];
+      kids.push(node);
+      children.set(node.parentId, kids);
+    }
   }
 
-  const depths = [...byDepth.keys()].sort((a, b) => a - b);
+  for (const kids of children.values()) {
+    sortNodes(kids);
+  }
 
-  for (const depth of depths) {
-    const layer = [...(byDepth.get(depth) ?? [])].sort(
-      (a, b) => b.importance - a.importance || a.title.localeCompare(b.title, 'ko'),
-    );
-    const count = layer.length;
-    const totalH = Math.max(0, count - 1) * cfg.verticalGap;
-    const startY = cfg.canvasCenterY - totalH / 2;
+  return children;
+}
 
-    layer.forEach((node, index) => {
-      positions.set(node.id, {
-        id: node.id,
-        x: depth * cfg.horizontalGap + cfg.leftAnchor,
-        y: startY + index * cfg.verticalGap,
-      });
-    });
+/** 접힌 노드의 모든 자손 id */
+export function getHiddenDescendantIds(
+  nodes: ThoughtNode[],
+  collapsedIds: Iterable<string>,
+): Set<string> {
+  const children = buildChildrenMap(nodes.filter((n) => !n.inInbox));
+  const hidden = new Set<string>();
+
+  const walk = (id: string) => {
+    for (const child of children.get(id) ?? []) {
+      if (hidden.has(child.id)) continue;
+      hidden.add(child.id);
+      walk(child.id);
+    }
+  };
+
+  for (const id of collapsedIds) walk(id);
+  return hidden;
+}
+
+export function countDescendants(
+  nodeId: string,
+  children: Map<string, ThoughtNode[]>,
+): number {
+  let total = 0;
+  for (const child of children.get(nodeId) ?? []) {
+    total += 1 + countDescendants(child.id, children);
+  }
+  return total;
+}
+
+/** 부모-자식 트리 기준 좌→우 배치 — 접힌 하위는 레이아웃에서 제외 */
+export function computeLayout(
+  nodes: ThoughtNode[],
+  mobile = false,
+  collapsedIds: Iterable<string> = [],
+): Map<string, LayoutPosition> {
+  const cfg = mobile ? LAYOUT_MOBILE : LAYOUT;
+  const positions = new Map<string, LayoutPosition>();
+  const placed = nodes.filter((n) => !n.inInbox);
+  if (placed.length === 0) return positions;
+
+  const collapsed = new Set(collapsedIds);
+  const byId = new Map(placed.map((n) => [n.id, n]));
+  const children = buildChildrenMap(placed);
+  const hidden = getHiddenDescendantIds(placed, collapsed);
+
+  const roots = sortNodes(
+    placed.filter((node) => !node.parentId || !byId.has(node.parentId)),
+  );
+
+  let yCursor = 0;
+
+  function layoutSubtree(node: ThoughtNode, depth: number): number {
+    const kids =
+      collapsed.has(node.id) || hidden.has(node.id)
+        ? []
+        : (children.get(node.id) ?? []).filter((c) => !hidden.has(c.id));
+    const x = depth * cfg.horizontalGap + cfg.leftAnchor;
+
+    if (kids.length === 0) {
+      const y = yCursor;
+      yCursor += cfg.verticalGap;
+      positions.set(node.id, { id: node.id, x, y });
+      return y;
+    }
+
+    const childYs = kids.map((child) => layoutSubtree(child, depth + 1));
+    const y = (childYs[0] + childYs[childYs.length - 1]) / 2;
+    positions.set(node.id, { id: node.id, x, y });
+    return y;
+  }
+
+  for (const root of roots) {
+    if (hidden.has(root.id)) continue;
+    layoutSubtree(root, 0);
+    yCursor += cfg.verticalGap * 0.5;
+  }
+
+  const ys = [...positions.values()].map((p) => p.y);
+  if (ys.length > 0) {
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const offset = cfg.canvasCenterY - (minY + maxY) / 2;
+    for (const pos of positions.values()) {
+      pos.y += offset;
+    }
   }
 
   return positions;
-}
-
-export function getAdjacentNodeIds(
-  nodeId: string,
-  nodes: ThoughtNode[],
-  edges: { sourceId: string; targetId: string }[],
-): Set<string> {
-  const adjacent = new Set<string>([nodeId]);
-
-  for (const edge of edges) {
-    if (edge.sourceId === nodeId) adjacent.add(edge.targetId);
-    if (edge.targetId === nodeId) adjacent.add(edge.sourceId);
-  }
-
-  const node = nodes.find((n) => n.id === nodeId);
-  if (node?.parentId) adjacent.add(node.parentId);
-
-  for (const child of nodes) {
-    if (child.parentId === nodeId) adjacent.add(child.id);
-  }
-
-  return adjacent;
 }
 
 /** 선택 노드에서 뿌리까지 경로上的 node id */

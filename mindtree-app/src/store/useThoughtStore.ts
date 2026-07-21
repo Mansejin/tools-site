@@ -17,22 +17,18 @@ const WELCOME_KEY = 'mindtree-welcome-dismissed';
 type ThoughtStore = {
   map: ThoughtMap;
   selectedNodeId: string | null;
-  calmMode: boolean;
   isSaving: boolean;
   showWelcome: boolean;
-  mobileTab: 'map' | 'list' | 'edit';
   editingNodeId: string | null;
+  collapsedIds: string[];
 
   setMap: (map: ThoughtMap) => void;
   selectNode: (id: string | null) => void;
   setEditingNodeId: (id: string | null) => void;
-  toggleCalmMode: () => void;
   dismissWelcome: () => void;
   openWelcome: () => void;
-  setMobileTab: (tab: 'map' | 'list' | 'edit') => void;
+  toggleCollapse: (id: string) => void;
 
-  addInboxThought: (title: string) => void;
-  placeInboxThought: (inboxId: string, parentId: string | null, direction: ThoughtDirection) => void;
   addConnectedThought: (
     parentId: string,
     direction: ThoughtDirection,
@@ -66,19 +62,21 @@ export const useThoughtStore = create<ThoughtStore>()(
   immer((set, get) => ({
     map: createSampleMap(),
     selectedNodeId: 'n-root',
-    calmMode: true,
     isSaving: false,
     showWelcome: readWelcomeState(),
-    mobileTab: 'map' as const,
     editingNodeId: null as string | null,
+    collapsedIds: [] as string[],
 
-    setMap: (map) => set({ map, selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null }),
+    setMap: (map) =>
+      set({
+        map,
+        selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null,
+        collapsedIds: [],
+      }),
 
     selectNode: (id) => set({ selectedNodeId: id }),
 
     setEditingNodeId: (id) => set({ editingNodeId: id }),
-
-    toggleCalmMode: () => set((s) => ({ calmMode: !s.calmMode })),
 
     dismissWelcome: () => {
       try {
@@ -89,34 +87,26 @@ export const useThoughtStore = create<ThoughtStore>()(
 
     openWelcome: () => set({ showWelcome: true }),
 
-    setMobileTab: (tab) => set({ mobileTab: tab }),
-
-    addInboxThought: (title) =>
+    toggleCollapse: (id) =>
       set((s) => {
-        const node = createNode({ title, inInbox: true });
-        s.map.nodes.push(node);
-        touchMap(s.map);
-      }),
-
-    placeInboxThought: (inboxId, parentId, direction) =>
-      set((s) => {
-        const inbox = s.map.nodes.find((n) => n.id === inboxId);
-        if (!inbox) return;
-
-        const parent = parentId ? s.map.nodes.find((n) => n.id === parentId) : undefined;
-        inbox.inInbox = false;
-        inbox.parentId = parentId;
-        inbox.direction = direction;
-        inbox.depth = nextDepth(parent);
-        inbox.category = defaultCategoryForDepth(inbox.depth);
-        inbox.importance = parent ? Math.max(0.3, parent.importance - 0.15) : 0.8;
-        inbox.updatedAt = new Date().toISOString();
-
-        if (parentId) {
-          s.map.edges.push(createEdge(parentId, inboxId, 'supports'));
+        const idx = s.collapsedIds.indexOf(id);
+        if (idx >= 0) {
+          s.collapsedIds.splice(idx, 1);
+          return;
         }
-        touchMap(s.map);
-        s.selectedNodeId = inboxId;
+
+        s.collapsedIds.push(id);
+
+        // 접힌 하위 안에 선택이 있으면 접은 노드로 선택 이동
+        let walk = s.map.nodes.find((n) => n.id === s.selectedNodeId);
+        while (walk?.parentId) {
+          if (walk.parentId === id) {
+            s.selectedNodeId = id;
+            s.editingNodeId = null;
+            break;
+          }
+          walk = s.map.nodes.find((n) => n.id === walk!.parentId);
+        }
       }),
 
     addConnectedThought: (parentId, direction, title = '새 생각') => {
@@ -134,6 +124,8 @@ export const useThoughtStore = create<ThoughtStore>()(
         newId = node.id;
         s.map.nodes.push(node);
         s.map.edges.push(createEdge(parentId, node.id, 'supports'));
+        // 자식 추가 시 접힌 부모는 자동 펼침
+        s.collapsedIds = s.collapsedIds.filter((cid) => cid !== parentId);
         touchMap(s.map);
         s.selectedNodeId = node.id;
         s.editingNodeId = node.id;
@@ -151,10 +143,22 @@ export const useThoughtStore = create<ThoughtStore>()(
 
     deleteNode: (id) =>
       set((s) => {
-        s.map.nodes = s.map.nodes.filter((n) => n.id !== id);
-        s.map.edges = s.map.edges.filter((e) => e.sourceId !== id && e.targetId !== id);
-        if (s.selectedNodeId === id) s.selectedNodeId = null;
-        if (s.editingNodeId === id) s.editingNodeId = null;
+        const removeIds = new Set<string>();
+        const collect = (nodeId: string) => {
+          removeIds.add(nodeId);
+          for (const child of s.map.nodes) {
+            if (child.parentId === nodeId) collect(child.id);
+          }
+        };
+        collect(id);
+
+        s.map.nodes = s.map.nodes.filter((n) => !removeIds.has(n.id));
+        s.map.edges = s.map.edges.filter(
+          (e) => !removeIds.has(e.sourceId) && !removeIds.has(e.targetId),
+        );
+        s.collapsedIds = s.collapsedIds.filter((cid) => !removeIds.has(cid));
+        if (s.selectedNodeId && removeIds.has(s.selectedNodeId)) s.selectedNodeId = null;
+        if (s.editingNodeId && removeIds.has(s.editingNodeId)) s.editingNodeId = null;
         touchMap(s.map);
       }),
 
@@ -174,7 +178,8 @@ export const useThoughtStore = create<ThoughtStore>()(
         touchMap(s.map);
       }),
 
-    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-root', showWelcome: false }),
+    loadSampleMap: () =>
+      set({ map: createSampleMap(), selectedNodeId: 'n-root', showWelcome: false, collapsedIds: [] }),
 
     startWithTopic: (topic) => {
       const map = createTopicMap(topic);
@@ -182,6 +187,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         map,
         selectedNodeId: map.nodes[0]?.id ?? null,
         showWelcome: false,
+        collapsedIds: [],
       });
       try {
         localStorage.setItem(WELCOME_KEY, '1');
@@ -190,13 +196,20 @@ export const useThoughtStore = create<ThoughtStore>()(
 
     startBlank: () => {
       const map = createEmptyMap('나의 생각');
-      set({ map, selectedNodeId: null, showWelcome: false });
+      const root = createNode({
+        title: '나',
+        depth: 0,
+        importance: 1,
+        category: 'question',
+      });
+      map.nodes.push(root);
+      set({ map, selectedNodeId: root.id, showWelcome: false, collapsedIds: [] });
       try {
         localStorage.setItem(WELCOME_KEY, '1');
       } catch { /* ignore */ }
     },
 
-    newMap: (title) => set({ map: createEmptyMap(title), selectedNodeId: null }),
+    newMap: (title) => set({ map: createEmptyMap(title), selectedNodeId: null, collapsedIds: [] }),
 
     updateMapTitle: (title) =>
       set((s) => {
