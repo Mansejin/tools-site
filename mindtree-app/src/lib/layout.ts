@@ -36,17 +36,11 @@ function sortNodes(nodes: ThoughtNode[]): ThoughtNode[] {
   );
 }
 
-/** 부모-자식 트리 기준 좌→우 배치 — 자식 Y를 부모에 맞춰 선 교차 최소화 */
-export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string, LayoutPosition> {
-  const cfg = mobile ? LAYOUT_MOBILE : LAYOUT;
-  const positions = new Map<string, LayoutPosition>();
-  const placed = nodes.filter((n) => !n.inInbox);
-  if (placed.length === 0) return positions;
-
-  const byId = new Map(placed.map((n) => [n.id, n]));
+export function buildChildrenMap(nodes: ThoughtNode[]): Map<string, ThoughtNode[]> {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
   const children = new Map<string, ThoughtNode[]>();
 
-  for (const node of placed) {
+  for (const node of nodes) {
     if (node.parentId && byId.has(node.parentId)) {
       const kids = children.get(node.parentId) ?? [];
       kids.push(node);
@@ -58,6 +52,56 @@ export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string,
     sortNodes(kids);
   }
 
+  return children;
+}
+
+/** 접힌 노드의 모든 자손 id */
+export function getHiddenDescendantIds(
+  nodes: ThoughtNode[],
+  collapsedIds: Iterable<string>,
+): Set<string> {
+  const children = buildChildrenMap(nodes.filter((n) => !n.inInbox));
+  const hidden = new Set<string>();
+
+  const walk = (id: string) => {
+    for (const child of children.get(id) ?? []) {
+      if (hidden.has(child.id)) continue;
+      hidden.add(child.id);
+      walk(child.id);
+    }
+  };
+
+  for (const id of collapsedIds) walk(id);
+  return hidden;
+}
+
+export function countDescendants(
+  nodeId: string,
+  children: Map<string, ThoughtNode[]>,
+): number {
+  let total = 0;
+  for (const child of children.get(nodeId) ?? []) {
+    total += 1 + countDescendants(child.id, children);
+  }
+  return total;
+}
+
+/** 부모-자식 트리 기준 좌→우 배치 — 접힌 하위는 레이아웃에서 제외 */
+export function computeLayout(
+  nodes: ThoughtNode[],
+  mobile = false,
+  collapsedIds: Iterable<string> = [],
+): Map<string, LayoutPosition> {
+  const cfg = mobile ? LAYOUT_MOBILE : LAYOUT;
+  const positions = new Map<string, LayoutPosition>();
+  const placed = nodes.filter((n) => !n.inInbox);
+  if (placed.length === 0) return positions;
+
+  const collapsed = new Set(collapsedIds);
+  const byId = new Map(placed.map((n) => [n.id, n]));
+  const children = buildChildrenMap(placed);
+  const hidden = getHiddenDescendantIds(placed, collapsed);
+
   const roots = sortNodes(
     placed.filter((node) => !node.parentId || !byId.has(node.parentId)),
   );
@@ -65,7 +109,10 @@ export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string,
   let yCursor = 0;
 
   function layoutSubtree(node: ThoughtNode, depth: number): number {
-    const kids = children.get(node.id) ?? [];
+    const kids =
+      collapsed.has(node.id) || hidden.has(node.id)
+        ? []
+        : (children.get(node.id) ?? []).filter((c) => !hidden.has(c.id));
     const x = depth * cfg.horizontalGap + cfg.leftAnchor;
 
     if (kids.length === 0) {
@@ -82,6 +129,7 @@ export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string,
   }
 
   for (const root of roots) {
+    if (hidden.has(root.id)) continue;
     layoutSubtree(root, 0);
     yCursor += cfg.verticalGap * 0.5;
   }

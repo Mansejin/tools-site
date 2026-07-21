@@ -8,17 +8,31 @@ export type ThoughtNodeData = {
   selected: boolean;
   isEditing: boolean;
   isRoot: boolean;
+  childCount: number;
+  descendantCount: number;
+  collapsed: boolean;
 };
 
 function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
-  const { thought, dimmed, selected, isEditing, isRoot } = data;
+  const {
+    thought,
+    dimmed,
+    selected,
+    isEditing,
+    isRoot,
+    childCount,
+    descendantCount,
+    collapsed,
+  } = data;
   const updateNode = useThoughtStore((s) => s.updateNode);
   const addConnectedThought = useThoughtStore((s) => s.addConnectedThought);
   const deleteNode = useThoughtStore((s) => s.deleteNode);
   const selectNode = useThoughtStore((s) => s.selectNode);
   const setEditingNodeId = useThoughtStore((s) => s.setEditingNodeId);
+  const toggleCollapse = useThoughtStore((s) => s.toggleCollapse);
 
   const [draft, setDraft] = useState(thought.title);
+  const hasChildren = childCount > 0;
 
   useEffect(() => {
     setDraft(thought.title);
@@ -48,8 +62,16 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
     deleteNode(thought.id);
   };
 
+  const handleFold = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectNode(thought.id);
+    toggleCollapse(thought.id);
+  };
+
   return (
-    <div className={`neural-wrap ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''}`}>
+    <div
+      className={`neural-wrap ${selected ? 'selected' : ''} ${dimmed ? 'dimmed' : ''} ${collapsed ? 'is-collapsed' : ''}`}
+    >
       <Handle type="target" position={Position.Left} className="neural-handle" />
       <button
         type="button"
@@ -75,6 +97,25 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
           <span className="neural-label">{thought.title}</span>
         )}
       </button>
+
+      {hasChildren && (
+        <button
+          type="button"
+          className={`neural-fold ${collapsed ? 'collapsed' : ''}`}
+          onClick={handleFold}
+          aria-label={collapsed ? '하위 펼치기' : '하위 접기'}
+          title={collapsed ? '펼치기' : '접기'}
+        >
+          {collapsed ? (
+            <span className="fold-count">{descendantCount}</span>
+          ) : (
+            <span className="fold-mark" aria-hidden>
+              −
+            </span>
+          )}
+        </button>
+      )}
+
       {selected && (
         <>
           <button type="button" className="neural-add" onClick={handleAdd} aria-label="연결 추가">

@@ -646,6 +646,59 @@ body {
   color: var(--accent);
 }
 
+.neural-fold {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 190, 180, 0.55);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.neural-wrap:hover .neural-fold,
+.neural-wrap.selected .neural-fold {
+  opacity: 1;
+}
+
+.neural-fold.collapsed {
+  opacity: 1;
+  border-color: rgba(224, 122, 58, 0.45);
+  background: var(--accent-bg);
+  color: var(--accent-dim);
+  font-weight: 600;
+}
+
+.neural-fold:hover,
+.neural-fold:active {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+  transform: scale(1.06);
+}
+
+.fold-count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.fold-mark {
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.neural-wrap.is-collapsed .neural-node {
+  border-color: rgba(224, 122, 58, 0.35);
+}
+
 .neural-delete {
   width: 16px;
   height: 16px;

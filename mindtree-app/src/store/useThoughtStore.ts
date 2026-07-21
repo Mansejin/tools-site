@@ -20,12 +20,14 @@ type ThoughtStore = {
   isSaving: boolean;
   showWelcome: boolean;
   editingNodeId: string | null;
+  collapsedIds: string[];
 
   setMap: (map: ThoughtMap) => void;
   selectNode: (id: string | null) => void;
   setEditingNodeId: (id: string | null) => void;
   dismissWelcome: () => void;
   openWelcome: () => void;
+  toggleCollapse: (id: string) => void;
 
   addConnectedThought: (
     parentId: string,
@@ -63,8 +65,14 @@ export const useThoughtStore = create<ThoughtStore>()(
     isSaving: false,
     showWelcome: readWelcomeState(),
     editingNodeId: null as string | null,
+    collapsedIds: [] as string[],
 
-    setMap: (map) => set({ map, selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null }),
+    setMap: (map) =>
+      set({
+        map,
+        selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null,
+        collapsedIds: [],
+      }),
 
     selectNode: (id) => set({ selectedNodeId: id }),
 
@@ -78,6 +86,28 @@ export const useThoughtStore = create<ThoughtStore>()(
     },
 
     openWelcome: () => set({ showWelcome: true }),
+
+    toggleCollapse: (id) =>
+      set((s) => {
+        const idx = s.collapsedIds.indexOf(id);
+        if (idx >= 0) {
+          s.collapsedIds.splice(idx, 1);
+          return;
+        }
+
+        s.collapsedIds.push(id);
+
+        // 접힌 하위 안에 선택이 있으면 접은 노드로 선택 이동
+        let walk = s.map.nodes.find((n) => n.id === s.selectedNodeId);
+        while (walk?.parentId) {
+          if (walk.parentId === id) {
+            s.selectedNodeId = id;
+            s.editingNodeId = null;
+            break;
+          }
+          walk = s.map.nodes.find((n) => n.id === walk!.parentId);
+        }
+      }),
 
     addConnectedThought: (parentId, direction, title = '새 생각') => {
       let newId = '';
@@ -94,6 +124,8 @@ export const useThoughtStore = create<ThoughtStore>()(
         newId = node.id;
         s.map.nodes.push(node);
         s.map.edges.push(createEdge(parentId, node.id, 'supports'));
+        // 자식 추가 시 접힌 부모는 자동 펼침
+        s.collapsedIds = s.collapsedIds.filter((cid) => cid !== parentId);
         touchMap(s.map);
         s.selectedNodeId = node.id;
         s.editingNodeId = node.id;
@@ -124,6 +156,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         s.map.edges = s.map.edges.filter(
           (e) => !removeIds.has(e.sourceId) && !removeIds.has(e.targetId),
         );
+        s.collapsedIds = s.collapsedIds.filter((cid) => !removeIds.has(cid));
         if (s.selectedNodeId && removeIds.has(s.selectedNodeId)) s.selectedNodeId = null;
         if (s.editingNodeId && removeIds.has(s.editingNodeId)) s.editingNodeId = null;
         touchMap(s.map);
@@ -145,7 +178,8 @@ export const useThoughtStore = create<ThoughtStore>()(
         touchMap(s.map);
       }),
 
-    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-root', showWelcome: false }),
+    loadSampleMap: () =>
+      set({ map: createSampleMap(), selectedNodeId: 'n-root', showWelcome: false, collapsedIds: [] }),
 
     startWithTopic: (topic) => {
       const map = createTopicMap(topic);
@@ -153,6 +187,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         map,
         selectedNodeId: map.nodes[0]?.id ?? null,
         showWelcome: false,
+        collapsedIds: [],
       });
       try {
         localStorage.setItem(WELCOME_KEY, '1');
@@ -168,13 +203,13 @@ export const useThoughtStore = create<ThoughtStore>()(
         category: 'question',
       });
       map.nodes.push(root);
-      set({ map, selectedNodeId: root.id, showWelcome: false });
+      set({ map, selectedNodeId: root.id, showWelcome: false, collapsedIds: [] });
       try {
         localStorage.setItem(WELCOME_KEY, '1');
       } catch { /* ignore */ }
     },
 
-    newMap: (title) => set({ map: createEmptyMap(title), selectedNodeId: null }),
+    newMap: (title) => set({ map: createEmptyMap(title), selectedNodeId: null, collapsedIds: [] }),
 
     updateMapTitle: (title) =>
       set((s) => {
