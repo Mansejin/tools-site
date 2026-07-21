@@ -35,14 +35,27 @@ function CanvasInner() {
     [map.nodes],
   );
 
-  const minDepth = useMemo(
-    () => (placedNodes.length ? Math.min(...placedNodes.map((n) => n.depth)) : 0),
-    [placedNodes],
+  const placedIds = useMemo(() => new Set(placedNodes.map((n) => n.id)), [placedNodes]);
+
+  const treeEdges = useMemo(
+    () =>
+      map.edges.filter((e) => {
+        const src = map.nodes.find((n) => n.id === e.sourceId);
+        const tgt = map.nodes.find((n) => n.id === e.targetId);
+        return (
+          src &&
+          tgt &&
+          !src.inInbox &&
+          !tgt.inInbox &&
+          tgt.parentId === src.id
+        );
+      }),
+    [map.edges, map.nodes],
   );
 
   const activeEdgeIds = useMemo(
-    () => getActiveEdgeIds(selectedNodeId, placedNodes, map.edges),
-    [selectedNodeId, placedNodes, map.edges],
+    () => getActiveEdgeIds(selectedNodeId, placedNodes, treeEdges),
+    [selectedNodeId, placedNodes, treeEdges],
   );
 
   const activePathNodeIds = useMemo(
@@ -66,28 +79,23 @@ function CanvasInner() {
           dimmed,
           selected: thought.id === selectedNodeId,
           isEditing: thought.id === editingNodeId,
-          isRoot: thought.depth === minDepth,
+          isRoot: !thought.parentId || !placedIds.has(thought.parentId),
         },
         draggable: false,
       };
     });
     setNodes(flowNodes);
-  }, [placedNodes, layout, selectedNodeId, editingNodeId, activePathNodeIds, minDepth, setNodes]);
+  }, [placedNodes, layout, selectedNodeId, editingNodeId, activePathNodeIds, placedIds, setNodes]);
 
   useEffect(() => {
-    const flowEdges: Edge[] = map.edges
-      .filter((e) => {
-        const src = map.nodes.find((n) => n.id === e.sourceId);
-        const tgt = map.nodes.find((n) => n.id === e.targetId);
-        return src && tgt && !src.inInbox && !tgt.inInbox;
-      })
-      .map((edge) => {
+    const flowEdges: Edge[] = treeEdges.map((edge) => {
         const active = activeEdgeIds.has(edge.id);
         return {
           id: edge.id,
           source: edge.sourceId,
           target: edge.targetId,
-          type: 'default',
+          type: 'smoothstep',
+          pathOptions: { borderRadius: 12, offset: 4 },
           style: {
             stroke: active ? 'rgba(224, 122, 58, 0.7)' : 'rgba(200, 190, 180, 0.35)',
             strokeWidth: active ? 1.5 : 1,
@@ -96,7 +104,7 @@ function CanvasInner() {
         };
       });
     setEdges(flowEdges);
-  }, [map.edges, map.nodes, activeEdgeIds, setEdges]);
+  }, [treeEdges, activeEdgeIds, setEdges]);
 
   useEffect(() => {
     if (!initialViewportSet.current) {

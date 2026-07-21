@@ -14,6 +14,7 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
   const { thought, dimmed, selected, isEditing, isRoot } = data;
   const updateNode = useThoughtStore((s) => s.updateNode);
   const addConnectedThought = useThoughtStore((s) => s.addConnectedThought);
+  const deleteNode = useThoughtStore((s) => s.deleteNode);
   const selectNode = useThoughtStore((s) => s.selectNode);
   const setEditingNodeId = useThoughtStore((s) => s.setEditingNodeId);
 
@@ -40,6 +41,11 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
     const newId = addConnectedThought(thought.id, 'center', '새 생각');
     selectNode(newId);
     setEditingNodeId(newId);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteNode(thought.id);
   };
 
   return (
@@ -70,9 +76,16 @@ function ThoughtNodeComponent({ data }: NodeProps & { data: ThoughtNodeData }) {
         )}
       </button>
       {selected && (
-        <button type="button" className="neural-add" onClick={handleAdd} aria-label="연결 추가">
-          +
-        </button>
+        <>
+          <button type="button" className="neural-add" onClick={handleAdd} aria-label="연결 추가">
+            +
+          </button>
+          {!isRoot && (
+            <button type="button" className="neural-delete" onClick={handleDelete} aria-label="삭제">
+              ×
+            </button>
+          )}
+        </>
       )}
       <Handle type="source" position={Position.Right} className="neural-handle" />
     </div>
