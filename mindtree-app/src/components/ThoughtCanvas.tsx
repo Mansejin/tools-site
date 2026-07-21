@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
-  Background,
-  Controls,
-  MiniMap,
   ReactFlowProvider,
   useNodesState,
   useEdgesState,
   useReactFlow,
   type Node,
   type Edge,
-  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ThoughtNodeComponent, { type ThoughtNodeData } from './ThoughtNodeComponent';
 import ViewportBoundary from './ViewportBoundary';
 import { useThoughtStore } from '../store/useThoughtStore';
-import { computeLayout, getAdjacentNodeIds } from '../lib/layout';
+import { computeLayout, getActiveEdgeIds, getActivePathNodeIds } from '../lib/layout';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 const nodeTypes = { thought: ThoughtNodeComponent };
@@ -25,11 +21,10 @@ function CanvasInner() {
   const map = useThoughtStore((s) => s.map);
   const selectedNodeId = useThoughtStore((s) => s.selectedNodeId);
   const editingNodeId = useThoughtStore((s) => s.editingNodeId);
-  const calmMode = useThoughtStore((s) => s.calmMode);
   const selectNode = useThoughtStore((s) => s.selectNode);
   const setEditingNodeId = useThoughtStore((s) => s.setEditingNodeId);
   const isMobile = useIsMobile();
-  const { fitView, setViewport } = useReactFlow();
+  const { setViewport } = useReactFlow();
   const initialViewportSet = useRef(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ThoughtNodeData>>([]);
@@ -40,17 +35,28 @@ function CanvasInner() {
     [map.nodes],
   );
 
-  const adjacentIds = useMemo(() => {
-    if (isMobile || !calmMode || !selectedNodeId) return null;
-    return getAdjacentNodeIds(selectedNodeId, placedNodes, map.edges);
-  }, [isMobile, calmMode, selectedNodeId, placedNodes, map.edges]);
+  const minDepth = useMemo(
+    () => (placedNodes.length ? Math.min(...placedNodes.map((n) => n.depth)) : 0),
+    [placedNodes],
+  );
+
+  const activeEdgeIds = useMemo(
+    () => getActiveEdgeIds(selectedNodeId, placedNodes, map.edges),
+    [selectedNodeId, placedNodes, map.edges],
+  );
+
+  const activePathNodeIds = useMemo(
+    () => getActivePathNodeIds(selectedNodeId, placedNodes),
+    [selectedNodeId, placedNodes],
+  );
 
   const layout = useMemo(() => computeLayout(placedNodes, isMobile), [placedNodes, isMobile]);
 
   useEffect(() => {
     const flowNodes: Node<ThoughtNodeData>[] = placedNodes.map((thought) => {
       const pos = layout.get(thought.id) ?? { x: 0, y: 0 };
-      const dimmed = adjacentIds ? !adjacentIds.has(thought.id) : false;
+      const dimmed = selectedNodeId ? !activePathNodeIds.has(thought.id) : false;
+
       return {
         id: thought.id,
         type: 'thought',
@@ -59,14 +65,14 @@ function CanvasInner() {
           thought,
           dimmed,
           selected: thought.id === selectedNodeId,
-          isMobile,
           isEditing: thought.id === editingNodeId,
+          isRoot: thought.depth === minDepth,
         },
         draggable: false,
       };
     });
     setNodes(flowNodes);
-  }, [placedNodes, layout, adjacentIds, selectedNodeId, editingNodeId, isMobile, setNodes]);
+  }, [placedNodes, layout, selectedNodeId, editingNodeId, activePathNodeIds, minDepth, setNodes]);
 
   useEffect(() => {
     const flowEdges: Edge[] = map.edges
@@ -76,47 +82,28 @@ function CanvasInner() {
         return src && tgt && !src.inInbox && !tgt.inInbox;
       })
       .map((edge) => {
-        const dimmed =
-          adjacentIds &&
-          selectedNodeId &&
-          !(adjacentIds.has(edge.sourceId) && adjacentIds.has(edge.targetId));
-        const mobileFaint = isMobile;
+        const active = activeEdgeIds.has(edge.id);
         return {
           id: edge.id,
           source: edge.sourceId,
           target: edge.targetId,
-          type: 'smoothstep',
-          animated: !isMobile && edge.relation === 'implies',
-          label: edge.label || undefined,
+          type: 'default',
           style: {
-            stroke: mobileFaint ? '#ebe6df' : dimmed ? '#ebe6df' : '#d4cdc4',
-            strokeWidth: mobileFaint ? 1 : dimmed ? 1 : 1.5,
-            opacity: mobileFaint ? 0.35 : dimmed ? 0.35 : 0.85,
+            stroke: active ? 'rgba(224, 122, 58, 0.7)' : 'rgba(200, 190, 180, 0.35)',
+            strokeWidth: active ? 1.5 : 1,
           },
-          markerEnd: isMobile
-            ? undefined
-            : {
-                type: MarkerType.ArrowClosed,
-                color: dimmed ? '#ebe6df' : '#c4bcb2',
-                width: 16,
-                height: 16,
-              },
+          animated: active,
         };
       });
     setEdges(flowEdges);
-  }, [map.edges, map.nodes, adjacentIds, selectedNodeId, isMobile, setEdges]);
+  }, [map.edges, map.nodes, activeEdgeIds, setEdges]);
 
   useEffect(() => {
-    if (isMobile) {
-      if (!initialViewportSet.current) {
-        setViewport({ x: 24, y: 80, zoom: 1 });
-        initialViewportSet.current = true;
-      }
-      return;
+    if (!initialViewportSet.current) {
+      setViewport({ x: isMobile ? 20 : 40, y: isMobile ? 60 : 40, zoom: 1 });
+      initialViewportSet.current = true;
     }
-    const t = setTimeout(() => fitView({ padding: 0.3, duration: 300 }), 80);
-    return () => clearTimeout(t);
-  }, [isMobile, layout, fitView, setViewport]);
+  }, [isMobile, setViewport]);
 
   useEffect(() => {
     initialViewportSet.current = false;
@@ -125,9 +112,9 @@ function CanvasInner() {
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       selectNode(node.id);
-      if (isMobile) setEditingNodeId(node.id);
+      setEditingNodeId(node.id);
     },
-    [selectNode, isMobile, setEditingNodeId],
+    [selectNode, setEditingNodeId],
   );
 
   const onPaneClick = useCallback(() => {
@@ -136,14 +123,7 @@ function CanvasInner() {
   }, [selectNode, setEditingNodeId]);
 
   return (
-    <div className="thought-canvas">
-      <div className="depth-axis">
-        <span>시작</span>
-        <div className="depth-line" />
-        <span>핵심</span>
-        <div className="depth-line" />
-        <span>다음</span>
-      </div>
+    <div className="thought-canvas neural-canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -152,22 +132,14 @@ function CanvasInner() {
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        minZoom={isMobile ? 0.65 : 0.3}
-        maxZoom={isMobile ? 1.4 : 2}
-        panOnScroll={!isMobile}
+        minZoom={0.5}
+        maxZoom={2}
+        panOnScroll
         nodesDraggable={false}
         elementsSelectable
         proOptions={{ hideAttribution: true }}
       >
         <ViewportBoundary />
-        <Background color="#ebe6df" gap={28} size={1} />
-        <Controls showInteractive={false} position="bottom-right" />
-        {!isMobile && (
-          <MiniMap
-            nodeColor={() => '#e07a3a'}
-            maskColor="rgba(250, 248, 245, 0.85)"
-          />
-        )}
       </ReactFlow>
     </div>
   );

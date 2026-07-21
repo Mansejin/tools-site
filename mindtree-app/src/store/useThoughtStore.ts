@@ -65,7 +65,7 @@ function readWelcomeState(): boolean {
 export const useThoughtStore = create<ThoughtStore>()(
   immer((set, get) => ({
     map: createSampleMap(),
-    selectedNodeId: 'n-core',
+    selectedNodeId: 'n-root',
     calmMode: true,
     isSaving: false,
     showWelcome: readWelcomeState(),
@@ -174,7 +174,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         touchMap(s.map);
       }),
 
-    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-core', showWelcome: false }),
+    loadSampleMap: () => set({ map: createSampleMap(), selectedNodeId: 'n-root', showWelcome: false }),
 
     startWithTopic: (topic) => {
       const map = createTopicMap(topic);
