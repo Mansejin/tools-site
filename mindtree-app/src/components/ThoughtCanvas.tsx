@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -14,6 +14,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ThoughtNodeComponent, { type ThoughtNodeData } from './ThoughtNodeComponent';
+import ViewportBoundary from './ViewportBoundary';
 import { useThoughtStore } from '../store/useThoughtStore';
 import { computeLayout, getAdjacentNodeIds } from '../lib/layout';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -23,11 +24,13 @@ const nodeTypes = { thought: ThoughtNodeComponent };
 function CanvasInner() {
   const map = useThoughtStore((s) => s.map);
   const selectedNodeId = useThoughtStore((s) => s.selectedNodeId);
+  const editingNodeId = useThoughtStore((s) => s.editingNodeId);
   const calmMode = useThoughtStore((s) => s.calmMode);
   const selectNode = useThoughtStore((s) => s.selectNode);
-  const setMobileTab = useThoughtStore((s) => s.setMobileTab);
+  const setEditingNodeId = useThoughtStore((s) => s.setEditingNodeId);
   const isMobile = useIsMobile();
-  const { fitView } = useReactFlow();
+  const { fitView, setViewport } = useReactFlow();
+  const initialViewportSet = useRef(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ThoughtNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -38,9 +41,9 @@ function CanvasInner() {
   );
 
   const adjacentIds = useMemo(() => {
-    if (!calmMode || !selectedNodeId) return null;
+    if (isMobile || !calmMode || !selectedNodeId) return null;
     return getAdjacentNodeIds(selectedNodeId, placedNodes, map.edges);
-  }, [calmMode, selectedNodeId, placedNodes, map.edges]);
+  }, [isMobile, calmMode, selectedNodeId, placedNodes, map.edges]);
 
   const layout = useMemo(() => computeLayout(placedNodes, isMobile), [placedNodes, isMobile]);
 
@@ -52,12 +55,18 @@ function CanvasInner() {
         id: thought.id,
         type: 'thought',
         position: { x: pos.x, y: pos.y },
-        data: { thought, dimmed, selected: thought.id === selectedNodeId },
+        data: {
+          thought,
+          dimmed,
+          selected: thought.id === selectedNodeId,
+          isMobile,
+          isEditing: thought.id === editingNodeId,
+        },
         draggable: false,
       };
     });
     setNodes(flowNodes);
-  }, [placedNodes, layout, adjacentIds, selectedNodeId, setNodes]);
+  }, [placedNodes, layout, adjacentIds, selectedNodeId, editingNodeId, isMobile, setNodes]);
 
   useEffect(() => {
     const flowEdges: Edge[] = map.edges
@@ -71,43 +80,60 @@ function CanvasInner() {
           adjacentIds &&
           selectedNodeId &&
           !(adjacentIds.has(edge.sourceId) && adjacentIds.has(edge.targetId));
+        const mobileFaint = isMobile;
         return {
           id: edge.id,
           source: edge.sourceId,
           target: edge.targetId,
           type: 'smoothstep',
-          animated: edge.relation === 'implies',
+          animated: !isMobile && edge.relation === 'implies',
           label: edge.label || undefined,
           style: {
-            stroke: dimmed ? '#ebe6df' : '#d4cdc4',
-            strokeWidth: dimmed ? 1 : 1.5,
-            opacity: dimmed ? 0.4 : 0.9,
+            stroke: mobileFaint ? '#ebe6df' : dimmed ? '#ebe6df' : '#d4cdc4',
+            strokeWidth: mobileFaint ? 1 : dimmed ? 1 : 1.5,
+            opacity: mobileFaint ? 0.35 : dimmed ? 0.35 : 0.85,
           },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: dimmed ? '#ebe6df' : '#c4bcb2',
-          },
+          markerEnd: isMobile
+            ? undefined
+            : {
+                type: MarkerType.ArrowClosed,
+                color: dimmed ? '#ebe6df' : '#c4bcb2',
+                width: 16,
+                height: 16,
+              },
         };
       });
     setEdges(flowEdges);
-  }, [map.edges, map.nodes, adjacentIds, selectedNodeId, setEdges]);
+  }, [map.edges, map.nodes, adjacentIds, selectedNodeId, isMobile, setEdges]);
 
   useEffect(() => {
-    const t = setTimeout(() => fitView({ padding: isMobile ? 0.15 : 0.3, duration: 300 }), 80);
+    if (isMobile) {
+      if (!initialViewportSet.current) {
+        setViewport({ x: 24, y: 80, zoom: 1 });
+        initialViewportSet.current = true;
+      }
+      return;
+    }
+    const t = setTimeout(() => fitView({ padding: 0.3, duration: 300 }), 80);
     return () => clearTimeout(t);
-  }, [layout, isMobile, fitView]);
+  }, [isMobile, layout, fitView, setViewport]);
+
+  useEffect(() => {
+    initialViewportSet.current = false;
+  }, [map.id]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       selectNode(node.id);
-      if (isMobile) setMobileTab('edit');
+      if (isMobile) setEditingNodeId(node.id);
     },
-    [selectNode, isMobile, setMobileTab],
+    [selectNode, isMobile, setEditingNodeId],
   );
 
   const onPaneClick = useCallback(() => {
     selectNode(null);
-  }, [selectNode]);
+    setEditingNodeId(null);
+  }, [selectNode, setEditingNodeId]);
 
   return (
     <div className="thought-canvas">
@@ -126,13 +152,14 @@ function CanvasInner() {
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: isMobile ? 0.15 : 0.3 }}
-        minZoom={isMobile ? 0.2 : 0.3}
-        maxZoom={2}
+        minZoom={isMobile ? 0.65 : 0.3}
+        maxZoom={isMobile ? 1.4 : 2}
         panOnScroll={!isMobile}
+        nodesDraggable={false}
+        elementsSelectable
         proOptions={{ hideAttribution: true }}
       >
+        <ViewportBoundary />
         <Background color="#ebe6df" gap={28} size={1} />
         <Controls showInteractive={false} position="bottom-right" />
         {!isMobile && (

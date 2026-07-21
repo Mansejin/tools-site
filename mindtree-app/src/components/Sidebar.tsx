@@ -1,5 +1,6 @@
 import { useThoughtStore } from '../store/useThoughtStore';
 import { CATEGORY_LABELS } from '../types';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 type SidebarProps = {
   className?: string;
@@ -10,6 +11,8 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   const selectedNodeId = useThoughtStore((s) => s.selectedNodeId);
   const selectNode = useThoughtStore((s) => s.selectNode);
   const setMobileTab = useThoughtStore((s) => s.setMobileTab);
+  const setEditingNodeId = useThoughtStore((s) => s.setEditingNodeId);
+  const isMobile = useIsMobile();
 
   const placed = map.nodes.filter((n) => !n.inInbox);
   const byDepth = new Map<number, typeof placed>();
@@ -23,7 +26,10 @@ export default function Sidebar({ className = '' }: SidebarProps) {
 
   const handleSelect = (id: string) => {
     selectNode(id);
-    setMobileTab('edit');
+    if (isMobile) {
+      setEditingNodeId(id);
+      setMobileTab('map');
+    }
   };
 
   return (

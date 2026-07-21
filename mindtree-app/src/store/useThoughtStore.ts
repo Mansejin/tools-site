@@ -21,9 +21,11 @@ type ThoughtStore = {
   isSaving: boolean;
   showWelcome: boolean;
   mobileTab: 'map' | 'list' | 'edit';
+  editingNodeId: string | null;
 
   setMap: (map: ThoughtMap) => void;
   selectNode: (id: string | null) => void;
+  setEditingNodeId: (id: string | null) => void;
   toggleCalmMode: () => void;
   dismissWelcome: () => void;
   openWelcome: () => void;
@@ -68,10 +70,13 @@ export const useThoughtStore = create<ThoughtStore>()(
     isSaving: false,
     showWelcome: readWelcomeState(),
     mobileTab: 'map' as const,
+    editingNodeId: null as string | null,
 
     setMap: (map) => set({ map, selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null }),
 
     selectNode: (id) => set({ selectedNodeId: id }),
+
+    setEditingNodeId: (id) => set({ editingNodeId: id }),
 
     toggleCalmMode: () => set((s) => ({ calmMode: !s.calmMode })),
 
@@ -131,6 +136,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         s.map.edges.push(createEdge(parentId, node.id, 'supports'));
         touchMap(s.map);
         s.selectedNodeId = node.id;
+        s.editingNodeId = node.id;
       });
       return newId;
     },
@@ -148,6 +154,7 @@ export const useThoughtStore = create<ThoughtStore>()(
         s.map.nodes = s.map.nodes.filter((n) => n.id !== id);
         s.map.edges = s.map.edges.filter((e) => e.sourceId !== id && e.targetId !== id);
         if (s.selectedNodeId === id) s.selectedNodeId = null;
+        if (s.editingNodeId === id) s.editingNodeId = null;
         touchMap(s.map);
       }),
 

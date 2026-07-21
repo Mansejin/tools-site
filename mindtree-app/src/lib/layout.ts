@@ -7,15 +7,17 @@ export const LAYOUT = {
   nodeWidth: 180,
   nodeHeight: 56,
   canvasCenterY: 400,
+  leftAnchor: 80,
 } as const;
 
 export const LAYOUT_MOBILE = {
-  horizontalGap: 160,
-  verticalGap: 88,
-  branchSpread: 100,
-  nodeWidth: 200,
-  nodeHeight: 64,
-  canvasCenterY: 320,
+  horizontalGap: 96,
+  verticalGap: 56,
+  branchSpread: 44,
+  nodeWidth: 108,
+  nodeHeight: 36,
+  canvasCenterY: 240,
+  leftAnchor: 20,
 } as const;
 
 export type LayoutConfig = {
@@ -25,6 +27,7 @@ export type LayoutConfig = {
   nodeWidth: number;
   nodeHeight: number;
   canvasCenterY: number;
+  leftAnchor?: number;
 };
 
 export type LayoutPosition = {
@@ -60,7 +63,7 @@ export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string,
     const centerNodes = layer.filter((n) => n.direction === 'center');
     const downNodes = layer.filter((n) => n.direction === 'down');
 
-    const x = depth * cfg.horizontalGap + (mobile ? 40 : 80);
+    const x = depth * cfg.horizontalGap + (cfg.leftAnchor ?? 80);
 
     placeGroup(upNodes, x, 'up', positions, cfg);
     placeGroup(centerNodes, x, 'center', positions, cfg);
@@ -89,9 +92,9 @@ function placeGroup(
 
     let y = cfg.canvasCenterY;
     if (direction === 'center') {
-      y += siblingOffset * 0.5;
+      y += siblingOffset * 0.4;
     } else {
-      y += sign * (importanceOffset + cfg.branchSpread * 0.35) + siblingOffset;
+      y += sign * (importanceOffset * 0.7 + cfg.branchSpread * 0.25) + siblingOffset;
     }
 
     positions.set(node.id, { id: node.id, x, y });
