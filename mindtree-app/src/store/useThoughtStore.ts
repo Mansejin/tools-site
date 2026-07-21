@@ -20,12 +20,14 @@ type ThoughtStore = {
   calmMode: boolean;
   isSaving: boolean;
   showWelcome: boolean;
+  mobileTab: 'map' | 'list' | 'edit';
 
   setMap: (map: ThoughtMap) => void;
   selectNode: (id: string | null) => void;
   toggleCalmMode: () => void;
   dismissWelcome: () => void;
   openWelcome: () => void;
+  setMobileTab: (tab: 'map' | 'list' | 'edit') => void;
 
   addInboxThought: (title: string) => void;
   placeInboxThought: (inboxId: string, parentId: string | null, direction: ThoughtDirection) => void;
@@ -65,6 +67,7 @@ export const useThoughtStore = create<ThoughtStore>()(
     calmMode: true,
     isSaving: false,
     showWelcome: readWelcomeState(),
+    mobileTab: 'map' as const,
 
     setMap: (map) => set({ map, selectedNodeId: map.nodes.find((n) => !n.inInbox)?.id ?? null }),
 
@@ -80,6 +83,8 @@ export const useThoughtStore = create<ThoughtStore>()(
     },
 
     openWelcome: () => set({ showWelcome: true }),
+
+    setMobileTab: (tab) => set({ mobileTab: tab }),
 
     addInboxThought: (title) =>
       set((s) => {

@@ -9,6 +9,24 @@ export const LAYOUT = {
   canvasCenterY: 400,
 } as const;
 
+export const LAYOUT_MOBILE = {
+  horizontalGap: 160,
+  verticalGap: 88,
+  branchSpread: 100,
+  nodeWidth: 200,
+  nodeHeight: 64,
+  canvasCenterY: 320,
+} as const;
+
+export type LayoutConfig = {
+  horizontalGap: number;
+  verticalGap: number;
+  branchSpread: number;
+  nodeWidth: number;
+  nodeHeight: number;
+  canvasCenterY: number;
+};
+
 export type LayoutPosition = {
   id: string;
   x: number;
@@ -21,7 +39,8 @@ function directionSign(direction: ThoughtNode['direction']): number {
   return 0;
 }
 
-export function computeLayout(nodes: ThoughtNode[]): Map<string, LayoutPosition> {
+export function computeLayout(nodes: ThoughtNode[], mobile = false): Map<string, LayoutPosition> {
+  const cfg = mobile ? LAYOUT_MOBILE : LAYOUT;
   const positions = new Map<string, LayoutPosition>();
   if (nodes.length === 0) return positions;
 
@@ -41,11 +60,11 @@ export function computeLayout(nodes: ThoughtNode[]): Map<string, LayoutPosition>
     const centerNodes = layer.filter((n) => n.direction === 'center');
     const downNodes = layer.filter((n) => n.direction === 'down');
 
-    const x = depth * LAYOUT.horizontalGap + 80;
+    const x = depth * cfg.horizontalGap + (mobile ? 40 : 80);
 
-    placeGroup(upNodes, x, 'up', positions);
-    placeGroup(centerNodes, x, 'center', positions);
-    placeGroup(downNodes, x, 'down', positions);
+    placeGroup(upNodes, x, 'up', positions, cfg);
+    placeGroup(centerNodes, x, 'center', positions, cfg);
+    placeGroup(downNodes, x, 'down', positions, cfg);
   }
 
   return positions;
@@ -56,22 +75,23 @@ function placeGroup(
   x: number,
   direction: ThoughtNode['direction'],
   positions: Map<string, LayoutPosition>,
+  cfg: LayoutConfig,
 ) {
   if (nodes.length === 0) return;
 
   const sorted = [...nodes].sort((a, b) => b.importance - a.importance);
   const sign = directionSign(direction);
-  const totalHeight = (sorted.length - 1) * LAYOUT.verticalGap;
+  const totalHeight = (sorted.length - 1) * cfg.verticalGap;
 
   sorted.forEach((node, index) => {
-    const importanceOffset = (1 - node.importance) * LAYOUT.branchSpread;
-    const siblingOffset = index * LAYOUT.verticalGap - totalHeight / 2;
+    const importanceOffset = (1 - node.importance) * cfg.branchSpread;
+    const siblingOffset = index * cfg.verticalGap - totalHeight / 2;
 
-    let y = LAYOUT.canvasCenterY;
+    let y = cfg.canvasCenterY;
     if (direction === 'center') {
       y += siblingOffset * 0.5;
     } else {
-      y += sign * (importanceOffset + LAYOUT.branchSpread * 0.35) + siblingOffset;
+      y += sign * (importanceOffset + cfg.branchSpread * 0.35) + siblingOffset;
     }
 
     positions.set(node.id, { id: node.id, x, y });

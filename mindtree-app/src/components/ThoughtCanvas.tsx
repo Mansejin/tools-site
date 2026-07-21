@@ -4,8 +4,10 @@ import {
   Background,
   Controls,
   MiniMap,
+  ReactFlowProvider,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Node,
   type Edge,
   MarkerType,
@@ -14,15 +16,18 @@ import '@xyflow/react/dist/style.css';
 import ThoughtNodeComponent, { type ThoughtNodeData } from './ThoughtNodeComponent';
 import { useThoughtStore } from '../store/useThoughtStore';
 import { computeLayout, getAdjacentNodeIds } from '../lib/layout';
-import { CATEGORY_COLORS } from '../types';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const nodeTypes = { thought: ThoughtNodeComponent };
 
-export default function ThoughtCanvas() {
+function CanvasInner() {
   const map = useThoughtStore((s) => s.map);
   const selectedNodeId = useThoughtStore((s) => s.selectedNodeId);
   const calmMode = useThoughtStore((s) => s.calmMode);
   const selectNode = useThoughtStore((s) => s.selectNode);
+  const setMobileTab = useThoughtStore((s) => s.setMobileTab);
+  const isMobile = useIsMobile();
+  const { fitView } = useReactFlow();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ThoughtNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -37,7 +42,7 @@ export default function ThoughtCanvas() {
     return getAdjacentNodeIds(selectedNodeId, placedNodes, map.edges);
   }, [calmMode, selectedNodeId, placedNodes, map.edges]);
 
-  const layout = useMemo(() => computeLayout(placedNodes), [placedNodes]);
+  const layout = useMemo(() => computeLayout(placedNodes, isMobile), [placedNodes, isMobile]);
 
   useEffect(() => {
     const flowNodes: Node<ThoughtNodeData>[] = placedNodes.map((thought) => {
@@ -74,24 +79,30 @@ export default function ThoughtCanvas() {
           animated: edge.relation === 'implies',
           label: edge.label || undefined,
           style: {
-            stroke: dimmed ? '#2a221c' : '#5a4a3a',
+            stroke: dimmed ? '#ebe6df' : '#d4cdc4',
             strokeWidth: dimmed ? 1 : 1.5,
-            opacity: dimmed ? 0.25 : 0.8,
+            opacity: dimmed ? 0.4 : 0.9,
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: dimmed ? '#2a221c' : '#8a7260',
+            color: dimmed ? '#ebe6df' : '#c4bcb2',
           },
         };
       });
     setEdges(flowEdges);
   }, [map.edges, map.nodes, adjacentIds, selectedNodeId, setEdges]);
 
+  useEffect(() => {
+    const t = setTimeout(() => fitView({ padding: isMobile ? 0.15 : 0.3, duration: 300 }), 80);
+    return () => clearTimeout(t);
+  }, [layout, isMobile, fitView]);
+
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       selectNode(node.id);
+      if (isMobile) setMobileTab('edit');
     },
-    [selectNode],
+    [selectNode, isMobile, setMobileTab],
   );
 
   const onPaneClick = useCallback(() => {
@@ -116,21 +127,29 @@ export default function ThoughtCanvas() {
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.3 }}
-        minZoom={0.3}
+        fitViewOptions={{ padding: isMobile ? 0.15 : 0.3 }}
+        minZoom={isMobile ? 0.2 : 0.3}
         maxZoom={2}
+        panOnScroll={!isMobile}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#2a221c" gap={24} size={1} />
-        <Controls showInteractive={false} />
-        <MiniMap
-          nodeColor={(n) => {
-            const data = n.data as ThoughtNodeData | undefined;
-            return data ? CATEGORY_COLORS[data.thought.category] : '#4a5f7a';
-          }}
-          maskColor="rgba(15, 18, 26, 0.8)"
-        />
+        <Background color="#ebe6df" gap={28} size={1} />
+        <Controls showInteractive={false} position="bottom-right" />
+        {!isMobile && (
+          <MiniMap
+            nodeColor={() => '#e07a3a'}
+            maskColor="rgba(250, 248, 245, 0.85)"
+          />
+        )}
       </ReactFlow>
     </div>
+  );
+}
+
+export default function ThoughtCanvas() {
+  return (
+    <ReactFlowProvider>
+      <CanvasInner />
+    </ReactFlowProvider>
   );
 }

@@ -73,14 +73,14 @@ export const CATEGORY_LABELS: Record<ThoughtCategory, string> = {
 };
 
 export const CATEGORY_COLORS: Record<ThoughtCategory, string> = {
-  premise: '#7a8e9e',
-  question: '#9a8ab0',
-  argument: '#8a9e88',
-  objection: '#b89088',
-  synthesis: '#c9895a',
-  conclusion: '#9a8e82',
-  value: '#d4a574',
-  intuition: '#b8a088',
+  premise: '#a8a29a',
+  question: '#9a948c',
+  argument: '#8a847c',
+  objection: '#b0a098',
+  synthesis: '#e07a3a',
+  conclusion: '#9a948c',
+  value: '#e07a3a',
+  intuition: '#a8a29a',
 };
 
 export const RELATION_LABELS: Record<ThoughtRelation, string> = {

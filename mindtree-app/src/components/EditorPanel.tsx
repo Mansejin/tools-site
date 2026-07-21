@@ -10,7 +10,11 @@ import {
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as ThoughtCategory[];
 const DIRECTIONS = Object.keys(DIRECTION_LABELS) as ThoughtDirection[];
 
-export default function EditorPanel() {
+type EditorPanelProps = {
+  className?: string;
+};
+
+export default function EditorPanel({ className = '' }: EditorPanelProps) {
   const map = useThoughtStore((s) => s.map);
   const selectedNodeId = useThoughtStore((s) => s.selectedNodeId);
   const updateNode = useThoughtStore((s) => s.updateNode);
@@ -22,9 +26,9 @@ export default function EditorPanel() {
 
   if (!node || node.inInbox) {
     return (
-      <aside className="editor-panel empty">
-        <p>노드를 선택하면 편집할 수 있습니다.</p>
-        <p className="hint">캔버스나 왼쪽 목록에서 생각을 선택하세요.</p>
+      <aside className={`editor-panel empty ${className}`.trim()}>
+        <p>생각을 선택하면 편집할 수 있습니다.</p>
+        <p className="hint">맵이나 목록 탭에서 노드를 탭하세요.</p>
       </aside>
     );
   }
@@ -34,7 +38,7 @@ export default function EditorPanel() {
   );
 
   return (
-    <aside className="editor-panel">
+    <aside className={`editor-panel ${className}`.trim()}>
       <h2 className="editor-title">생각 편집</h2>
 
       <label className="field">
