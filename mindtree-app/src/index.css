@@ -544,194 +544,133 @@ body {
   background: var(--border);
 }
 
-/* ── Thought nodes ── */
+/* ── Neural tree nodes ── */
 
-.thought-node-wrap {
+.neural-canvas .react-flow {
+  background: var(--bg-deep);
+}
+
+.neural-canvas .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.neural-wrap {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 6px;
+  transition: opacity 0.25s ease;
 }
 
-.thought-node-wrap.desktop .desktop-rail {
-  display: flex;
+.neural-wrap.dimmed {
+  opacity: 0.22;
+}
+
+.neural-node {
+  display: inline-flex;
   align-items: center;
-  margin-left: 2px;
-}
-
-.thought-node-wrap.mobile {
-  flex-direction: row;
-  align-items: stretch;
-}
-
-.thought-node {
-  width: 180px;
-  background: var(--bg-panel);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  padding: 0.65rem 0.75rem;
-  box-shadow: var(--shadow-sm);
-  transition: opacity 0.3s ease, box-shadow 0.2s ease, border-color 0.2s, transform 0.2s;
+  justify-content: center;
+  min-height: 22px;
+  max-width: 120px;
+  padding: 2px 10px;
+  border: 1px solid rgba(200, 190, 180, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  line-height: 1.3;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
 }
 
-.thought-node.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-md);
-}
-
-.thought-node.is-core {
-  border-color: var(--accent-soft);
-}
-
-.thought-node.dimmed {
-  opacity: 0.25;
-}
-
-/* Mobile compact node */
-.thought-node.mobile-node {
-  width: auto;
-  min-width: 72px;
-  max-width: 108px;
-  padding: 0.4rem 0.55rem;
-  border-radius: 10px;
-  flex-shrink: 0;
-}
-
-.thought-node-wrap.mobile.expanded .mobile-node {
-  max-width: 148px;
-  padding: 0.5rem 0.6rem;
-  transform: scale(1.06);
-  z-index: 2;
-}
-
-.mobile-node-label {
-  display: block;
-  font-size: 0.72rem;
-  line-height: 1.35;
+.neural-node.root {
+  border-color: rgba(224, 122, 58, 0.45);
   color: var(--text-primary);
-  word-break: keep-all;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.75);
 }
 
-.mobile-node-input {
-  width: 100%;
+.neural-node.active,
+.neural-wrap.selected .neural-node {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 2px var(--accent-glow), 0 0 12px rgba(224, 122, 58, 0.12);
+  transform: scale(1.04);
+}
+
+.neural-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.neural-input {
+  width: 88px;
   border: none;
   background: transparent;
-  font-size: 0.8rem;
-  line-height: 1.35;
   color: var(--text-primary);
+  font-size: 0.68rem;
+  line-height: 1.3;
   outline: none;
   padding: 0;
   font-family: inherit;
 }
 
-/* + add buttons */
-.node-add-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  padding-left: 2px;
-  flex-shrink: 0;
-}
-
-.node-add-rail.desktop-rail {
-  flex-direction: row;
-}
-
-.add-line-h {
-  width: 14px;
-  height: 1px;
-  background: var(--border);
-  opacity: 0.7;
-}
-
-.add-line-v {
-  width: 1px;
-  height: 6px;
-  background: var(--border);
-  opacity: 0.6;
-}
-
-.add-btn {
-  width: 22px;
-  height: 22px;
+.neural-add {
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(200, 190, 180, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  opacity: 0.55;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s;
   flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
 }
 
-.thought-node-wrap:hover .add-btn,
-.thought-node-wrap.mobile.expanded .add-btn,
-.add-btn:active {
+.neural-add:hover,
+.neural-add:active {
   opacity: 1;
   border-color: var(--accent-soft);
   color: var(--accent);
-  background: var(--accent-bg);
 }
 
-.add-btn.add-right {
-  width: 24px;
-  height: 24px;
-}
-
-.thought-node-wrap.mobile .add-up,
-.thought-node-wrap.mobile .add-down {
-  width: 18px;
-  height: 18px;
-  font-size: 0.72rem;
-}
-
-.thought-node-category {
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  margin-bottom: 0.2rem;
-}
-
-.thought-node-category.accent {
-  color: var(--accent);
-}
-
-.thought-node-title {
-  font-family: var(--font-serif);
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--text-primary);
-}
-
-.importance-badge {
-  display: inline-block;
-  background: var(--accent-bg);
-  color: var(--accent-dim);
-  border-radius: 4px;
-  padding: 0.1rem 0.4rem;
-  font-size: 0.6rem;
-  margin-top: 0.35rem;
-  font-weight: 500;
-}
-
-.thought-handle {
-  width: 6px !important;
-  height: 6px !important;
-  background: var(--border) !important;
+.neural-handle {
+  width: 4px !important;
+  height: 4px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
   border: none !important;
+  opacity: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .neural-node {
+    min-height: 20px;
+    max-width: 96px;
+    padding: 2px 8px;
+    font-size: 0.64rem;
+  }
+
+  .neural-label {
+    max-width: 76px;
+  }
+
+  .neural-input {
+    width: 72px;
+    font-size: 16px;
+  }
 }
 
 /* ── React Flow overrides ── */

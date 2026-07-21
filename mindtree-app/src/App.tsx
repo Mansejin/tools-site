@@ -22,9 +22,7 @@ export default function App() {
         {(!isMobile || mobileTab === 'list') && (
           <Sidebar className={isMobile ? 'sidebar-mobile' : ''} />
         )}
-        {(!isMobile || mobileTab === 'edit') && (
-          <EditorPanel className={isMobile ? 'editor-mobile' : ''} />
-        )}
+        {!isMobile && <EditorPanel />}
       </main>
       {isMobile && <MobileTabBar />}
     </div>
