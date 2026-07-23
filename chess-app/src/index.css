@@ -1,0 +1,136 @@
+@import 'tailwindcss';
+
+/* 에이투지체 (A2Z) */
+@font-face {
+  font-family: 'A2Z';
+  src: url('./assets/fonts/a2z-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'A2Z';
+  src: url('./assets/fonts/a2z-500.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'A2Z';
+  src: url('./assets/fonts/a2z-600.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+/* 700·800은 SemiBold로 고정 — 에이투지체 Bold가 너무 묵직함 */
+@font-face {
+  font-family: 'A2Z';
+  src: url('./assets/fonts/a2z-600.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'A2Z';
+  src: url('./assets/fonts/a2z-600.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg0: #0f1612;
+  --bg1: #162018;
+  --bg2: #1e2c22;
+  --panel: #24352a;
+  --ink: #f2ebe0;
+  --muted: #a8b5aa;
+  --accent: #c4a35a;
+  --accent-soft: #d4b978;
+  --good: #6fbf8a;
+  --bad: #e07a6a;
+  --line: #334438;
+  --board-light: #eeeed2;
+  --board-dark: #769656;
+  --font: 'A2Z', system-ui, sans-serif;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg0);
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, #2a3f30 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, #3a3220 0%, transparent 50%),
+    linear-gradient(165deg, var(--bg0), var(--bg1) 45%, #121a14);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+.display {
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent-soft);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: slide-up 0.35s ease-out both;
+}

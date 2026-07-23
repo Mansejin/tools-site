@@ -1,0 +1,150 @@
+{
+  "version": 1,
+  "source": "lichess-org/chess-openings",
+  "lines": [
+    {
+      "id": "italian-white",
+      "side": "white",
+      "titleKo": "이탈리안 게임",
+      "titleEn": "Italian Game",
+      "why": "e4 + Bc4로 빠르게 전개·캐슬링. 초보 백 레퍼토리의 정석.",
+      "ideas": [
+        "중앙(e4)을 잡고 나이트·비숍을 빠르게 전개",
+        "킹사이드 캐슬링을 서두르기",
+        "f7을 노리되, 혼자 두지 말기"
+      ],
+      "eco": "C54",
+      "openingName": "Italian Game: Classical Variation, Giuoco Pianissimo",
+      "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. O-O Nf6 5. d3 d6 6. c3 a6 7. a4 Ba7",
+      "moves": [
+        "e4",
+        "e5",
+        "Nf3",
+        "Nc6",
+        "Bc4",
+        "Bc5",
+        "O-O",
+        "Nf6",
+        "d3",
+        "d6",
+        "c3",
+        "a6",
+        "a4",
+        "Ba7"
+      ]
+    },
+    {
+      "id": "london-white",
+      "side": "white",
+      "titleKo": "런던 시스템",
+      "titleEn": "London System",
+      "why": "흑이 뭘 두든 비슷한 셋업. 오프닝 고민을 줄여줌.",
+      "ideas": [
+        "d4 → Nf3 → Bf4 → e3 → c3 → Bd3 셋업",
+        "킹사이드 캐슬링 후 천천히 압박",
+        "이론 싸움보다 구조 이해"
+      ],
+      "eco": "D02",
+      "openingName": "Queen's Pawn Game: London System",
+      "pgn": "1. d4 d5 2. Nf3 Nf6 3. Bf4 c5 4. e3 Nc6 5. Nbd2 e6 6. c3",
+      "moves": [
+        "d4",
+        "d5",
+        "Nf3",
+        "Nf6",
+        "Bf4",
+        "c5",
+        "e3",
+        "Nc6",
+        "Nbd2",
+        "e6",
+        "c3"
+      ]
+    },
+    {
+      "id": "scandi-black",
+      "side": "black",
+      "titleKo": "스칸디나비안 디펜스",
+      "titleEn": "Scandinavian Defense",
+      "why": "1.e4에 바로 맞받아치는 단순 흑 디펜스. 라인이 짧음.",
+      "ideas": [
+        "1...d5로 중앙을 즉시 도전",
+        "퀸을 너무 일찍 쫓기지 않게 자리 잡기",
+        "전개(나이트·비숍)와 캐슬링을 우선"
+      ],
+      "eco": "B01",
+      "openingName": "Scandinavian Defense: Main Line",
+      "pgn": "1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5",
+      "moves": [
+        "e4",
+        "d5",
+        "exd5",
+        "Qxd5",
+        "Nc3",
+        "Qa5"
+      ]
+    },
+    {
+      "id": "caro-black",
+      "side": "black",
+      "titleKo": "카로칸 디펜스",
+      "titleEn": "Caro-Kann Defense",
+      "why": "탄탄한 폰 구조. 블런더가 적고 중반까지 버티기 좋음.",
+      "ideas": [
+        "c6 → d5로 안전한 중앙 도전",
+        "라이트스퀘어 비숍을 가두지 않기",
+        "차분히 전개한 뒤 중반 싸움"
+      ],
+      "eco": "B19",
+      "openingName": "Caro-Kann Defense: Classical Variation",
+      "pgn": "1. e4 c6 2. d4 d5 3. Nd2 dxe4 4. Nxe4 Bf5 5. Ng3 Bg6 6. h4 h6 7. Nf3 Nd7",
+      "moves": [
+        "e4",
+        "c6",
+        "d4",
+        "d5",
+        "Nd2",
+        "dxe4",
+        "Nxe4",
+        "Bf5",
+        "Ng3",
+        "Bg6",
+        "h4",
+        "h6",
+        "Nf3",
+        "Nd7"
+      ]
+    },
+    {
+      "id": "qgd-black",
+      "side": "black",
+      "titleKo": "퀸스 갬빗 디클라인드",
+      "titleEn": "Queen's Gambit Declined",
+      "why": "1.d4 대응의 클래식. 구조가 안정적.",
+      "ideas": [
+        "d5로 중앙을 잡고 e6으로 지키기",
+        "나이트·비숍 전개 후 캐슬링",
+        "c5 또는 e5로 나중에 풀기"
+      ],
+      "eco": "D56",
+      "openingName": "Queen's Gambit Declined",
+      "pgn": "1. d4 d5 2. c4 e6 3. Nf3 Nf6 4. Nc3 Nc6 5. Bg5 Be7 6. e3 O-O 7. Rc1 h6 8. Bh4",
+      "moves": [
+        "d4",
+        "d5",
+        "c4",
+        "e6",
+        "Nf3",
+        "Nf6",
+        "Nc3",
+        "Nc6",
+        "Bg5",
+        "Be7",
+        "e3",
+        "O-O",
+        "Rc1",
+        "h6"
+      ]
+    }
+  ]
+}
