@@ -1174,3 +1174,173 @@
     html[data-theme="light"] .adult-toggle-box {
       border-color: rgba(0,0,0,.15);
     }
+
+    /* ── 로또 심층 분석기 ── */
+    .lotto-card { max-width: 440px; }
+
+    .lotto-status {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+      word-break: keep-all;
+    }
+
+    .lotto-factors .tab {
+      flex: 1 1 calc(33% - 6px);
+      min-width: calc(33% - 6px);
+      font-size: 0.78rem;
+      padding: 10px 6px;
+    }
+
+    .lotto-result {
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 22px 14px;
+      min-height: 110px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px dashed rgba(255,255,255,.1);
+      transition: opacity .3s;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .lotto-result.fade { opacity: 0; }
+
+    .lotto-result .placeholder {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .lotto-balls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lotto-ball {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      box-shadow:
+        inset 0 -3px 6px rgba(0,0,0,.18),
+        inset 0 2px 4px rgba(255,255,255,.35),
+        0 4px 10px rgba(0,0,0,.25);
+      animation: lotto-pop .45s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    .lotto-ball:nth-child(1) { animation-delay: .02s; }
+    .lotto-ball:nth-child(2) { animation-delay: .06s; }
+    .lotto-ball:nth-child(3) { animation-delay: .1s; }
+    .lotto-ball:nth-child(4) { animation-delay: .14s; }
+    .lotto-ball:nth-child(5) { animation-delay: .18s; }
+    .lotto-ball:nth-child(6) { animation-delay: .22s; }
+    .lotto-ball-bonus { animation-delay: .32s; outline: 2px dashed rgba(255,209,102,.55); outline-offset: 2px; }
+
+    .lotto-plus {
+      font-weight: 800;
+      color: var(--muted);
+      margin: 0 2px;
+      font-size: 1.1rem;
+    }
+
+    .lotto-tap-hint {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    @keyframes lotto-pop {
+      from { transform: scale(.4); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .lotto-report {
+      margin-top: 14px;
+      padding: 14px 14px 10px;
+      border-radius: 14px;
+      background: rgba(100,180,255,.06);
+      border: 1px solid rgba(100,180,255,.15);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .lotto-report ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lotto-chart-label { margin-top: 22px; }
+
+    .lotto-freq {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 72px;
+      padding: 4px 2px 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .lotto-freq-bar {
+      flex: 1 0 7px;
+      min-width: 6px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+    }
+
+    .lotto-freq-bar i {
+      display: block;
+      width: 100%;
+      border-radius: 3px 3px 1px 1px;
+      background: linear-gradient(180deg, var(--accent), rgba(255,107,74,.45));
+      min-height: 3px;
+    }
+
+    .lotto-freq-bar.is-cold i {
+      background: linear-gradient(180deg, #69c8f2, rgba(105,200,242,.35));
+    }
+
+    .lotto-freq-bar span {
+      font-size: 0.48rem;
+      color: var(--muted);
+      line-height: 1;
+      transform: scale(.9);
+    }
+
+    html[data-theme="light"] .lotto-status,
+    html[data-theme="light"] .lotto-result {
+      background: rgba(0,0,0,.03);
+      border-color: rgba(0,0,0,.1);
+    }
+
+    html[data-theme="light"] .lotto-report {
+      background: rgba(40,120,200,.06);
+      border-color: rgba(40,120,200,.15);
+    }

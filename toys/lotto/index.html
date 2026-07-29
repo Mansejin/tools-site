@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>로또 심층 분석기 🎱 · 장난감</title>
+  <meta name="description" content="역대 당첨번호 + 수학 + 미시물리 + 조작 음모론까지 고려한 번호 생성기 (책임 안 짐)">
+  <meta property="og:url" content="https://mansejin.com/toys/lotto/">
+  <meta property="og:title" content="로또 심층 분석기 🎱">
+  <meta property="og:description" content="역대 당첨번호 + 수학 + 미시물리 + 조작 음모론까지 고려한 번호 생성기 (책임 안 짐)">
+  <link rel="canonical" href="https://mansejin.com/toys/lotto/">
+  <link rel="stylesheet" href="../css/toys.css">
+</head>
+<body>
+  <div class="file-warning" id="fileWarning">
+    ⚠️ 파일로 열면 일부 기능이 안 될 수 있어요.<br>
+    <strong>사파리·크롬</strong>에서 열거나, 웹에 올린 링크로 접속하세요.
+  </div>
+  <div class="site-top no-capture">
+    <a class="site-top-link" href="../">← 장난감</a>
+    <div class="site-top-actions">
+      <a class="site-top-link" href="../../">도구함</a>
+      <label class="theme-switch">
+        <input type="checkbox" class="theme-switch-input" role="switch">
+        <span class="theme-switch-track">
+          <span class="theme-switch-thumb"></span>
+        </span>
+      </label>
+    </div>
+  </div>
+  <div id="shareZone" class="share-zone">
+    <header id="appHeader">
+      <div class="emoji-hero" id="headerEmoji">🎱🔬</div>
+      <h1 id="headerTitle">로또 심층 분석기</h1>
+      <p class="subtitle" id="headerSubtitle">수학 · 물리 · 음모론으로 번호를 뽑습니다 (책임 안 짐)</p>
+    </header>
+    <main class="card lotto-card" id="panelLotto">
+      <div class="lotto-status" id="dataStatus">역대 당첨번호 불러오는 중…</div>
+
+      <p class="section-label">분석 요인 (복수 선택)</p>
+      <div class="tabs-row lotto-factors" id="factorTabs">
+        <button type="button" class="tab active" data-factor="hot">🔥 핫넘버</button>
+        <button type="button" class="tab active" data-factor="cold">❄️ 콜드</button>
+        <button type="button" class="tab active" data-factor="math">📐 수학</button>
+        <button type="button" class="tab active" data-factor="physics">⚛️ 미시물리</button>
+        <button type="button" class="tab active" data-factor="conspiracy">🕵️ 음모론</button>
+      </div>
+
+      <div class="form-field">
+        <label for="conspiracyLevel">음모론 강도 <span id="conspiracyVal">중간</span></label>
+        <input type="range" id="conspiracyLevel" min="0" max="100" value="55" step="5">
+      </div>
+
+      <div class="form-field">
+        <label for="recentWindow">최근 추세 창 <span id="recentVal">30회</span></label>
+        <input type="range" id="recentWindow" min="10" max="100" value="30" step="5">
+      </div>
+
+      <div class="lotto-result" id="resultBox" role="button" tabindex="0" aria-label="번호 복사">
+        <span class="placeholder">요인을 고르고 아래 버튼을 누르세요</span>
+      </div>
+
+      <div class="lotto-report" id="reportBox" hidden></div>
+
+      <div class="btn-group no-capture">
+        <button type="button" class="btn btn-primary" id="generateBtn" disabled>🔮 심층 분석 후 번호 생성</button>
+        <button type="button" class="btn btn-secondary" id="copyBtn" style="display:none">📋 번호 복사</button>
+        <button type="button" class="btn btn-share" id="shareBtn">📸 캡처해서 공유하기</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-num" id="drawCount">—</div>
+          <div class="stat-label">분석 회차</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="genCount">0</div>
+          <div class="stat-label">생성 횟수</div>
+        </div>
+      </div>
+
+      <p class="section-label lotto-chart-label">최근 핫·콜드 (출현 횟수)</p>
+      <div class="lotto-freq" id="freqChart" aria-hidden="true"></div>
+    </main>
+    <footer id="appFooter">
+      <p id="footerLine1">※ 당첨을 보장하지 않습니다. 재미로만 쓰세요.</p>
+      <p id="footerLine2">데이터: 공개 로또 추첨 결과 · 조작은 가정일 뿐입니다</p>
+    </footer>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="../js/lotto.js"></script>
+  <script src="../../js/theme.js"></script>
+  <script>if (location.protocol === 'file:') document.getElementById('fileWarning').classList.add('show');</script>
+</body>
+</html>

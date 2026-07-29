@@ -23,7 +23,7 @@
       var p = new URLSearchParams(q);
       if (p.get('e')) { location.replace('excuse/' + q); return; }
       var app = p.get('app');
-      if (app === 'excuse' || app === 'hair' || app === 'poker' || app === 'coupon' || app === 'chess') {
+      if (app === 'excuse' || app === 'hair' || app === 'poker' || app === 'coupon' || app === 'chess' || app === 'lotto') {
         location.replace(app + '/' + q);
       }
     })();
@@ -74,6 +74,11 @@
         <span class="toys-card-emoji">♟️</span>
         <span class="toys-card-title">오프닝 드릴</span>
         <span class="toys-card-desc">레퍼토리 암기 + 이론 끝에서 엔진 이어치기</span>
+      </a>
+      <a class="toys-card" href="lotto/">
+        <span class="toys-card-emoji">🎱</span>
+        <span class="toys-card-title">로또 심층 분석기</span>
+        <span class="toys-card-desc">수학·물리·음모론으로 번호 뽑기 (책임 안 짐)</span>
       </a>
     </nav>
 
