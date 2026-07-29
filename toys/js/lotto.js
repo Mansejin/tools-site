@@ -573,7 +573,64 @@
     lines.push(
       `📦 5게임 합계 범위 ${Math.min(...sums)}–${Math.max(...sums)} (역사 평균 ${s.shape.sumMean.toFixed(0)})`
     );
+    reverseAnalyze(games, draws).forEach((line) => lines.push(line));
     return lines;
+  }
+
+  function reverseAnalyze(games, allDraws) {
+    const lines = [];
+    lines.push('🕵️ 역분석 (1234회 대조)');
+    games.forEach((g, i) => {
+      const info = scanHistory(g.numbers, g.bonus, allDraws);
+      if (info.exact6) {
+        lines.push(
+          `${i + 1}번: ⚠ 6개 완전일치 ${info.exactHits.map((h) => `#${h.n}`).join(', ')}`
+        );
+      } else if (info.bestMatch >= 5) {
+        lines.push(
+          `${i + 1}번: 5개 일치 ${info.nearHits.filter((h) => h.match === 5).length}회 · 최고 #${info.best.n} (${info.best.date})`
+        );
+      } else if (info.bestMatch >= 4) {
+        const near = info.nearHits.filter((h) => h.match >= 4).slice(0, 2);
+        lines.push(
+          `${i + 1}번: 완전일치 없음 · 최고 ${info.bestMatch}개=#${info.best.n}` +
+          (near.length ? ` (${near.map((h) => `#${h.n}`).join(', ')})` : '')
+        );
+      } else {
+        lines.push(
+          `${i + 1}번: 완전일치 없음 · 최고 ${info.bestMatch}개=#${info.best.n} (${info.best.date})`
+        );
+      }
+    });
+    return lines;
+  }
+
+  function scanHistory(nums, bonus, allDraws) {
+    const set = new Set(nums);
+    let best = null;
+    let bestMatch = -1;
+    const exactHits = [];
+    const nearHits = [];
+    allDraws.forEach((d) => {
+      let match = 0;
+      d.numbers.forEach((n) => { if (set.has(n)) match++; });
+      const date = (d.date || '').slice(0, 10);
+      if (match === 6) exactHits.push({ n: d.drawNo, date, bonus: d.bonus });
+      if (match >= 4) nearHits.push({ n: d.drawNo, date, match, nums: d.numbers, bonus: d.bonus });
+      if (match > bestMatch) {
+        bestMatch = match;
+        best = { n: d.drawNo, date, match, nums: d.numbers, bonus: d.bonus };
+      }
+    });
+    nearHits.sort((a, b) => b.match - a.match || b.n - a.n);
+    return {
+      exact6: exactHits.length > 0,
+      exactHits,
+      nearHits,
+      best,
+      bestMatch,
+      bonus,
+    };
   }
 
   function describeResult(result, s) {
