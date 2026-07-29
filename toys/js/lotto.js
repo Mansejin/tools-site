@@ -2,7 +2,8 @@
 'use strict';
 
   const ALL_URL = 'https://smok95.github.io/lotto/results/all.json';
-  const CONSPIRACY_LABELS = ['없음', '약함', '중간', '강함', '확고'];
+  const MIX_LABELS = ['약함', '약함', '보통', '강함', '최대'];
+  const CHI_CRIT_05 = 60.48; // df=44, α=0.05
 
   const BALL_COLORS = [
     { max: 10, bg: '#fbc400', fg: '#1a1a1a' },
@@ -148,7 +149,65 @@
     sharing = false;
   }
 
-  // ── Analysis engine ──
+  // ── Stats helpers ──
+
+  function mean(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+
+  function std(arr) {
+    if (arr.length < 2) return 0;
+    const m = mean(arr);
+    return Math.sqrt(arr.reduce((a, x) => a + (x - m) ** 2, 0) / arr.length);
+  }
+
+  function percentileRank(sortedAsc, value) {
+    if (!sortedAsc.length) return 0.5;
+    let lo = 0;
+    for (let i = 0; i < sortedAsc.length; i++) if (sortedAsc[i] <= value) lo = i + 1;
+    return lo / sortedAsc.length;
+  }
+
+  function acValue(nums) {
+    const s = nums.slice().sort((a, b) => a - b);
+    const diffs = new Set();
+    for (let i = 0; i < s.length; i++) {
+      for (let j = i + 1; j < s.length; j++) diffs.add(s[j] - s[i]);
+    }
+    return diffs.size - (s.length - 1);
+  }
+
+  function comboFeatures(nums) {
+    const s = nums.slice().sort((a, b) => a - b);
+    let consec = 0;
+    for (let i = 1; i < s.length; i++) if (s[i] === s[i - 1] + 1) consec++;
+    return {
+      sum: s.reduce((a, b) => a + b, 0),
+      odds: s.filter((n) => n % 2).length,
+      lows: s.filter((n) => n <= 22).length,
+      consec,
+      span: s[5] - s[0],
+      ac: acValue(s),
+      highCount: s.filter((n) => n >= 32).length,
+      birthdayHeavy: s.filter((n) => n <= 31).length,
+    };
+  }
+
+  function mulberry32(a) {
+    return function () {
+      let t = (a += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function seededRand() {
+    return mulberry32((Date.now() ^ (Math.random() * 0xffffffff)) >>> 0);
+  }
+
+  // ── Core analysis ──
 
   let draws = [];
   let stats = null;
@@ -173,66 +232,139 @@
   }
 
   function buildStats(allDraws, recentWindow) {
+    const N = allDraws.length;
     const freq = Array(46).fill(0);
-    const lastSeen = Array(46).fill(allDraws.length + 1);
+    const lastIdx = Array(46).fill(-1);
+    const gaps = Array.from({ length: 46 }, () => []);
     const recentFreq = Array(46).fill(0);
+    const pair = Array.from({ length: 46 }, () => Array(46).fill(0));
     const sums = [];
-    let oddCount = 0;
-    let lowCount = 0;
+    const odds = [];
+    const lows = [];
+    const consecs = [];
+    const spans = [];
+    const acs = [];
+    const decade = Array(5).fill(0);
 
     allDraws.forEach((d, i) => {
-      let odds = 0;
-      let lows = 0;
-      let sum = 0;
+      const f = comboFeatures(d.numbers);
+      sums.push(f.sum);
+      odds.push(f.odds);
+      lows.push(f.lows);
+      consecs.push(f.consec);
+      spans.push(f.span);
+      acs.push(f.ac);
+
       d.numbers.forEach((n) => {
         freq[n]++;
-        lastSeen[n] = allDraws.length - 1 - i;
-        sum += n;
-        if (n % 2 === 1) odds++;
-        if (n <= 22) lows++;
+        if (lastIdx[n] >= 0) gaps[n].push(i - lastIdx[n]);
+        lastIdx[n] = i;
+        if (i >= N - recentWindow) recentFreq[n]++;
+        decade[Math.min(4, Math.floor((n - 1) / 10))]++;
       });
-      sums.push(sum);
-      oddCount += odds;
-      lowCount += lows;
+
+      for (let a = 0; a < 6; a++) {
+        for (let b = a + 1; b < 6; b++) {
+          pair[d.numbers[a]][d.numbers[b]]++;
+          pair[d.numbers[b]][d.numbers[a]]++;
+        }
+      }
     });
 
-    const recent = allDraws.slice(-recentWindow);
-    recent.forEach((d) => {
-      d.numbers.forEach((n) => { recentFreq[n]++; });
-    });
+    const expected = (N * 6) / 45;
+    let chi = 0;
+    for (let n = 1; n <= 45; n++) chi += (freq[n] - expected) ** 2 / expected;
 
-    const avgSum = sums.reduce((a, b) => a + b, 0) / Math.max(1, sums.length);
-    const sumStd = Math.sqrt(
-      sums.reduce((a, s) => a + (s - avgSum) ** 2, 0) / Math.max(1, sums.length)
-    );
+    const avgGap = Array(46).fill(0);
+    const gapNow = Array(46).fill(0);
+    for (let n = 1; n <= 45; n++) {
+      avgGap[n] = gaps[n].length ? mean(gaps[n]) : N / Math.max(1, freq[n]);
+      gapNow[n] = lastIdx[n] < 0 ? N : N - 1 - lastIdx[n];
+    }
+
+    const pairExpected = (N * 15) / (45 * 44 / 2); // ≈ N * C(6,2)/C(45,2)
+    const topPairs = [];
+    for (let i = 1; i <= 45; i++) {
+      for (let j = i + 1; j <= 45; j++) {
+        topPairs.push({ a: i, b: j, c: pair[i][j] });
+      }
+    }
+    topPairs.sort((a, b) => b.c - a.c);
+
+    const byFreq = [];
+    for (let n = 1; n <= 45; n++) {
+      byFreq.push({
+        n,
+        f: freq[n],
+        r: recentFreq[n],
+        gap: gapNow[n],
+        avgGap: avgGap[n],
+        overdue: gapNow[n] / Math.max(1, avgGap[n]),
+      });
+    }
+
+    const sortedSums = sums.slice().sort((a, b) => a - b);
 
     return {
-      total: allDraws.length,
-      latest: allDraws[allDraws.length - 1],
+      total: N,
+      latest: allDraws[N - 1],
       freq,
-      lastSeen,
       recentFreq,
       recentWindow,
-      avgSum,
-      sumStd,
-      avgOdds: oddCount / Math.max(1, allDraws.length),
-      avgLows: lowCount / Math.max(1, allDraws.length),
-      meanFreq: (allDraws.length * 6) / 45,
+      expected,
+      chi,
+      uniformOk: chi < CHI_CRIT_05,
+      avgGap,
+      gapNow,
+      pair,
+      pairExpected,
+      topPairs: topPairs.slice(0, 8),
+      byFreq,
+      hotRecent: byFreq.slice().sort((a, b) => b.r - a.r || b.f - a.f).slice(0, 8),
+      coldGap: byFreq.slice().sort((a, b) => b.overdue - a.overdue || b.gap - a.gap).slice(0, 8),
+      coldLife: byFreq.slice().sort((a, b) => a.f - b.f).slice(0, 8),
+      shape: {
+        sumMean: mean(sums),
+        sumStd: std(sums),
+        oddsMean: mean(odds),
+        lowsMean: mean(lows),
+        consecMean: mean(consecs),
+        spanMean: mean(spans),
+        spanStd: std(spans),
+        acMean: mean(acs),
+        acStd: std(acs),
+        consecDist: {
+          zero: consecs.filter((x) => x === 0).length / N,
+          one: consecs.filter((x) => x === 1).length / N,
+          twoPlus: consecs.filter((x) => x >= 2).length / N,
+        },
+        oddsMode: modeOf(odds),
+        decadePct: decade.map((x) => (x / (N * 6)) * 100),
+      },
+      sortedSums,
+      oddsHist: histCount(odds, 0, 6),
+      decade,
     };
   }
 
-  function mulberry32(a) {
-    return function () {
-      let t = (a += 0x6d2b79f5);
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
+  function modeOf(arr) {
+    const c = {};
+    let best = arr[0];
+    let bestN = 0;
+    arr.forEach((x) => {
+      c[x] = (c[x] || 0) + 1;
+      if (c[x] > bestN) {
+        bestN = c[x];
+        best = x;
+      }
+    });
+    return best;
   }
 
-  function seededRand() {
-    const t = Date.now() ^ (Math.random() * 0xffffffff);
-    return mulberry32(t >>> 0);
+  function histCount(arr, lo, hi) {
+    const h = [];
+    for (let i = lo; i <= hi; i++) h.push(arr.filter((x) => x === i).length);
+    return h;
   }
 
   function weightedPick(weights, rand, exclude) {
@@ -240,7 +372,7 @@
     const entries = [];
     for (let n = 1; n <= 45; n++) {
       if (exclude.has(n)) continue;
-      const w = Math.max(0.0001, weights[n]);
+      const w = Math.max(1e-9, weights[n]);
       entries.push([n, w]);
       total += w;
     }
@@ -252,190 +384,247 @@
     return entries[entries.length - 1][0];
   }
 
-  function computeWeights(factors, conspiracyLevel, s) {
-    const weights = Array(46).fill(1);
-    const c = conspiracyLevel / 100;
-    const mean = s.meanFreq || 1;
-    const rMean = (s.recentWindow * 6) / 45;
+  function baseWeights(s, factors, strength) {
+    const w = Array(46).fill(1);
+    const k = strength; // 0..1
+    const expR = (s.recentWindow * 6) / 45;
 
     for (let n = 1; n <= 45; n++) {
-      let w = 1;
+      let score = 1;
 
-      if (factors.hot) {
-        const hot = s.recentFreq[n] / Math.max(0.5, rMean);
-        w *= 0.55 + hot * 0.9;
+      if (factors.freq) {
+        // Empirical Bayes: shrink lifetime + recent toward mean
+        const life = (s.freq[n] + 8) / (s.expected + 8);
+        const recent = (s.recentFreq[n] + 2) / (expR + 2);
+        const blended = 0.45 * life + 0.55 * recent;
+        score *= Math.pow(blended, 0.35 + k * 0.9);
       }
 
-      if (factors.cold) {
-        const gap = s.lastSeen[n];
-        const overdue = Math.min(3, gap / Math.max(8, s.recentWindow * 0.35));
-        w *= 0.7 + overdue * 0.55;
-        const lifetime = s.freq[n] / Math.max(0.5, mean);
-        if (lifetime < 0.92) w *= 1.08;
+      if (factors.gap) {
+        // Overdue vs own average gap (geometric waiting)
+        const overdue = s.gapNow[n] / Math.max(1, s.avgGap[n] || 7.5);
+        const gapW = Math.pow(Math.min(2.8, Math.max(0.35, overdue)), 0.5 + k * 0.7);
+        score *= gapW;
       }
 
-      if (factors.math) {
-        // Mild preference toward historically middle-frequency numbers (regression to mean)
-        const ratio = s.freq[n] / Math.max(0.5, mean);
-        w *= 1.05 - Math.abs(ratio - 1) * 0.25;
-        // Slight preference for numbers that help typical odd/even & AC-ish spread later
-        if (n >= 8 && n <= 38) w *= 1.04;
+      if (factors.split) {
+        // Reduce birthday-band crowding (1–31) so jackpot splits less often
+        if (n <= 31) score *= 1 - 0.22 * k;
+        else score *= 1 + 0.28 * k;
       }
 
-      if (factors.physics) {
-        // Tongue-in-cheek micro-physics: surface wear, static, drum harmonics
-        const wear = 1 + Math.sin(n * 1.618) * 0.08;
-        const massBias = 1 + ((23 - n) / 45) * 0.12; // lighter high-number balls float more
-        const harmonic = 1 + Math.cos(n * Math.PI / 7.5) * 0.1;
-        const staticCling = 1 + ((n % 5 === 0) ? 0.06 : 0);
-        w *= wear * massBias * harmonic * staticCling;
-      }
-
-      if (factors.conspiracy) {
-        // Assume human operators leave fingerprints when "balancing" draws
-        // 1) Overcorrect birthday bias → slight boost for 32–45
-        if (n >= 32) w *= 1 + 0.22 * c;
-        if (n <= 12) w *= 1 - 0.08 * c;
-        // 2) Avoid suspiciously lucky digits (7, 3) at high conspiracy
-        if (n % 10 === 7 || n === 3) w *= 1 - 0.18 * c;
-        // 3) Prefer "looks random" mid-gaps candidates (not too round)
-        if (n % 5 === 0) w *= 1 - 0.1 * c;
-        // 4) Numbers that recently spiked look "planted" if overused — dampen extreme hot
-        if (s.recentFreq[n] >= rMean * 1.8) w *= 1 - 0.2 * c;
-        // 5) Human-like affinity for primes when faking randomness poorly
-        if (isPrime(n)) w *= 1 + 0.12 * c;
-      }
-
-      weights[n] = w;
+      w[n] = score;
     }
-    return weights;
+    return w;
   }
 
-  function isPrime(n) {
-    if (n < 2) return false;
-    for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
-    return true;
+  function applyPairBoost(weights, picked, s, strength) {
+    if (!picked.length) return weights;
+    const out = weights.slice();
+    const exp = s.pairExpected || 18;
+    for (let n = 1; n <= 45; n++) {
+      if (picked.includes(n)) continue;
+      let boost = 1;
+      picked.forEach((p) => {
+        const c = s.pair[p][n];
+        // lift numbers that co-occur more than expected with current picks
+        boost *= 1 + strength * 0.55 * ((c - exp) / Math.max(8, exp));
+      });
+      out[n] *= Math.max(0.25, Math.min(2.4, boost));
+    }
+    return out;
   }
 
-  function comboScore(nums, factors, s) {
-    const sorted = nums.slice().sort((a, b) => a - b);
+  function shapeScore(nums, s) {
+    const f = comboFeatures(nums);
+    const sh = s.shape;
     let score = 0;
-    const sum = sorted.reduce((a, b) => a + b, 0);
-    const odds = sorted.filter((n) => n % 2).length;
-    const lows = sorted.filter((n) => n <= 22).length;
 
-    if (factors.math) {
-      const sumZ = Math.abs(sum - s.avgSum) / Math.max(1, s.sumStd);
-      score -= sumZ * 1.4;
-      score -= Math.abs(odds - 3) * 0.7;
-      score -= Math.abs(lows - 3) * 0.55;
-      // consecutive pairs: historically mild presence is ok, triples rare
-      let consec = 0;
-      for (let i = 1; i < sorted.length; i++) if (sorted[i] === sorted[i - 1] + 1) consec++;
-      if (consec >= 3) score -= 2;
-      else if (consec === 1) score += 0.3;
-      // spread: max-min should not be tiny
-      const span = sorted[5] - sorted[0];
-      if (span < 20) score -= 1.2;
-      if (span > 38) score += 0.2;
-    }
+    const sumZ = Math.abs(f.sum - sh.sumMean) / Math.max(1, sh.sumStd);
+    score -= sumZ * sumZ;
 
-    if (factors.conspiracy) {
-      // Human-touched sets often look "evenly sprinkled"
-      const gaps = [];
-      for (let i = 1; i < sorted.length; i++) gaps.push(sorted[i] - sorted[i - 1]);
-      const gMean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-      const gVar = gaps.reduce((a, g) => a + (g - gMean) ** 2, 0) / gaps.length;
-      // Prefer moderate gap variance (not ruler-straight, not clustered)
-      score -= Math.abs(Math.sqrt(gVar) - 5.5) * 0.25;
-      // Avoid arithmetic sequences
-      if (gaps.every((g) => g === gaps[0])) score -= 3;
-      // Prefer 2–4 color bands represented
-      const bands = new Set(sorted.map((n) => Math.ceil(n / 10)));
-      if (bands.size >= 3 && bands.size <= 5) score += 0.6;
-    }
+    score -= Math.abs(f.odds - sh.oddsMode) * 0.85;
+    score -= Math.abs(f.odds - sh.oddsMean) * 0.35;
+    score -= Math.abs(f.lows - sh.lowsMean) * 0.55;
 
-    if (factors.physics) {
-      // Prefer mix of "heavy/light" balls
-      const lowHeavy = sorted.filter((n) => n <= 15).length;
-      if (lowHeavy >= 1 && lowHeavy <= 3) score += 0.4;
-    }
+    // Match historical consecutive distribution
+    if (f.consec === 0) score += Math.log(sh.consecDist.zero + 0.01);
+    else if (f.consec === 1) score += Math.log(sh.consecDist.one + 0.01);
+    else score += Math.log(sh.consecDist.twoPlus + 0.01) - (f.consec - 2) * 0.8;
+
+    const spanZ = Math.abs(f.span - sh.spanMean) / Math.max(1, sh.spanStd);
+    score -= spanZ * 0.9;
+
+    const acZ = Math.abs(f.ac - sh.acMean) / Math.max(0.5, sh.acStd);
+    score -= acZ * 0.7;
+
+    // Decade coverage: prefer 3–5 bands like typical draws
+    const bands = new Set(nums.map((n) => Math.min(4, Math.floor((n - 1) / 10))));
+    if (bands.size >= 3 && bands.size <= 5) score += 0.45;
+    if (bands.size <= 2) score -= 1.1;
 
     return score;
   }
 
-  function generateCombination(factors, conspiracyLevel, s) {
+  function pairScore(nums, s) {
+    let score = 0;
+    const exp = s.pairExpected || 18;
+    for (let i = 0; i < nums.length; i++) {
+      for (let j = i + 1; j < nums.length; j++) {
+        const c = s.pair[nums[i]][nums[j]];
+        score += (c - exp) / Math.max(6, exp);
+      }
+    }
+    return score;
+  }
+
+  function generateCombination(factors, strength, s) {
     const rand = seededRand();
-    const baseWeights = computeWeights(factors, conspiracyLevel, s);
+    const active = Object.keys(factors).filter((k) => factors[k]);
+    const attempts = factors.shape || factors.pair ? 80 : 24;
     let best = null;
     let bestScore = -Infinity;
 
-    const attempts = factors.math || factors.conspiracy ? 48 : 12;
     for (let a = 0; a < attempts; a++) {
+      let weights = baseWeights(s, factors, strength);
+      // jitter so repeats aren't identical
+      weights = weights.map((w, i) => (i === 0 ? 0 : w * (0.82 + rand() * 0.4)));
+
       const exclude = new Set();
       const picked = [];
-      const jittered = baseWeights.map((w, i) => (i === 0 ? 0 : w * (0.85 + rand() * 0.35)));
       for (let i = 0; i < 6; i++) {
-        const n = weightedPick(jittered, rand, exclude);
+        let w = weights;
+        if (factors.pair && picked.length) w = applyPairBoost(weights, picked, s, strength);
+        const n = weightedPick(w, rand, exclude);
         exclude.add(n);
         picked.push(n);
       }
-      picked.sort((a, b) => a - b);
-      const score = comboScore(picked, factors, s) + rand() * 0.15;
+      picked.sort((x, y) => x - y);
+
+      let score = rand() * 0.05;
+      if (factors.shape) score += shapeScore(picked, s) * (0.7 + strength);
+      if (factors.pair) score += pairScore(picked, s) * (0.5 + strength * 0.8);
+      if (factors.freq) {
+        const expR = (s.recentWindow * 6) / 45;
+        picked.forEach((n) => {
+          score += strength * 0.15 * ((s.recentFreq[n] / Math.max(0.5, expR)) - 1);
+        });
+      }
+      if (factors.gap) {
+        picked.forEach((n) => {
+          const overdue = s.gapNow[n] / Math.max(1, s.avgGap[n]);
+          score += strength * 0.12 * (overdue - 1);
+        });
+      }
+      if (factors.split) {
+        const f = comboFeatures(picked);
+        if (f.highCount >= 2) score += 0.35 * strength;
+        if (f.birthdayHeavy >= 5) score -= 0.9 * strength;
+      }
+
       if (score > bestScore) {
         bestScore = score;
         best = picked;
       }
     }
 
-    // bonus: exclude mains, slight cold+physics bias
-    const bonusWeights = computeWeights(factors, conspiracyLevel * 0.6, s);
-    const exclude = new Set(best);
-    const bonus = weightedPick(bonusWeights, rand, exclude);
+    // Bonus: weight by gap + mild freq, exclude mains
+    const bonusW = baseWeights(s, { freq: true, gap: true, shape: false, pair: false, split: false }, strength * 0.7);
+    const bonus = weightedPick(bonusW, rand, new Set(best));
 
-    return { numbers: best, bonus, score: bestScore };
+    return {
+      numbers: best,
+      bonus,
+      score: bestScore,
+      features: comboFeatures(best),
+      strategies: active,
+    };
   }
 
-  function renderBalls(nums, bonus) {
-    const balls = nums.map((n) =>
-      `<span class="lotto-ball" style="${ballStyle(n)}">${n}</span>`
-    ).join('');
-    const bonusBall = `<span class="lotto-ball lotto-ball-bonus" style="${ballStyle(bonus)}">${bonus}</span>`;
-    return `<div class="lotto-balls">${balls}<span class="lotto-plus">+</span>${bonusBall}</div>`;
-  }
+  function describeResult(result, s) {
+    const f = result.features;
+    const sh = s.shape;
+    const lines = [];
+    const sumPct = percentileRank(s.sortedSums, f.sum);
 
-  function renderFreqChart(s) {
-    const el = document.getElementById('freqChart');
-    const max = Math.max(1, ...s.recentFreq.slice(1));
-    const items = [];
-    for (let n = 1; n <= 45; n++) {
-      const h = Math.round((s.recentFreq[n] / max) * 100);
-      const cold = s.lastSeen[n] >= s.recentWindow * 0.7;
-      items.push(
-        `<div class="lotto-freq-bar${cold ? ' is-cold' : ''}" title="${n}: ${s.recentFreq[n]}회">` +
-        `<i style="height:${Math.max(4, h)}%"></i><span>${n}</span></div>`
+    lines.push(
+      `📐 합계 ${f.sum} (역사 평균 ${sh.sumMean.toFixed(1)}±${sh.sumStd.toFixed(1)}, 백분위 ${(sumPct * 100).toFixed(0)}%)`
+    );
+    lines.push(
+      `⚖️ 홀수 ${f.odds} · 저번호(≤22) ${f.lows} · 연속쌍 ${f.consec} · AC ${f.ac} · 스팬 ${f.span}`
+    );
+
+    if (result.strategies.includes('freq')) {
+      const top = result.numbers
+        .map((n) => ({ n, r: s.recentFreq[n] }))
+        .sort((a, b) => b.r - a.r)
+        .slice(0, 3);
+      lines.push(
+        `📈 최근 ${s.recentWindow}회 출현: ` +
+        top.map((x) => `${x.n}(${x.r})`).join(', ')
       );
     }
-    el.innerHTML = items.join('');
+    if (result.strategies.includes('gap')) {
+      const overdue = result.numbers
+        .map((n) => ({ n, g: s.gapNow[n], o: s.gapNow[n] / Math.max(1, s.avgGap[n]) }))
+        .sort((a, b) => b.o - a.o)
+        .slice(0, 3);
+      lines.push(
+        `⏳ 공백: ` +
+        overdue.map((x) => `${x.n}(${x.g}회/${x.o.toFixed(1)}×)`).join(', ')
+      );
+    }
+    if (result.strategies.includes('pair')) {
+      const pairs = [];
+      for (let i = 0; i < result.numbers.length; i++) {
+        for (let j = i + 1; j < result.numbers.length; j++) {
+          const a = result.numbers[i];
+          const b = result.numbers[j];
+          pairs.push({ a, b, c: s.pair[a][b] });
+        }
+      }
+      pairs.sort((a, b) => b.c - a.c);
+      const top = pairs.slice(0, 3);
+      lines.push(
+        `🔗 동반: ` +
+        top.map((p) => `${p.a}-${p.b}(${p.c}회,기대~${s.pairExpected.toFixed(0)})`).join(', ')
+      );
+    }
+    if (result.strategies.includes('shape')) {
+      lines.push(
+        `📊 조합형 적합: 홀수모드 ${sh.oddsMode}, 연속 0/${(sh.consecDist.zero * 100).toFixed(0)}% · 1/${(sh.consecDist.one * 100).toFixed(0)}%`
+      );
+    }
+    if (result.strategies.includes('split')) {
+      lines.push(`🎯 분산: 32+ 고번호 ${f.highCount}개 (생일대 편중 완화)`);
+    }
+
+    lines.push(`✨ 보너스 ${result.bonus} · 적합도 ${result.score.toFixed(2)}`);
+    lines.push(
+      s.uniformOk
+        ? `ℹ️ 번호별 빈도 χ²=${s.chi.toFixed(1)} < ${CHI_CRIT_05} → 장기 균등성 기각 못함`
+        : `ℹ️ 번호별 빈도 χ²=${s.chi.toFixed(1)} (균등성 이탈 신호)`
+    );
+    return lines;
   }
 
   // ── UI ──
 
   const dataStatus = document.getElementById('dataStatus');
+  const insightBox = document.getElementById('insightBox');
   const generateBtn = document.getElementById('generateBtn');
   const copyBtn = document.getElementById('copyBtn');
   const shareBtn = document.getElementById('shareBtn');
   const resultBox = document.getElementById('resultBox');
   const reportBox = document.getElementById('reportBox');
-  const conspiracyLevel = document.getElementById('conspiracyLevel');
   const recentWindow = document.getElementById('recentWindow');
-  const factors = { hot: true, cold: true, math: true, physics: true, conspiracy: true };
+  const mixStrength = document.getElementById('mixStrength');
+  const factors = { freq: true, gap: true, shape: true, pair: true, split: false };
 
   function updateLabels() {
-    const v = +conspiracyLevel.value;
-    document.getElementById('conspiracyVal').textContent =
-      CONSPIRACY_LABELS[Math.min(4, Math.floor(v / 25))];
     document.getElementById('recentVal').textContent = recentWindow.value + '회';
+    const v = +mixStrength.value;
+    document.getElementById('mixVal').textContent = MIX_LABELS[Math.min(4, Math.floor(v / 25))];
   }
 
   document.getElementById('factorTabs').addEventListener('click', (e) => {
@@ -446,39 +635,100 @@
     btn.classList.toggle('active', factors[key]);
   });
 
-  conspiracyLevel.addEventListener('input', updateLabels);
   recentWindow.addEventListener('input', () => {
     updateLabels();
-    if (draws.length) {
-      stats = buildStats(draws, +recentWindow.value);
-      renderFreqChart(stats);
-    }
+    if (draws.length) refreshStats();
   });
+  mixStrength.addEventListener('input', updateLabels);
   updateLabels();
 
-  function setLoading(on, msg) {
-    generateBtn.disabled = on || !stats;
-    if (msg) dataStatus.textContent = msg;
+  function renderBalls(nums, bonus) {
+    const balls = nums.map((n) =>
+      `<span class="lotto-ball" style="${ballStyle(n)}">${n}</span>`
+    ).join('');
+    const bonusBall = `<span class="lotto-ball lotto-ball-bonus" style="${ballStyle(bonus)}">${bonus}</span>`;
+    return `<div class="lotto-balls">${balls}<span class="lotto-plus">+</span>${bonusBall}</div>`;
+  }
+
+  function renderInsight(s) {
+    const sh = s.shape;
+    insightBox.hidden = false;
+    insightBox.innerHTML =
+      `<div class="lotto-insight-grid">` +
+      `<div><b>χ²</b> ${s.chi.toFixed(1)} ${s.uniformOk ? '(균등 OK)' : '(편향?)'}</div>` +
+      `<div><b>합계</b> ${sh.sumMean.toFixed(0)}±${sh.sumStd.toFixed(0)}</div>` +
+      `<div><b>홀수</b> 평균 ${sh.oddsMean.toFixed(1)} / 최빈 ${sh.oddsMode}</div>` +
+      `<div><b>연속</b> 0:${(sh.consecDist.zero * 100).toFixed(0)}% 1:${(sh.consecDist.one * 100).toFixed(0)}%</div>` +
+      `<div><b>AC</b> ${sh.acMean.toFixed(1)}±${sh.acStd.toFixed(1)}</div>` +
+      `<div><b>스팬</b> ${sh.spanMean.toFixed(0)}±${sh.spanStd.toFixed(0)}</div>` +
+      `</div>`;
+  }
+
+  function renderFreqChart(s) {
+    const el = document.getElementById('freqChart');
+    const maxAll = Math.max(1, ...s.freq.slice(1));
+    const maxR = Math.max(1, ...s.recentFreq.slice(1));
+    const items = [];
+    for (let n = 1; n <= 45; n++) {
+      const hAll = Math.round((s.freq[n] / maxAll) * 100);
+      const hR = Math.round((s.recentFreq[n] / maxR) * 100);
+      const cold = s.gapNow[n] >= s.avgGap[n] * 1.4;
+      items.push(
+        `<div class="lotto-freq-bar${cold ? ' is-cold' : ''}" title="${n}: 전체 ${s.freq[n]} / 최근 ${s.recentFreq[n]} / 공백 ${s.gapNow[n]}">` +
+        `<div class="lotto-freq-pair">` +
+        `<i class="lotto-freq-all" style="height:${Math.max(3, hAll)}%"></i>` +
+        `<i class="lotto-freq-recent" style="height:${Math.max(3, hR)}%"></i>` +
+        `</div><span>${n}</span></div>`
+      );
+    }
+    el.innerHTML = items.join('');
+  }
+
+  function renderLists(s) {
+    const box = document.getElementById('listsBox');
+    const chip = (x, extra) => `<span class="lotto-chip">${x}${extra ? ` <small>${extra}</small>` : ''}</span>`;
+    box.innerHTML =
+      `<div class="lotto-list"><div class="lotto-list-title">최근 핫</div><div class="lotto-chips">` +
+      s.hotRecent.slice(0, 6).map((x) => chip(x.n, x.r + '회')).join('') +
+      `</div></div>` +
+      `<div class="lotto-list"><div class="lotto-list-title">공백 과다</div><div class="lotto-chips">` +
+      s.coldGap.slice(0, 6).map((x) => chip(x.n, x.gap + '회')).join('') +
+      `</div></div>` +
+      `<div class="lotto-list"><div class="lotto-list-title">누적 저빈도</div><div class="lotto-chips">` +
+      s.coldLife.slice(0, 6).map((x) => chip(x.n, x.f + '회')).join('') +
+      `</div></div>` +
+      `<div class="lotto-list"><div class="lotto-list-title">동반 상위</div><div class="lotto-chips">` +
+      s.topPairs.slice(0, 5).map((p) => chip(`${p.a}-${p.b}`, p.c + '회')).join('') +
+      `</div></div>`;
+  }
+
+  function refreshStats() {
+    stats = buildStats(draws, +recentWindow.value);
+    const latest = stats.latest;
+    dataStatus.textContent =
+      `${stats.total}회 분석 · 최신 ${latest.drawNo}회 [${latest.numbers.join(', ')}]+${latest.bonus}` +
+      (stats.uniformOk ? ' · 장기 빈도 균등' : ' · 빈도 편차 주의');
+    document.getElementById('drawCount').textContent = stats.total.toLocaleString();
+    document.getElementById('chiStat').textContent = stats.chi.toFixed(0);
+    renderInsight(stats);
+    renderFreqChart(stats);
+    renderLists(stats);
+    generateBtn.disabled = false;
   }
 
   async function loadData() {
-    setLoading(true, '역대 당첨번호 불러오는 중…');
+    generateBtn.disabled = true;
+    dataStatus.textContent = '역대 당첨번호 불러오는 중…';
     try {
-      const res = await fetch(ALL_URL, { cache: 'force-cache' });
+      const res = await fetch(ALL_URL, { cache: 'no-cache' });
       if (!res.ok) throw new Error('fetch failed');
       const raw = await res.json();
       draws = parseDraws(raw);
       if (draws.length < 50) throw new Error('too few draws');
-      stats = buildStats(draws, +recentWindow.value);
-      const latest = stats.latest;
-      dataStatus.textContent =
-        `${stats.total}회차 분석 완료 · 최신 ${latest.drawNo}회 (${latest.numbers.join(', ')})`;
-      document.getElementById('drawCount').textContent = stats.total.toLocaleString();
-      renderFreqChart(stats);
-      generateBtn.disabled = false;
+      refreshStats();
     } catch (err) {
       console.error(err);
-      dataStatus.textContent = '데이터 로드 실패 — 새로고침 해주세요 (CORS/네트워크)';
+      dataStatus.textContent = '데이터 로드 실패 — 새로고침 해주세요';
       generateBtn.disabled = true;
     }
   }
@@ -489,68 +739,33 @@
     resultBox.classList.add('fade');
     reportBox.hidden = true;
     generateBtn.disabled = true;
-    dataStatus.textContent = '요인 가중치 계산 · 조합 시뮬레이션 중…';
+    dataStatus.textContent = '가중치·조합형 적합도 시뮬레이션 중…';
 
+    const strength = +mixStrength.value / 100;
     setTimeout(() => {
-      const result = generateCombination(factors, +conspiracyLevel.value, stats);
+      const result = generateCombination(factors, strength, stats);
       lastResult = result;
       genCount++;
       document.getElementById('genCount').textContent = String(genCount);
-
-      const lines = [];
-      const c = +conspiracyLevel.value / 100;
-      const sorted = result.numbers;
-      const sum = sorted.reduce((a, b) => a + b, 0);
-      const odds = sorted.filter((n) => n % 2).length;
-      const lows = sorted.filter((n) => n <= 22).length;
-
-      if (factors.hot) {
-        const hotOnes = sorted
-          .map((n) => ({ n, f: stats.recentFreq[n] }))
-          .sort((a, b) => b.f - a.f)
-          .slice(0, 2);
-        lines.push(`🔥 최근 ${stats.recentWindow}회에서 ${hotOnes.map((x) => x.n).join(', ')}가 상대적으로 자주 출현`);
-      }
-      if (factors.cold) {
-        const coldOnes = sorted
-          .map((n) => ({ n, g: stats.lastSeen[n] }))
-          .sort((a, b) => b.g - a.g)
-          .slice(0, 2);
-        lines.push(`❄️ ${coldOnes.map((x) => `${x.n}번(${x.g}회 공백)`).join(', ')} 반등 후보로 가중`);
-      }
-      if (factors.math) {
-        lines.push(`📐 합계 ${sum} (평균 ${stats.avgSum.toFixed(0)}±${stats.sumStd.toFixed(0)}), 홀수 ${odds}개, 저번호 ${lows}개`);
-      }
-      if (factors.physics) {
-        lines.push('⚛️ 공 표면마모·정전기·드럼 공진을 의사물리 모델로 보정 (진지하지 않음)');
-      }
-      if (factors.conspiracy) {
-        const hi = sorted.filter((n) => n >= 32).length;
-        if (c > 0.35) {
-          lines.push(
-            `🕵️ 조작 가정: 생일 편향 과보정 · 운수 숫자 회피 · 간격 분산 위장` +
-            (hi ? ` · 고번호 ${hi}개 포함` : '')
-          );
-        } else {
-          lines.push('🕵️ 음모론 강도 낮음 — 인간 개입 흔적 가중치 소량만 적용');
-        }
-      }
-      if (!lines.length) {
-        lines.push('🎲 요인 없음 — 사실상 균등 난수에 가깝습니다');
-      }
-      lines.push(`✨ 보너스 ${result.bonus} · 조합 적합도 ${result.score.toFixed(2)}`);
 
       resultBox.innerHTML = renderBalls(result.numbers, result.bonus) +
         '<span class="lotto-tap-hint">탭하면 복사</span>';
       resultBox.classList.add('has-result');
       resultBox.classList.remove('fade');
+
+      const lines = describeResult(result, stats);
       reportBox.hidden = false;
       reportBox.innerHTML = '<ul>' + lines.map((l) => `<li>${l}</li>`).join('') + '</ul>';
       copyBtn.style.display = '';
+
+      const nActive = Object.keys(factors).filter((k) => factors[k]).length;
       dataStatus.textContent =
-        `${stats.total}회차 반영 · ${Object.keys(factors).filter((k) => factors[k]).length}개 요인 활성`;
+        `${stats.total}회 반영 · 전략 ${nActive}개 · 강도 ${MIX_LABELS[Math.min(4, Math.floor(strength * 100 / 25))]}`;
       generateBtn.disabled = false;
-    }, 420 + Math.random() * 380);
+      renderFreqChart(stats);
+      renderLists(stats);
+      renderInsight(stats);
+    }, 380 + Math.random() * 320);
   }
 
   function copyNumbers() {
@@ -561,13 +776,11 @@
 
   bindTap(generateBtn, runGenerate);
   bindTap(copyBtn, copyNumbers);
-  bindTap(resultBox, () => {
-    if (lastResult) copyNumbers();
-  });
+  bindTap(resultBox, () => { if (lastResult) copyNumbers(); });
   bindTap(shareBtn, () => {
     const text = lastResult
-      ? `로또 심층 분석기 번호: ${lastResult.numbers.join(', ')} + ${lastResult.bonus}`
-      : '로또 심층 분석기 — 수학·물리·음모론으로 번호 뽑기';
+      ? `로또 심층 분석: ${lastResult.numbers.join(', ')} + ${lastResult.bonus}`
+      : '로또 심층 분석기 — 역대 통계 기반 번호 생성';
     captureAndShare('로또 심층 분석기', text);
   });
 
