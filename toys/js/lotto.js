@@ -211,8 +211,9 @@
 
   let draws = [];
   let stats = null;
-  let lastResult = null;
+  let lastResults = null;
   let genCount = 0;
+  const GAME_COUNT = 5;
 
   function parseDraws(raw) {
     const list = Array.isArray(raw) ? raw : (raw.results || raw.data || []);
@@ -541,6 +542,40 @@
     };
   }
 
+  function comboKey(nums) {
+    return nums.slice().sort((a, b) => a - b).join('-');
+  }
+
+  function generateGames(factors, strength, s, count) {
+    const games = [];
+    const seen = new Set();
+    let guard = 0;
+    while (games.length < count && guard < count * 12) {
+      guard++;
+      const result = generateCombination(factors, strength, s);
+      const key = comboKey(result.numbers);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      games.push(result);
+    }
+    while (games.length < count) {
+      games.push(generateCombination(factors, strength, s));
+    }
+    games.sort((a, b) => b.score - a.score);
+    return games;
+  }
+
+  function describeBatch(games, s) {
+    const best = games[0];
+    const lines = describeResult(best, s);
+    lines.unshift(`🎫 ${games.length}게임 생성 · 적합도 순 정렬 (1번이 가장 높음)`);
+    const sums = games.map((g) => g.features.sum);
+    lines.push(
+      `📦 5게임 합계 범위 ${Math.min(...sums)}–${Math.max(...sums)} (역사 평균 ${s.shape.sumMean.toFixed(0)})`
+    );
+    return lines;
+  }
+
   function describeResult(result, s) {
     const f = result.features;
     const sh = s.shape;
@@ -650,6 +685,19 @@
     return `<div class="lotto-balls">${balls}<span class="lotto-plus">+</span>${bonusBall}</div>`;
   }
 
+  function renderGames(games) {
+    return (
+      `<div class="lotto-games">` +
+      games.map((g, i) =>
+        `<div class="lotto-game">` +
+        `<div class="lotto-game-label">${i + 1} <small>적합 ${g.score.toFixed(1)}</small></div>` +
+        renderBalls(g.numbers, g.bonus) +
+        `</div>`
+      ).join('') +
+      `</div><span class="lotto-tap-hint">탭하면 5게임 복사</span>`
+    );
+  }
+
   function renderInsight(s) {
     const sh = s.shape;
     insightBox.hidden = false;
@@ -706,7 +754,7 @@
     stats = buildStats(draws, +recentWindow.value);
     const latest = stats.latest;
     dataStatus.textContent =
-      `${stats.total}회 분석 · 최신 ${latest.drawNo}회 [${latest.numbers.join(', ')}]+${latest.bonus}` +
+      `${stats.total}회 전체 로드 · 최신 ${latest.drawNo}회 [${latest.numbers.join(', ')}]+${latest.bonus}` +
       (stats.uniformOk ? ' · 장기 빈도 균등' : ' · 빈도 편차 주의');
     document.getElementById('drawCount').textContent = stats.total.toLocaleString();
     document.getElementById('chiStat').textContent = stats.chi.toFixed(0);
@@ -739,47 +787,53 @@
     resultBox.classList.add('fade');
     reportBox.hidden = true;
     generateBtn.disabled = true;
-    dataStatus.textContent = '가중치·조합형 적합도 시뮬레이션 중…';
+    dataStatus.textContent = `가중치·조합형 적합도 시뮬레이션 중… (${GAME_COUNT}게임)`;
 
     const strength = +mixStrength.value / 100;
     setTimeout(() => {
-      const result = generateCombination(factors, strength, stats);
-      lastResult = result;
-      genCount++;
+      const games = generateGames(factors, strength, stats, GAME_COUNT);
+      lastResults = games;
+      genCount += games.length;
       document.getElementById('genCount').textContent = String(genCount);
 
-      resultBox.innerHTML = renderBalls(result.numbers, result.bonus) +
-        '<span class="lotto-tap-hint">탭하면 복사</span>';
+      resultBox.innerHTML = renderGames(games);
       resultBox.classList.add('has-result');
       resultBox.classList.remove('fade');
 
-      const lines = describeResult(result, stats);
+      const lines = describeBatch(games, stats);
       reportBox.hidden = false;
       reportBox.innerHTML = '<ul>' + lines.map((l) => `<li>${l}</li>`).join('') + '</ul>';
       copyBtn.style.display = '';
 
       const nActive = Object.keys(factors).filter((k) => factors[k]).length;
       dataStatus.textContent =
-        `${stats.total}회 반영 · 전략 ${nActive}개 · 강도 ${MIX_LABELS[Math.min(4, Math.floor(strength * 100 / 25))]}`;
+        `${stats.total}회 반영 · 전략 ${nActive}개 · ${GAME_COUNT}게임` +
+        ` · 강도 ${MIX_LABELS[Math.min(4, Math.floor(strength * 100 / 25))]}`;
       generateBtn.disabled = false;
       renderFreqChart(stats);
       renderLists(stats);
       renderInsight(stats);
-    }, 380 + Math.random() * 320);
+    }, 420 + Math.random() * 360);
+  }
+
+  function formatGamesText(games) {
+    return games.map((g, i) =>
+      `${i + 1}) ${g.numbers.join(', ')} + ${g.bonus}`
+    ).join('\n');
   }
 
   function copyNumbers() {
-    if (!lastResult) return;
-    const text = lastResult.numbers.join(', ') + ' + ' + lastResult.bonus;
-    copyToClipboard(text).then((ok) => showToast(ok ? '📋 번호 복사됨!' : '복사 실패'));
+    if (!lastResults || !lastResults.length) return;
+    const text = formatGamesText(lastResults);
+    copyToClipboard(text).then((ok) => showToast(ok ? '📋 5게임 복사됨!' : '복사 실패'));
   }
 
   bindTap(generateBtn, runGenerate);
   bindTap(copyBtn, copyNumbers);
-  bindTap(resultBox, () => { if (lastResult) copyNumbers(); });
+  bindTap(resultBox, () => { if (lastResults) copyNumbers(); });
   bindTap(shareBtn, () => {
-    const text = lastResult
-      ? `로또 심층 분석: ${lastResult.numbers.join(', ')} + ${lastResult.bonus}`
+    const text = lastResults && lastResults.length
+      ? `로또 심층 분석 5게임\n${formatGamesText(lastResults)}`
       : '로또 심층 분석기 — 역대 통계 기반 번호 생성';
     captureAndShare('로또 심층 분석기', text);
   });
