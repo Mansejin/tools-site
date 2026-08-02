@@ -17,13 +17,16 @@ import {
   XCircle,
   ArrowLeft,
   RotateCcw,
+  Grid3x3,
 } from 'lucide-react';
+import GtoLab from './gto/GtoLab.jsx';
 
 /* ─── Tabs config ─── */
 const TABS = [
   { id: 'turbo', label: '7분 터보', short: '터보', icon: Zap },
   { id: 'mtt', label: '15분 MTT', short: 'MTT', icon: Hourglass },
   { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
+  { id: 'gto', label: 'GTO 랩', short: 'GTO', icon: Grid3x3 },
   { id: 'quiz', label: '모의고사', short: '퀴즈', icon: GraduationCap },
 ];
 
@@ -753,6 +756,7 @@ export default function App() {
             {tab === 'turbo' && <TurboTab />}
             {tab === 'mtt' && <MttTab />}
             {tab === 'hu' && <HeadsUpTab />}
+            {tab === 'gto' && <GtoLab />}
             {tab === 'quiz' && <QuizTab />}
           </motion.div>
         </AnimatePresence>
