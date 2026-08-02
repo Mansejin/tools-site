@@ -23,6 +23,7 @@ import GtoLab from './gto/GtoLab.jsx';
 import PracticeTools from './tools/PracticeTools.jsx';
 import QuizHub from './tools/QuizHub.jsx';
 import HomeHub from './HomeHub.jsx';
+import BottomNav, { isGuideTab } from './BottomNav.jsx';
 import { readRoute, writeRoute } from './lib/route.js';
 
 /* ─── Tabs config ─── */
@@ -85,7 +86,7 @@ function Accordion({ items }) {
             <button
               type="button"
               onClick={() => setOpen(isOpen ? -1 : i)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-white/3"
+              className="flex w-full min-h-12 items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-white/5"
               aria-expanded={isOpen}
             >
               <span className="flex items-center gap-2.5 font-medium text-ink">
@@ -487,6 +488,7 @@ export default function App() {
   const [hand, setHand] = useState(initial.hand);
   const [pos, setPos] = useState(initial.pos);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const syncRoute = useCallback((next) => {
     const state = {
@@ -500,6 +502,7 @@ export default function App() {
     if (next.hand !== undefined) setHand(next.hand);
     if (next.pos !== undefined) setPos(next.pos);
     writeRoute(state);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, [tab, tool, hand, pos]);
 
   useEffect(() => {
@@ -509,6 +512,7 @@ export default function App() {
       setTool(r.tool);
       setHand(r.hand);
       setPos(r.pos);
+      setGuideOpen(false);
     }
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -527,17 +531,27 @@ export default function App() {
     syncRoute({ tab: id, tool: id === 'tools' ? tool : undefined });
   }
 
+  const showDesktopHeader = tab === 'home';
+
   return (
     <div className="felt-noise min-h-dvh">
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-4 sm:px-6 sm:pt-8">
-        <a
-          href="/toys/"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-gold"
-        >
-          <ArrowLeft size={14} /> 장난감
-        </a>
+      <div className="mx-auto max-w-3xl px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-16 sm:pt-8 md:pb-16">
+        <div className="mb-3 flex items-center justify-between gap-2 sm:mb-6">
+          <a
+            href="/toys/"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-1 text-sm text-muted transition hover:text-gold"
+          >
+            <ArrowLeft size={14} /> 장난감
+          </a>
+          {!showDesktopHeader && (
+            <p className="truncate text-sm font-medium text-gold sm:hidden">
+              {TABS.find((t) => t.id === tab)?.label || '가이드'}
+            </p>
+          )}
+          <span className="w-14 sm:hidden" aria-hidden />
+        </div>
 
-        <header className="mb-8 text-center">
+        <header className={`text-center ${showDesktopHeader ? 'mb-6 sm:mb-8' : 'mb-4 hidden sm:mb-8 sm:block'}`}>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -549,14 +563,15 @@ export default function App() {
             <h1 className="font-display text-2xl font-bold tracking-wide sm:text-4xl">
               <span className="gold-text">홀덤펍 토너먼트 가이드</span>
             </h1>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted sm:mt-3 sm:text-base">
               터보·MTT·헤즈업 정리 · 차트 · 15bb 연습
             </p>
           </motion.div>
         </header>
 
+        {/* desktop / tablet top tabs */}
         <nav
-          className="sticky top-0 z-40 -mx-4 mb-6 border-b border-gold/15 bg-felt/90 px-4 backdrop-blur-md sm:-mx-6 sm:px-6"
+          className="sticky top-0 z-40 -mx-3 mb-6 hidden border-b border-gold/15 bg-felt/90 px-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:block"
           aria-label="전략 섹션"
         >
           <div className="flex gap-1 overflow-x-auto py-2 scrollbar-thin">
@@ -567,7 +582,7 @@ export default function App() {
                   key={id}
                   type="button"
                   onClick={() => goTab(id)}
-                  className={`relative flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium transition sm:px-4 ${
+                  className={`relative flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium transition sm:px-4 ${
                     active ? 'text-gold' : 'text-muted hover:text-ink'
                   }`}
                 >
@@ -585,6 +600,29 @@ export default function App() {
             })}
           </div>
         </nav>
+
+        {/* mobile: compact chip row for guide context only */}
+        {isGuideTab(tab) && (
+          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin md:hidden">
+            {[
+              { id: 'turbo', label: '터보' },
+              { id: 'mtt', label: 'MTT' },
+              { id: 'hu', label: 'HU' },
+              { id: 'gto', label: '차트' },
+            ].map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => goTab(c.id)}
+                className={`min-h-10 shrink-0 rounded-full px-3.5 text-sm font-medium ${
+                  tab === c.id ? 'bg-gold text-felt' : 'border border-white/12 text-muted'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -622,7 +660,7 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
 
-        <footer className="mt-12 border-t border-white/8 pt-6 text-center text-xs text-muted">
+        <footer className="mt-10 hidden border-t border-white/8 pt-6 text-center text-xs text-muted md:block">
           <p>※ 학습용 정리입니다. 도박을 권하지 않습니다.</p>
           <p className="mt-1">
             <a href="/toys/" className="hover:text-gold">
@@ -635,6 +673,13 @@ export default function App() {
           </p>
         </footer>
       </div>
+
+      <BottomNav
+        tab={tab}
+        onTab={goTab}
+        guideOpen={guideOpen}
+        setGuideOpen={setGuideOpen}
+      />
     </div>
   );
 }

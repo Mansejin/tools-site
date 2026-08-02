@@ -23,6 +23,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -36,6 +38,9 @@ body {
     radial-gradient(ellipse 40% 35% at 0% 80%, rgba(139, 30, 45, 0.12), transparent 45%),
     linear-gradient(180deg, #070b09 0%, #0a0f0c 40%, #0d1410 100%);
   background-attachment: fixed;
+  /* avoid rubber-band revealing white on iOS */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {
@@ -47,7 +52,6 @@ body {
   color: #fff;
 }
 
-/* felt texture noise overlay */
 .felt-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
@@ -59,6 +63,10 @@ body {
   color: transparent;
 }
 
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a32 transparent;
+}
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -66,4 +74,34 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: #2a3a32;
   border-radius: 999px;
+}
+
+/* iOS: prevent zoom on focus — keep inputs ≥16px */
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input,
+  select,
+  textarea,
+  button {
+    font-size: inherit;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* hand grid: readable on narrow phones */
+.hand-grid-cell {
+  font-size: clamp(8px, 2.4vw, 11px);
 }

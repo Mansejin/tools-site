@@ -21,29 +21,43 @@ const ACTION_STYLE = {
 };
 
 function HandGrid({ getAction, title }) {
+  const [picked, setPicked] = useState(null);
+
   return (
     <div>
       {title && <p className="mb-2 text-xs font-medium tracking-wide text-gold">{title}</p>}
       <div
-        className="grid gap-px rounded-lg border border-white/10 bg-black/40 p-1"
+        className="grid gap-px rounded-lg border border-white/10 bg-black/40 p-0.5 sm:p-1"
         style={{ gridTemplateColumns: 'repeat(13, minmax(0, 1fr))' }}
       >
         {GRID_RANKS.map((_, row) =>
           GRID_RANKS.map((__, col) => {
             const hand = handFromGrid(row, col);
             const action = getAction(hand);
+            const sel = picked === hand;
             return (
-              <div
+              <button
                 key={hand}
+                type="button"
                 title={`${hand} · ${action}`}
-                className={`flex aspect-square items-center justify-center rounded-[2px] text-[7px] font-semibold leading-none sm:text-[10px] ${ACTION_STYLE[action] || ACTION_STYLE.fold}`}
+                onClick={() => setPicked(hand)}
+                className={`hand-grid-cell flex aspect-square items-center justify-center rounded-[2px] font-semibold leading-none ${ACTION_STYLE[action] || ACTION_STYLE.fold} ${
+                  sel ? 'ring-2 ring-gold ring-offset-1 ring-offset-felt' : ''
+                }`}
               >
                 {hand}
-              </div>
+              </button>
             );
           }),
         )}
       </div>
+      {picked && (
+        <p className="mt-2 rounded-lg bg-felt px-3 py-2 text-center text-sm">
+          <span className="font-semibold text-ink">{picked}</span>
+          <span className="mx-2 text-muted">·</span>
+          <span className="text-gold uppercase">{getAction(picked)}</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
             type="button"
             whileTap={{ scale: 0.98 }}
             onClick={() => onGo({ tab: q.tab, tool: q.tool })}
-            className="flex items-center gap-4 rounded-2xl border border-gold/15 bg-felt-3/90 px-4 py-4 text-left transition hover:border-gold/35"
+            className="flex min-h-[4.5rem] items-center gap-4 rounded-2xl border border-gold/15 bg-felt-3/90 px-4 py-4 text-left transition active:border-gold/40 active:bg-felt-2"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/15 text-gold">
               <q.icon size={22} />
@@ -66,7 +66,7 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
         <button
           type="button"
           onClick={copyHome}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 py-3 text-sm text-muted"
+          className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm text-muted active:bg-white/5"
         >
           <Share2 size={15} />
           {copied ? '복사됨' : '가이드 링크 복사'}
@@ -75,7 +75,7 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
           <button
             type="button"
             onClick={onInstall}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-casino-green py-3 text-sm font-semibold text-white"
+            className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-casino-green text-sm font-semibold text-white active:brightness-95"
           >
             <Download size={15} />
             홈 화면에 추가

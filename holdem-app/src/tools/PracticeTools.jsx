@@ -28,14 +28,16 @@ function Card({ children, className = '' }) {
 
 function SubTabs({ tabs, value, onChange }) {
   return (
-    <div className="mb-5 flex gap-1 overflow-x-auto rounded-xl border border-white/8 bg-felt p-1 scrollbar-thin">
+    <div className="-mx-1 mb-4 flex gap-1 overflow-x-auto px-1 pb-1 scrollbar-thin">
       {tabs.map((t) => (
         <button
           key={t.id}
           type="button"
           onClick={() => onChange(t.id)}
-          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-            value === t.id ? 'bg-gold/90 text-felt' : 'text-muted hover:text-ink'
+          className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition ${
+            value === t.id
+              ? 'bg-gold text-felt'
+              : 'border border-white/12 bg-felt text-muted active:bg-white/5'
           }`}
         >
           <t.icon size={14} />
@@ -56,7 +58,7 @@ function Field({ label, children }) {
 }
 
 const inputCls =
-  'w-full rounded-xl border border-white/10 bg-felt px-3 py-2.5 text-ink outline-none focus:border-gold/40';
+  'w-full min-h-12 rounded-xl border border-white/10 bg-felt px-3 py-3 text-ink outline-none focus:border-gold/40';
 
 /* ─── Blind timer ─── */
 function BlindTimer() {
@@ -113,7 +115,7 @@ function BlindTimer() {
             key={s.id}
             type="button"
             onClick={() => setStructure(s.id)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            className={`min-h-11 rounded-lg px-4 text-sm font-medium ${
               structure === s.id ? 'bg-casino-green text-white' : 'border border-white/10 text-muted'
             }`}
           >
@@ -162,9 +164,9 @@ function BlindTimer() {
         </Field>
       </div>
 
-      <div className="rounded-2xl border border-gold/20 bg-felt p-6 text-center">
+      <div className="rounded-2xl border border-gold/20 bg-felt p-5 text-center sm:p-6">
         <p className="text-xs tracking-widest text-gold uppercase">Level {level}</p>
-        <p className="font-display mt-2 text-5xl font-bold text-ink tabular-nums sm:text-6xl">
+        <p className="font-display mt-2 text-6xl font-bold tracking-tight text-ink tabular-nums sm:text-7xl">
           {mm}:{ss}
         </p>
         <p className="mt-3 text-sm text-muted">
@@ -173,7 +175,7 @@ function BlindTimer() {
           스택 <span className="font-semibold text-casino-green-bright">{stackBb.toFixed(1)}bb</span>
         </p>
         {stackBb <= 15 && (
-          <p className="mt-2 text-sm font-medium text-red-300">숏스택 구간 — 푸시/폴드 모드</p>
+          <p className="mt-2 text-sm font-medium text-red-300">숏스택 — 푸시/폴드</p>
         )}
       </div>
 
@@ -181,9 +183,9 @@ function BlindTimer() {
         <button
           type="button"
           onClick={() => setRunning((r) => !r)}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gold px-4 py-3 font-semibold text-felt"
+          className="inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-gold px-4 text-base font-semibold text-felt active:brightness-95"
         >
-          {running ? <Pause size={16} /> : <Play size={16} />}
+          {running ? <Pause size={20} /> : <Play size={20} />}
           {running ? '일시정지' : '시작'}
         </button>
         <button
@@ -192,9 +194,10 @@ function BlindTimer() {
             setRunning(false);
             setLeft(levelMin * 60);
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-muted"
+          className="inline-flex min-h-14 min-w-14 items-center justify-center rounded-2xl border border-white/15 text-muted"
+          aria-label="리셋"
         >
-          <RotateCcw size={16} />
+          <RotateCcw size={20} />
         </button>
       </div>
     </div>
@@ -347,7 +350,7 @@ function HandLookup({ initialHand, initialPos }) {
             window.prompt('링크 복사', link);
           }
         }}
-        className="w-full rounded-xl border border-gold/30 py-2.5 text-sm font-medium text-gold"
+        className="w-full min-h-12 rounded-xl border border-gold/30 text-sm font-medium text-gold active:bg-gold/10"
       >
         {copied ? '복사됨' : '이 조회 링크 복사'}
       </button>
@@ -640,7 +643,7 @@ export default function PracticeTools({
   }
 
   return (
-    <Card>
+    <div className="rounded-2xl border border-gold/15 bg-felt-3/80 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:p-6">
       <SubTabs tabs={TOOL_TABS} value={tab} onChange={changeTool} />
       <motion.div
         key={tab}
@@ -657,6 +660,6 @@ export default function PracticeTools({
         {tab === 'sheet' && <CheatSheet />}
         {tab === 'glossary' && <Glossary />}
       </motion.div>
-    </Card>
+    </div>
   );
 }

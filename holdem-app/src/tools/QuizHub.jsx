@@ -76,15 +76,15 @@ function ModeTabs({ mode, setMode, wrongCount }) {
     <div className="mb-4 flex gap-1 rounded-xl border border-white/8 bg-felt p-1">
       {[
         { id: 'exam', label: '5문제', icon: GraduationCap },
-        { id: 'drill', label: '무한 연습', icon: Infinity },
-        { id: 'review', label: `오답 (${wrongCount})`, icon: BookMarked },
+        { id: 'drill', label: '무한', icon: Infinity },
+        { id: 'review', label: `오답 ${wrongCount}`, icon: BookMarked },
       ].map((m) => (
         <button
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition sm:text-sm ${
-            mode === m.id ? 'bg-gold/90 text-felt' : 'text-muted hover:text-ink'
+          className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-lg px-1.5 text-xs font-medium transition sm:gap-1.5 sm:text-sm ${
+            mode === m.id ? 'bg-gold/90 text-felt' : 'text-muted active:text-ink'
           }`}
         >
           <m.icon size={14} />
@@ -102,19 +102,19 @@ function OxButtons({ disabled, onYes, onNo, yesLabel = 'O · 올인/콜', noLabe
         type="button"
         disabled={disabled}
         onClick={onYes}
-        className="flex flex-col items-center gap-2 rounded-2xl border-2 border-casino-green/50 bg-casino-green/15 px-4 py-5 font-bold text-casino-green-bright transition hover:bg-casino-green/25 disabled:opacity-60"
+        className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-casino-green/50 bg-casino-green/15 px-3 py-6 text-base font-bold text-casino-green-bright transition active:bg-casino-green/30 disabled:opacity-60 sm:min-h-0 sm:py-5"
       >
-        <CheckCircle2 size={28} />
-        <span>{yesLabel}</span>
+        <CheckCircle2 size={32} />
+        <span className="text-center leading-tight">{yesLabel}</span>
       </button>
       <button
         type="button"
         disabled={disabled}
         onClick={onNo}
-        className="flex flex-col items-center gap-2 rounded-2xl border-2 border-deep-red/50 bg-deep-red/15 px-4 py-5 font-bold text-red-300 transition hover:bg-deep-red/25 disabled:opacity-60"
+        className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-deep-red/50 bg-deep-red/15 px-3 py-6 text-base font-bold text-red-300 transition active:bg-deep-red/30 disabled:opacity-60 sm:min-h-0 sm:py-5"
       >
-        <XCircle size={28} />
-        <span>{noLabel}</span>
+        <XCircle size={32} />
+        <span className="text-center leading-tight">{noLabel}</span>
       </button>
     </div>
   );
@@ -126,14 +126,14 @@ function FeedbackModal({ correct, answerLabel, explanation, onNext, nextLabel })
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
     >
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
-        className="w-full max-w-md rounded-2xl border border-gold/25 bg-felt-3 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-gold/25 bg-felt-3 p-5 shadow-2xl sm:p-6"
       >
         <div
           className={`mb-3 flex items-center gap-2 text-lg font-bold ${
@@ -148,7 +148,7 @@ function FeedbackModal({ correct, answerLabel, explanation, onNext, nextLabel })
         <button
           type="button"
           onClick={onNext}
-          className="w-full rounded-xl bg-gold px-4 py-3 font-semibold text-felt transition hover:bg-gold-soft"
+          className="w-full min-h-12 rounded-xl bg-gold px-4 py-3.5 text-base font-semibold text-felt transition active:brightness-95"
         >
           {nextLabel}
         </button>
