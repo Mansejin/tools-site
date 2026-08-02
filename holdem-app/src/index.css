@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-felt: #0a0f0c;
+  --color-felt-2: #111814;
+  --color-felt-3: #1a2420;
+  --color-felt-4: #24302b;
+  --color-casino-green: #1f8a4c;
+  --color-casino-green-bright: #2ecc71;
+  --color-gold: #c9a227;
+  --color-gold-soft: #e8c547;
+  --color-deep-red: #8b1e2d;
+  --color-deep-red-bright: #c0392b;
+  --color-ink: #e8ebe6;
+  --color-muted: #9aa89f;
+  --font-display: 'Cinzel', 'Pretendard', serif;
+  --font-sans: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(31, 138, 76, 0.18), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(201, 162, 39, 0.08), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 0% 80%, rgba(139, 30, 45, 0.12), transparent 45%),
+    linear-gradient(180deg, #070b09 0%, #0a0f0c 40%, #0d1410 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(201, 162, 39, 0.35);
+  color: #fff;
+}
+
+/* felt texture noise overlay */
+.felt-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #e8c547 0%, #c9a227 45%, #f0d978 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #2a3a32;
+  border-radius: 999px;
+}

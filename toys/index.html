@@ -23,7 +23,7 @@
       var p = new URLSearchParams(q);
       if (p.get('e')) { location.replace('excuse/' + q); return; }
       var app = p.get('app');
-      if (app === 'excuse' || app === 'hair' || app === 'poker' || app === 'coupon' || app === 'chess' || app === 'lotto') {
+      if (app === 'excuse' || app === 'hair' || app === 'poker' || app === 'coupon' || app === 'chess' || app === 'lotto' || app === 'holdem') {
         location.replace(app + '/' + q);
       }
     })();
@@ -64,6 +64,11 @@
         <span class="toys-card-emoji">🃏</span>
         <span class="toys-card-title">콜 할까 말까?</span>
         <span class="toys-card-desc">홀덤 톡방 의사결정 도우미 (책임 안 짐)</span>
+      </a>
+      <a class="toys-card" href="holdem/">
+        <span class="toys-card-emoji">♠</span>
+        <span class="toys-card-title">홀덤펍 토너먼트 바이블</span>
+        <span class="toys-card-desc">7분 터보·MTT·헤즈업 전략 + 15bb 모의고사</span>
       </a>
       <a class="toys-card" href="coupon/">
         <span class="toys-card-emoji">💕</span>
