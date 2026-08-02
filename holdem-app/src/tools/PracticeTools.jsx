@@ -10,11 +10,14 @@ import {
   Play,
   Pause,
   RotateCcw,
+  Settings2,
 } from 'lucide-react';
 import { isShove, isCall } from '../gto/pushfoldNash.js';
 import { RFI_CHARTS, cellAction } from '../gto/rfiCharts.js';
 import { normalizeHand, shouldPush, shouldCallShove } from './pushFoldPub.js';
 import { shareUrl } from '../lib/route.js';
+import { useGameSettings } from '../settings/GameSettingsContext.jsx';
+import SettingsPanel from '../settings/SettingsPanel.jsx';
 
 function Card({ children, className = '' }) {
   return (
@@ -62,28 +65,22 @@ const inputCls =
 
 /* ─── Blind timer ─── */
 function BlindTimer() {
-  const [structure, setStructure] = useState('turbo'); // turbo 7m | mtt 15m
-  const [levelMin, setLevelMin] = useState(7);
-  const [startStack, setStartStack] = useState(30000);
-  const [startBB, setStartBB] = useState(200);
+  const { settings, analysis, turbo } = useGameSettings();
+  const [levelMin, setLevelMin] = useState(settings.levelMin);
+  const [startStack, setStartStack] = useState(settings.startChips);
+  const [startBB, setStartBB] = useState(settings.startBB);
   const [level, setLevel] = useState(1);
-  const [left, setLeft] = useState(7 * 60);
+  const [left, setLeft] = useState(settings.levelMin * 60);
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    const m = structure === 'turbo' ? 7 : 15;
-    setLevelMin(m);
-    setLeft(m * 60);
+    setLevelMin(settings.levelMin);
+    setStartStack(settings.startChips);
+    setStartBB(settings.startBB);
+    setLeft(settings.levelMin * 60);
     setLevel(1);
     setRunning(false);
-    if (structure === 'turbo') {
-      setStartStack(30000);
-      setStartBB(200);
-    } else {
-      setStartStack(40000);
-      setStartBB(200);
-    }
-  }, [structure]);
+  }, [settings.levelMin, settings.startChips, settings.startBB]);
 
   useEffect(() => {
     if (!running) return undefined;
@@ -106,23 +103,9 @@ function BlindTimer() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'turbo', label: '7분 터보' },
-          { id: 'mtt', label: '15분 MTT' },
-        ].map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setStructure(s.id)}
-            className={`min-h-11 rounded-lg px-4 text-sm font-medium ${
-              structure === s.id ? 'bg-casino-green text-white' : 'border border-white/10 text-muted'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <p className="text-xs text-muted">
+        설정값 기준 · {turbo.summary}
+      </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Field label="시작 스택">
@@ -174,8 +157,10 @@ function BlindTimer() {
           {' · '}
           스택 <span className="font-semibold text-casino-green-bright">{stackBb.toFixed(1)}bb</span>
         </p>
-        {stackBb <= 15 && (
-          <p className="mt-2 text-sm font-medium text-red-300">숏스택 — 푸시/폴드</p>
+        {stackBb <= analysis.pushFoldBb && (
+          <p className="mt-2 text-sm font-medium text-red-300">
+            숏스택 — {analysis.pushFoldBb}bb 이하 푸시/폴드
+          </p>
         )}
       </div>
 
@@ -206,9 +191,10 @@ function BlindTimer() {
 
 /* ─── Hand lookup ─── */
 function HandLookup({ initialHand, initialPos }) {
+  const { analysis } = useGameSettings();
   const [hand, setHand] = useState(initialHand || 'K9o');
   const [pos, setPos] = useState(initialPos || 'BTN');
-  const [bb, setBb] = useState(15);
+  const [bb, setBb] = useState(analysis.pushFoldBb);
   const [mode, setMode] = useState('pub'); // pub | nash | rfi
   const [copied, setCopied] = useState(false);
 
@@ -218,6 +204,9 @@ function HandLookup({ initialHand, initialPos }) {
   useEffect(() => {
     if (initialPos) setPos(initialPos);
   }, [initialPos]);
+  useEffect(() => {
+    setBb(analysis.pushFoldBb);
+  }, [analysis.pushFoldBb]);
 
   const norm = normalizeHand(hand);
   const result = useMemo(() => {
@@ -228,7 +217,11 @@ function HandLookup({ initialHand, initialPos }) {
       return {
         ok: true,
         lines: [
-          { label: '15bb 오픈 잼 (펍)', yes: push, detail: push ? 'PUSH' : 'FOLD' },
+          {
+            label: `${analysis.pushFoldBb}bb 오픈 잼 (펍)`,
+            yes: push,
+            detail: push ? 'PUSH' : 'FOLD',
+          },
           { label: '남의 올인 콜 (타이트)', yes: call, detail: call ? 'CALL' : 'FOLD' },
         ],
       };
@@ -256,13 +249,13 @@ function HandLookup({ initialHand, initialPos }) {
         },
       ],
     };
-  }, [norm, pos, bb, mode]);
+  }, [norm, pos, bb, mode, analysis.pushFoldBb]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {[
-          { id: 'pub', label: '펍 15bb' },
+          { id: 'pub', label: `펍 ${analysis.pushFoldBb}bb` },
           { id: 'nash', label: 'HU Nash' },
           { id: 'rfi', label: 'RFI 차트' },
         ].map((m) => (
@@ -480,11 +473,18 @@ function BubbleTree() {
 
 /* ─── ROI ─── */
 function RoiCalc() {
-  const [buyin, setBuyin] = useState(30000);
-  const [rebuy, setRebuy] = useState(40000);
-  const [rebuyN, setRebuyN] = useState(1);
+  const { settings, analysis, turbo } = useGameSettings();
+  const [buyin, setBuyin] = useState(settings.buyin);
+  const [rebuy, setRebuy] = useState(settings.rebuy);
+  const [rebuyN, setRebuyN] = useState(settings.maxRebuys);
   const [itm, setItm] = useState(25);
   const [avgCash, setAvgCash] = useState(120000);
+
+  useEffect(() => {
+    setBuyin(settings.buyin);
+    setRebuy(settings.rebuy);
+    setRebuyN(settings.maxRebuys);
+  }, [settings.buyin, settings.rebuy, settings.maxRebuys]);
 
   const cost = buyin + rebuy * rebuyN;
   const ev = (itm / 100) * avgCash - cost;
@@ -492,7 +492,11 @@ function RoiCalc() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted">바이인·리바인 대비 기대값. 리바를 몇 번 할지 숫자로 비교해 본다.</p>
+      <p className="text-sm text-muted">설정 바이인·리바 기준. {turbo.rebuy}</p>
+      <p className="text-xs text-gold">
+        최대 비용(설정) {analysis.totalBuyCost.toLocaleString()}원 · 칩 상한{' '}
+        {analysis.maxChips.toLocaleString()}
+      </p>
       <div className="grid grid-cols-2 gap-3">
         <Field label="바이인(원)">
           <input type="number" className={inputCls} value={buyin} onChange={(e) => setBuyin(+e.target.value || 0)} />
@@ -543,18 +547,23 @@ function RoiCalc() {
 
 /* ─── Cheat sheet ─── */
 function CheatSheet() {
+  const { turbo, analysis, summary } = useGameSettings();
   return (
     <div className="space-y-4 text-sm leading-relaxed text-muted">
       <div className="rounded-xl border border-gold/25 bg-gold/10 p-4">
-        <h3 className="mb-2 font-display text-base text-gold">터보 한 줄</h3>
-        <p className="text-ink">리바 1번까지 · 초반 타이트 · 콜 많은 상대엔 블러프 자제 · 15bb면 푸시/폴드</p>
+        <h3 className="mb-2 font-display text-base text-gold">오늘 한 줄</h3>
+        <p className="text-xs text-muted">{summary}</p>
+        <p className="mt-2 text-ink">{turbo.summary}</p>
+        <p className="mt-1 text-ink">
+          리바 최대 {analysis.maxRebuys}회 · {turbo.earlyOpen} · {analysis.pushFoldBb}bb면 푸시/폴드
+        </p>
       </div>
       <div>
-        <h3 className="mb-2 font-semibold text-ink">UTG 오픈 (앤티 없음)</h3>
+        <h3 className="mb-2 font-semibold text-ink">UTG 오픈</h3>
         <p>88+, AQo+, A5s만 · AJo/KQo 폴드 · 3~4bb</p>
       </div>
       <div>
-        <h3 className="mb-2 font-semibold text-ink">15bb 잼 (앞 폴드)</h3>
+        <h3 className="mb-2 font-semibold text-ink">{analysis.pushFoldBb}bb 잼 (앞 폴드)</h3>
         <ul className="space-y-1">
           <li>UTG 10%: 77+, ATs+, AQo+, KQs</li>
           <li>MP/CO 20%: 55+, 수티드 A, A9o+, 브로드웨이 s</li>
@@ -564,7 +573,7 @@ function CheatSheet() {
       </div>
       <div>
         <h3 className="mb-2 font-semibold text-ink">콜 많은 상대</h3>
-        <p>3벳 4~5x (프리미엄만) · C-bet 블러프 안 함 · TPTK까지 밸류 · 넛은 슬로우</p>
+        <p>{turbo.iso}</p>
       </div>
       <div>
         <h3 className="mb-2 font-semibold text-ink">버블 / ITM</h3>
@@ -617,6 +626,7 @@ function Glossary() {
 }
 
 const TOOL_TABS = [
+  { id: 'settings', label: '설정', icon: Settings2 },
   { id: 'timer', label: '타이머', icon: Timer },
   { id: 'lookup', label: '핸드조회', icon: Search },
   { id: 'bubble', label: '버블', icon: GitBranch },
@@ -651,6 +661,7 @@ export default function PracticeTools({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.18 }}
       >
+        {tab === 'settings' && <SettingsPanel />}
         {tab === 'timer' && <BlindTimer />}
         {tab === 'lookup' && (
           <HandLookup initialHand={initialHand} initialPos={initialPos} />

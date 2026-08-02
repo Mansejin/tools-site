@@ -354,7 +354,7 @@ function DrillMode() {
         >
           <Card>
             <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-felt px-3 py-1.5 text-xs font-medium text-gold">
-              {q.kind === 'push' ? '오픈 잼' : '올인 방어 콜'} · 15bb
+              {q.kind === 'push' ? '오픈 잼' : '올인 방어 콜'} · 숏스택
             </div>
             <p className="mb-2 text-sm text-muted">
               {q.kind === 'push'

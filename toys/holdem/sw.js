@@ -1,5 +1,5 @@
 /* ponytail: runtime cache for hashed assets; bump CACHE when shell changes */
-const CACHE = 'holdem-guide-v1';
+const CACHE = 'holdem-guide-v2';
 const PRECACHE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {

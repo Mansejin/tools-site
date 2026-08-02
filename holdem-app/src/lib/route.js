@@ -1,7 +1,7 @@
 const STREAK_KEY = 'holdem-bible-streak';
 
 const TAB_IDS = new Set(['home', 'turbo', 'mtt', 'hu', 'gto', 'tools', 'quiz']);
-const TOOL_IDS = new Set(['timer', 'lookup', 'bubble', 'roi', 'sheet', 'glossary']);
+const TOOL_IDS = new Set(['timer', 'lookup', 'bubble', 'roi', 'sheet', 'glossary', 'settings']);
 
 export function readRoute() {
   const p = new URLSearchParams(window.location.search);

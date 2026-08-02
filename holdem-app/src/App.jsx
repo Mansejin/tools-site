@@ -25,6 +25,8 @@ import QuizHub from './tools/QuizHub.jsx';
 import HomeHub from './HomeHub.jsx';
 import BottomNav, { isGuideTab } from './BottomNav.jsx';
 import { readRoute, writeRoute } from './lib/route.js';
+import { useGameSettings } from './settings/GameSettingsContext.jsx';
+import SettingsPanel from './settings/SettingsPanel.jsx';
 
 /* ─── Tabs config ─── */
 const TABS = [
@@ -184,57 +186,62 @@ function Callout({ tone = 'gold', children }) {
 }
 
 /* ─── Tab panels ─── */
-function TurboTab() {
+function TurboTab({ onOpenSettings }) {
+  const { turbo, analysis, summary } = useGameSettings();
   return (
     <div className="space-y-5">
+      <SettingsPanel compact onOpen={onOpenSettings} />
       <Card>
         <SectionTitle icon={AlertTriangle} accent="gold">
           구조부터 보자
         </SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
+          <p className="text-xs text-gold">{summary}</p>
           <p>
-            시작은 <span className="font-semibold text-ink">150bb</span>지만{' '}
-            <span className="font-semibold text-gold">7분 블라인드</span>라{' '}
-            <span className="font-semibold text-ink">20분이면 이미 15bb</span> 숏스택 게임이다.
+            <span className="font-semibold text-ink">{turbo.summary}</span>
           </p>
-          <Callout>
-            바이인 + 리바인 한 번(3만+4만칩)까지만 쓰는 편이 ROI가 낫다.
-          </Callout>
+          <Callout>{turbo.rebuy}</Callout>
+          <p className="text-sm">{turbo.seatsNote}</p>
         </div>
       </Card>
 
       <Card>
         <SectionTitle icon={Spade}>프리플랍: 초반엔 타이트</SectionTitle>
-        <p className="mb-4 text-sm text-muted">앤티 없음 · 9–10웨이</p>
-        <Accordion
-          items={[
-            {
-              title: 'UTG — 아주 타이트',
-              icon: Shield,
-              body: (
-                <BulletList
-                  items={[
-                    '오픈: 88+, AQo+, A5s(블러프는 이것만)',
-                    'AJo, KQo는 폴드',
-                    '멀티팟 피하려면 3~4bb로 크게 오픈',
-                  ]}
-                />
-              ),
-            },
-            {
-              title: 'BTN — 스틸은 골라서',
-              icon: Target,
-              body: (
-                <BulletList
-                  items={[
-                    '22+, A2s+, A8o+, 브로드웨이, 65s+',
-                    '앤티가 없으면 너무 넓게 스틸하지 말 것',
-                  ]}
-                />
-              ),
-            },
-          ]}
-        />
+        <p className="mb-4 text-sm text-muted">
+          {analysis.ante ? '앤티 있음' : '앤티 없음'} · {analysis.seats}웨이
+        </p>
+        <Callout tone="green">{turbo.earlyOpen}</Callout>
+        <div className="mt-3">
+          <Accordion
+            items={[
+              {
+                title: 'UTG — 아주 타이트',
+                icon: Shield,
+                body: (
+                  <BulletList
+                    items={[
+                      '오픈: 88+, AQo+, A5s(블러프는 이것만)',
+                      'AJo, KQo는 폴드',
+                      '멀티팟 피하려면 3~4bb로 크게 오픈',
+                    ]}
+                  />
+                ),
+              },
+              {
+                title: 'BTN — 스틸은 골라서',
+                icon: Target,
+                body: (
+                  <BulletList
+                    items={[
+                      '22+, A2s+, A8o+, 브로드웨이, 65s+',
+                      turbo.anteNote,
+                    ]}
+                  />
+                ),
+              },
+            ]}
+          />
+        </div>
       </Card>
 
       <Card>
@@ -242,60 +249,64 @@ function TurboTab() {
           포스트플랍: 리바인러(콜 많은 상대)
         </SectionTitle>
         <p className="mb-4 text-sm text-muted">플랍~리버</p>
-        <Accordion
-          items={[
-            {
-              title: '프리플랍 아이솔레이션',
-              icon: Users,
-              body: (
-                <BulletList
-                  items={[
-                    '콜 스테이션 상대로는 3벳을 4~5배로 키워 헤즈업 만들기',
-                    '레인지: TT+, AQo+, KQs 등 프리미엄만',
-                    'A5s, 87s 같은 3벳 블러프는 안 씀',
-                    '미들 페어(22~99)는 콜만 하고 셋 노림',
-                  ]}
-                />
-              ),
-            },
-            {
-              title: '포스트플랍 블러프는 접기',
-              icon: XCircle,
-              body: (
-                <p>
-                  폴드를 거의 안 하는 상대에게 <strong className="text-ink">C-bet 블러프는 금지</strong>.
-                  안 맞으면 체크/폴드.
-                </p>
-              ),
-            },
-            {
-              title: '밸류와 슬로우플레이',
-              icon: Crown,
-              body: (
-                <BulletList
-                  items={[
-                    '밸류 기준을 TPTK까지 낮춰 리버까지 밸류벳',
-                    '셋·투페어 이상이면 먼저 벳하지 말 것',
-                    '체크/콜로 리버까지 끌어서 상대 올인을 받기',
-                  ]}
-                />
-              ),
-            },
-          ]}
-        />
+        <Callout tone="red">{turbo.iso}</Callout>
+        <div className="mt-3">
+          <Accordion
+            items={[
+              {
+                title: '프리플랍 아이솔레이션',
+                icon: Users,
+                body: (
+                  <BulletList
+                    items={[
+                      '콜 스테이션 상대로는 3벳을 4~5배로 키워 헤즈업 만들기',
+                      '레인지: TT+, AQo+, KQs 등 프리미엄만',
+                      'A5s, 87s 같은 3벳 블러프는 안 씀',
+                      '미들 페어(22~99)는 콜만 하고 셋 노림',
+                    ]}
+                  />
+                ),
+              },
+              {
+                title: '포스트플랍 블러프는 접기',
+                icon: XCircle,
+                body: (
+                  <p>
+                    폴드를 거의 안 하는 상대에게 <strong className="text-ink">C-bet 블러프는 금지</strong>.
+                    안 맞으면 체크/폴드.
+                  </p>
+                ),
+              },
+              {
+                title: '밸류와 슬로우플레이',
+                icon: Crown,
+                body: (
+                  <BulletList
+                    items={[
+                      '밸류 기준을 TPTK까지 낮춰 리버까지 밸류벳',
+                      '셋·투페어 이상이면 먼저 벳하지 말 것',
+                      '체크/콜로 리버까지 끌어서 상대 올인을 받기',
+                    ]}
+                  />
+                ),
+              },
+            ]}
+          />
+        </div>
       </Card>
 
       <Card>
         <SectionTitle icon={Zap} accent="gold">
-          15bb 숏스택 푸시/폴드
+          {analysis.pushFoldBb}bb 숏스택 푸시/폴드
         </SectionTitle>
         <div className="mb-4 space-y-2 text-sm text-muted">
           <p>
-            <strong className="text-ink">원리:</strong> 폴드 에퀴티와 데드머니(앤티) 흡수.
+            <strong className="text-ink">원리:</strong> 폴드 에퀴티와 데드머니 흡수.
           </p>
           <Callout tone="red">
-            남의 올인을 &apos;콜&apos;할 때는 내가 &apos;올인&apos;할 때보다 2~3배 타이트하게 방어.
+            남의 올인을 콜할 때는 내가 올인할 때보다 2~3배 타이트하게.
           </Callout>
+          <Callout tone="green">{turbo.pushNote}</Callout>
         </div>
         <p className="mb-3 text-sm font-medium text-gold">포지션별 올인 레인지 (앞이 모두 폴드)</p>
         <DataTable
@@ -353,23 +364,26 @@ function TurboTab() {
   );
 }
 
-function MttTab() {
+function MttTab({ onOpenSettings }) {
+  const { mtt, analysis, summary } = useGameSettings();
   return (
     <div className="space-y-5">
+      <SettingsPanel compact onOpen={onOpenSettings} />
       <Card>
         <SectionTitle icon={Hourglass} accent="gold">
           게임 구조
         </SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
+          <p className="text-xs text-gold">{summary}</p>
           <BulletList
             items={[
-              '200bb 딥스택 시작',
-              '15분 블라인드',
-              '시작부터 앤티 적용',
-              '리엔트리(4/5/6만 칩)',
+              `시작 ${analysis.startBb}bb (${analysis.startChips.toLocaleString()}칩 / BB ${analysis.startBB})`,
+              `${analysis.levelMin}분 블라인드`,
+              analysis.ante ? '앤티 적용' : '앤티 없음(또는 늦게)',
+              `리엔트리 칩 약 ${analysis.rebuyChips.toLocaleString()}`,
             ]}
           />
-          <Callout tone="green">포스트플랍 실력이 매우 중요한 구조.</Callout>
+          <Callout tone="green">{mtt.summary}</Callout>
         </div>
       </Card>
 
@@ -380,24 +394,12 @@ function MttTab() {
             {
               title: '데드 머니 스틸',
               icon: Target,
-              body: (
-                <p>
-                  레벨 1부터 앤티가 있으므로, <strong className="text-ink">BTN과 CO</strong>에서 넓은
-                  레인지로 블라인드 스틸을 적극 시도.
-                </p>
-              ),
+              body: <p>{mtt.ante}</p>,
             },
             {
-              title: '임플라이드 오즈(Implied Odds) 극대화',
+              title: '임플라이드 오즈',
               icon: Crown,
-              body: (
-                <BulletList
-                  items={[
-                    '딥스택이므로 22~66 로우 파켓과 76s, 87s 같은 수티드 커넥터의 가치가 폭등',
-                    '플랍에 셋·넛 플러시 드로우가 나오면 리바인 상대와 크게 승부',
-                  ]}
-                />
-              ),
+              body: <p>{mtt.implied}</p>,
             },
           ]}
         />
@@ -405,34 +407,29 @@ function MttTab() {
 
       <Card>
         <SectionTitle icon={AlertTriangle} accent="red">
-          레지(Late Reg) 마감과 3bb 룰렛 방어
+          레지 마감과 숏스택 방어
         </SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
-          <p>
-            <strong className="text-ink">10000/20000 블라인드</strong> 전 브레이크 때 레지 마감.
-            이때 6만 칩 리엔트리를 하면 <span className="font-semibold text-gold">3bb 스택</span>.
-          </p>
-          <Callout>
-            레지 직전에 들어와 Any Two로 다이렉트 올인 박는 도박꾼들을 상대로 A 하이나 미들 파켓으로
-            과감히 콜을 받아 데드머니 챙기기.
-          </Callout>
+          <p>{mtt.lateReg}</p>
+          <Callout>{mtt.rebuy}</Callout>
         </div>
       </Card>
     </div>
   );
 }
 
-function HeadsUpTab() {
+function HeadsUpTab({ onOpenSettings }) {
+  const { hu } = useGameSettings();
   return (
     <div className="space-y-5">
+      <SettingsPanel compact onOpen={onOpenSettings} />
       <Card>
         <SectionTitle icon={Swords} accent="gold">
           규칙의 변화
         </SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
-          <p>
-            헤즈업에서는 버튼(BTN)이 스몰 블라인드(SB)가 됨.
-          </p>
+          <p>헤즈업에서는 버튼(BTN)이 스몰 블라인드(SB)가 됨.</p>
+          <p className="text-ink">{hu.summary}</p>
           <DataTable
             columns={['국면', '버튼(SB) 액션 순서', '의미']}
             rows={[
@@ -447,24 +444,13 @@ function HeadsUpTab() {
         <SectionTitle icon={Flame} accent="red">
           가치의 변화
         </SectionTitle>
-        <BulletList
-          items={[
-            '밸류 기준이 많이 낮아진다',
-            '프리플랍에 A·K만 있어도 강한 편',
-            '포스트플랍은 바텀 페어에도 벳할 수 있다',
-            '투페어는 거의 넛으로 봐도 된다',
-          ]}
-        />
+        <BulletList items={[hu.value, '프리플랍에 A·K만 있어도 강한 편', '포스트플랍은 바텀 페어에도 벳할 수 있다', '투페어는 거의 넛으로 봐도 된다']} />
       </Card>
 
       <Card>
         <SectionTitle icon={Target}>버튼(SB) 운영법</SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
-          <p>어차피 15bb 이하 숏스택 싸움.</p>
-          <Callout tone="green">
-            강하게 레이즈하면 상대 올인에 폴드하기 아까우니,{' '}
-            <strong>림프와 미니 레이즈</strong>를 섞어 스택을 지키며 포스트플랍으로 간다.
-          </Callout>
+          <Callout tone="green">{hu.line}</Callout>
         </div>
       </Card>
 
@@ -472,13 +458,12 @@ function HeadsUpTab() {
         <SectionTitle icon={Crown} accent="gold">
           팁 · 칩 나누기(Chop)
         </SectionTitle>
-        <Callout>
-          칩이 조금 더 많으면(예: 6:4) 상금 나누기(Chop)를 제안하는 쪽이 이득인 경우가 많다.
-        </Callout>
+        <Callout>{hu.chop}</Callout>
       </Card>
     </div>
   );
 }
+
 
 /* ─── App ─── */
 export default function App() {
@@ -644,9 +629,15 @@ export default function App() {
                 }}
               />
             )}
-            {tab === 'turbo' && <TurboTab />}
-            {tab === 'mtt' && <MttTab />}
-            {tab === 'hu' && <HeadsUpTab />}
+            {tab === 'turbo' && (
+              <TurboTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+            )}
+            {tab === 'mtt' && (
+              <MttTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+            )}
+            {tab === 'hu' && (
+              <HeadsUpTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+            )}
             {tab === 'gto' && <GtoLab />}
             {tab === 'tools' && (
               <PracticeTools

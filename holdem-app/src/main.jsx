@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import { GameSettingsProvider } from './settings/GameSettingsContext.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <GameSettingsProvider>
+      <App />
+    </GameSettingsProvider>
   </StrictMode>,
 );
 

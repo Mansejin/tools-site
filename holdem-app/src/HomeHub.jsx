@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, Search, ScrollText, Flame, Download, Share2 } from 'lucide-react';
+import { Timer, Search, ScrollText, Flame, Download, Share2, Settings2 } from 'lucide-react';
 import { streakCount, touchStreak, shareUrl } from './lib/route.js';
+import SettingsPanel from './settings/SettingsPanel.jsx';
 
 const QUICK = [
+  { id: 'settings', label: '테이블 설정', desc: '칩·레벨·리바', icon: Settings2, tab: 'tools', tool: 'settings' },
   { id: 'timer', label: '타이머', desc: '블라인드·스택 bb', icon: Timer, tab: 'tools', tool: 'timer' },
-  { id: 'lookup', label: '15bb 조회', desc: '핸드·포지션 바로', icon: Search, tab: 'tools', tool: 'lookup' },
+  { id: 'lookup', label: '숏스택 조회', desc: '핸드·포지션 바로', icon: Search, tab: 'tools', tool: 'lookup' },
   { id: 'sheet', label: '치트시트', desc: '한 장 요약', icon: ScrollText, tab: 'tools', tool: 'sheet' },
 ];
 
@@ -41,6 +43,8 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
           </p>
         )}
       </div>
+
+      <SettingsPanel compact onOpen={() => onGo({ tab: 'tools', tool: 'settings' })} />
 
       <div className="grid gap-3">
         {QUICK.map((q) => (
