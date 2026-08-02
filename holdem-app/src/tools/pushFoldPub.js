@@ -1,5 +1,5 @@
 /**
- * Pub turbo 15bb push ranges (앞이 모두 폴드) — 바이블 하드코딩 기준.
+ * Pub turbo 15bb push ranges (앞이 모두 폴드).
  */
 
 const RANKS = 'AKQJT98765432';

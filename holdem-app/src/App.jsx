@@ -27,9 +27,9 @@ const TABS = [
   { id: 'turbo', label: '7분 터보', short: '터보', icon: Zap },
   { id: 'mtt', label: '15분 MTT', short: 'MTT', icon: Hourglass },
   { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
-  { id: 'gto', label: 'GTO 랩', short: 'GTO', icon: Grid3x3 },
-  { id: 'tools', label: '실전 툴', short: '툴', icon: Wrench },
-  { id: 'quiz', label: '모의고사', short: '퀴즈', icon: GraduationCap },
+  { id: 'gto', label: '차트', short: '차트', icon: Grid3x3 },
+  { id: 'tools', label: '도구', short: '도구', icon: Wrench },
+  { id: 'quiz', label: '퀴즈', short: '퀴즈', icon: GraduationCap },
 ];
 
 const PUSH_FOLD = [
@@ -184,46 +184,46 @@ function TurboTab() {
     <div className="space-y-5">
       <Card>
         <SectionTitle icon={AlertTriangle} accent="gold">
-          게임 구조의 진실
+          구조부터 보자
         </SectionTitle>
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
           <p>
             시작은 <span className="font-semibold text-ink">150bb</span>지만{' '}
             <span className="font-semibold text-gold">7분 블라인드</span>라{' '}
-            <span className="font-semibold text-ink">20분이면 숏스택(15bb)</span> 게임이 됨.
+            <span className="font-semibold text-ink">20분이면 이미 15bb</span> 숏스택 게임이다.
           </p>
           <Callout>
-            최대 2블릿(본바이인 3만 + 1리바인 4만칩)까지만 쓰는 것이 수학적 최고 ROI.
+            바이인 + 리바인 한 번(3만+4만칩)까지만 쓰는 편이 ROI가 낫다.
           </Callout>
         </div>
       </Card>
 
       <Card>
-        <SectionTitle icon={Spade}>프리플랍: 초반 닌자 모드</SectionTitle>
+        <SectionTitle icon={Spade}>프리플랍: 초반엔 타이트</SectionTitle>
         <p className="mb-4 text-sm text-muted">앤티 없음 · 9–10웨이</p>
         <Accordion
           items={[
             {
-              title: 'UTG — 극강 타이트',
+              title: 'UTG — 아주 타이트',
               icon: Shield,
               body: (
                 <BulletList
                   items={[
-                    '오픈: 88+, AQo+, A5s(유일한 블러프)만',
-                    'AJo, KQo 절대 금지',
-                    '다자간 팟 방지를 위해 3~4bb 강하게 오픈',
+                    '오픈: 88+, AQo+, A5s(블러프는 이것만)',
+                    'AJo, KQo는 폴드',
+                    '멀티팟 피하려면 3~4bb로 크게 오픈',
                   ]}
                 />
               ),
             },
             {
-              title: 'BTN — 선택적 스틸',
+              title: 'BTN — 스틸은 골라서',
               icon: Target,
               body: (
                 <BulletList
                   items={[
-                    '22+, A2s+, A8o+, 모든 브로드웨이, 65s+',
-                    '앤티가 없으므로 너무 넓은 스틸은 자제',
+                    '22+, A2s+, A8o+, 브로드웨이, 65s+',
+                    '앤티가 없으면 너무 넓게 스틸하지 말 것',
                   ]}
                 />
               ),
@@ -234,9 +234,9 @@ function TurboTab() {
 
       <Card>
         <SectionTitle icon={Flame} accent="red">
-          포스트플랍: 매니악(리바인러) 착취
+          포스트플랍: 리바인러(콜 많은 상대)
         </SectionTitle>
-        <p className="mb-4 text-sm text-muted">리버까지의 운영</p>
+        <p className="mb-4 text-sm text-muted">플랍~리버</p>
         <Accordion
           items={[
             {
@@ -245,33 +245,33 @@ function TurboTab() {
               body: (
                 <BulletList
                   items={[
-                    '매니악 상대로 3벳을 4배~5배(4x~5x)로 강하게 쳐서 1:1 상황 만들기',
-                    '프리미엄: TT+, AQo+, KQs 등',
-                    'A5s, 87s 같은 3벳 블러프는 0%로 봉인',
-                    '미들 파켓(22~99)은 콜만 해서 셋 마이닝',
+                    '콜 스테이션 상대로는 3벳을 4~5배로 키워 헤즈업 만들기',
+                    '레인지: TT+, AQo+, KQs 등 프리미엄만',
+                    'A5s, 87s 같은 3벳 블러프는 안 씀',
+                    '미들 페어(22~99)는 콜만 하고 셋 노림',
                   ]}
                 />
               ),
             },
             {
-              title: '포스트플랍 블러프 금지',
+              title: '포스트플랍 블러프는 접기',
               icon: XCircle,
               body: (
                 <p>
-                  폴드 버튼이 고장난 매니악 상대로 <strong className="text-ink">C-bet 블러프 금지</strong>.
-                  안 맞으면 첵/폴드로 미련 없이 포기.
+                  폴드를 거의 안 하는 상대에게 <strong className="text-ink">C-bet 블러프는 금지</strong>.
+                  안 맞으면 체크/폴드.
                 </p>
               ),
             },
             {
-              title: '밸류 베팅 및 함정(Trap)',
+              title: '밸류와 슬로우플레이',
               icon: Crown,
               body: (
                 <BulletList
                   items={[
-                    '밸류 기준을 탑페어+탑키커(TPTK)로 낮춰 리버까지 강하게 밸류를 뽑아냄',
-                    '셋(Set)이나 투페어 이상의 넛(Nut)이 맞았다면 절대 먼저 베팅하지 말 것',
-                    '첵/콜로 리버까지 함정을 파서 매니악이 알아서 올인하게 유도',
+                    '밸류 기준을 TPTK까지 낮춰 리버까지 밸류벳',
+                    '셋·투페어 이상이면 먼저 벳하지 말 것',
+                    '체크/콜로 리버까지 끌어서 상대 올인을 받기',
                   ]}
                 />
               ),
@@ -315,7 +315,7 @@ function TurboTab() {
 
       <Card>
         <SectionTitle icon={Crown} accent="gold">
-          버블(Bubble)과 ITM 직후 심리전
+          버블과 ITM 직후
         </SectionTitle>
         <Accordion
           items={[
@@ -325,20 +325,19 @@ function TurboTab() {
               body: (
                 <BulletList
                   items={[
-                    '칩 리더: 미들 스택을 60% 이상 VPIP로 폭군처럼 압박',
-                    '숏스택: 철저하게 프리미엄만 기다리며 생존',
+                    '칩 리더: 미들 스택을 VPIP 60% 이상으로 압박',
+                    '숏스택: 센 핸드만 기다리며 버티기',
                   ]}
                 />
               ),
             },
             {
-              title: 'ITM(상금 확정) 직후',
+              title: 'ITM(상금권) 직후',
               icon: Flame,
               body: (
                 <p>
-                  숏스택들의 &apos;아무 카드(Any Two) 무지성 올인&apos; 파티 시작. 이때는{' '}
-                  <strong className="text-ink">77이나 KTs</strong> 같은 마지널 밸류로도 과감하게 콜을
-                  받아 칩 흡수.
+                  숏스택이 아무 카드로 올인하기 시작한다. 이때는{' '}
+                  <strong className="text-ink">77, KTs</strong> 같은 핸드도 콜해서 칩을 먹는다.
                 </p>
               ),
             },
@@ -390,7 +389,7 @@ function MttTab() {
                 <BulletList
                   items={[
                     '딥스택이므로 22~66 로우 파켓과 76s, 87s 같은 수티드 커넥터의 가치가 폭등',
-                    '플랍에 셋이나 넛 플러시 드로우가 맞으면 다이아몬드 광산 캐듯 리바인 유저들과 칩을 다 넣고 승부',
+                    '플랍에 셋·넛 플러시 드로우가 나오면 리바인 상대와 크게 승부',
                   ]}
                 />
               ),
@@ -445,10 +444,10 @@ function HeadsUpTab() {
         </SectionTitle>
         <BulletList
           items={[
-            '밸류 기준이 우주 끝까지 내려감',
-            '프리플랍에서 A나 K가 한 장이라도 있으면 몬스터 핸드',
-            '포스트플랍에서는 바텀 페어만 맞아도 강하게 벳 가능',
-            '투페어는 넛(Nut) 취급',
+            '밸류 기준이 많이 낮아진다',
+            '프리플랍에 A·K만 있어도 강한 편',
+            '포스트플랍은 바텀 페어에도 벳할 수 있다',
+            '투페어는 거의 넛으로 봐도 된다',
           ]}
         />
       </Card>
@@ -458,19 +457,18 @@ function HeadsUpTab() {
         <div className="space-y-3 text-sm leading-relaxed text-muted sm:text-[15px]">
           <p>어차피 15bb 이하 숏스택 싸움.</p>
           <Callout tone="green">
-            강하게 레이즈하면 상대 올인에 폴드하기 아까우므로,{' '}
-            <strong>림프(Limp)와 미니 레이즈(Min-raise)</strong>를 섞어 스택을 보호하며 포스트플랍
-            운영.
+            강하게 레이즈하면 상대 올인에 폴드하기 아까우니,{' '}
+            <strong>림프와 미니 레이즈</strong>를 섞어 스택을 지키며 포스트플랍으로 간다.
           </Callout>
         </div>
       </Card>
 
       <Card>
         <SectionTitle icon={Crown} accent="gold">
-          팁 · 칩 찹(Chop)
+          팁 · 칩 나누기(Chop)
         </SectionTitle>
         <Callout>
-          내 칩이 조금이라도 많다면(예: 6대4 비율) 칩 찹(Chop) 딜을 제안하는 것이 최상의 수익률.
+          칩이 조금 더 많으면(예: 6:4) 상금 나누기(Chop)를 제안하는 쪽이 이득인 경우가 많다.
         </Callout>
       </Card>
     </div>
@@ -501,10 +499,10 @@ export default function App() {
               Korean Hold&apos;em Pub
             </p>
             <h1 className="font-display text-2xl font-bold tracking-wide sm:text-4xl">
-              <span className="gold-text">토너먼트 필승 전략 바이블</span>
+              <span className="gold-text">홀덤펍 토너먼트 가이드</span>
             </h1>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-              전략 · GTO · 실전 툴 · 15bb 드릴
+              터보·MTT·헤즈업 정리 · 차트 · 15bb 연습
             </p>
           </motion.div>
         </header>
@@ -558,7 +556,7 @@ export default function App() {
         </AnimatePresence>
 
         <footer className="mt-12 border-t border-white/8 pt-6 text-center text-xs text-muted">
-          <p>※ 펍 토너먼트 ROI용 전략 정리 · 도박 권장 아님</p>
+          <p>※ 학습용 정리입니다. 도박을 권하지 않습니다.</p>
           <p className="mt-1">
             <a href="/toys/" className="hover:text-gold">
               장난감

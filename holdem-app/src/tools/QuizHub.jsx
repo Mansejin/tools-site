@@ -32,10 +32,10 @@ const QUIZ = [
   },
   {
     id: 2,
-    situation: '매니악이 3bb 오픈함. 나는 BTN에서 A5s 보유.',
-    question: '3벳 블러프로 압박?',
+    situation: '콜을 많이 하는 상대가 3bb 오픈. 나는 BTN에 A5s.',
+    question: '3벳 블러프로 갈까?',
     answer: false,
-    explanation: '폴드를 모르는 매니악에게 3벳 블러프는 칩 헌납. 과감히 3벳 포기가 착취 전략.',
+    explanation: '폴드를 잘 안 하는 상대에게 3벳 블러프는 칩만 준다. 그냥 폴드가 낫다.',
   },
   {
     id: 3,
@@ -56,7 +56,7 @@ const QUIZ = [
     situation: 'ITM 상금 확정 직후, 5bb 숏스택이 묻지마 올인. 나는 칩 리더, 카드는 77.',
     question: '콜(Call)?',
     answer: true,
-    explanation: '상금 확정 직후 숏스택 레인지는 Any Two. 77로 쿨하게 받아먹을 타이밍.',
+    explanation: '상금권 직후 숏스택은 레인지만 넓다. 77로 콜해도 된다.',
   },
 ];
 
@@ -74,8 +74,8 @@ function ModeTabs({ mode, setMode, wrongCount }) {
   return (
     <div className="mb-4 flex gap-1 rounded-xl border border-white/8 bg-felt p-1">
       {[
-        { id: 'exam', label: '모의고사', icon: GraduationCap },
-        { id: 'drill', label: '무한 드릴', icon: Infinity },
+        { id: 'exam', label: '5문제', icon: GraduationCap },
+        { id: 'drill', label: '무한 연습', icon: Infinity },
         { id: 'review', label: `오답 (${wrongCount})`, icon: BookMarked },
       ].map((m) => (
         <button
@@ -205,7 +205,7 @@ function ExamMode() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gold/15 text-gold">
           <GraduationCap size={32} />
         </div>
-        <h2 className="font-display text-2xl text-gold-soft">모의고사 완료</h2>
+        <h2 className="font-display text-2xl text-gold-soft">완료</h2>
         <p className="mt-2 text-muted">
           {QUIZ.length}문제 중 <span className="text-2xl font-bold text-ink">{score}</span>개 ·{' '}
           <span className="text-gold">{pct}%</span>
@@ -402,7 +402,7 @@ function ReviewMode({ onChange }) {
     return (
       <Card className="text-center text-sm text-muted">
         <BookMarked className="mx-auto mb-3 text-gold" size={28} />
-        오답이 없습니다. 모의고사·드릴을 풀면 여기에 쌓입니다.
+        오답이 없습니다. 퀴즈·연습을 풀면 여기에 쌓입니다.
       </Card>
     );
   }
@@ -449,7 +449,7 @@ function ReviewMode({ onChange }) {
       </div>
       <Card>
         <p className="mb-2 text-xs text-gold">
-          {q.kind === 'exam' ? '모의고사' : q.kind === 'push' ? '푸시 드릴' : '콜 드릴'} · {q.pos}
+          {q.kind === 'exam' ? '퀴즈' : q.kind === 'push' ? '푸시 연습' : '콜 연습'} · {q.pos}
         </p>
         <p className="mb-3 text-sm text-muted">{q.situation || `${q.pos} · ${q.hand}`}</p>
         <h3 className="mb-6 font-display text-xl text-ink">

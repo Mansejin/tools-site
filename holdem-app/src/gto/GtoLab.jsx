@@ -66,8 +66,7 @@ function NashPanel() {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-muted">
-        헤즈업 숏스택 Nash 푸시/폴드 균형. 스택을 조절하면 잼·콜 레인지가 실시간으로 바뀝니다.
-        (≤25bb)
+        헤즈업 숏스택 Nash 푸시/폴드. 스택(bb)을 바꾸면 잼·콜 레인지가 바뀐다. (최대 25bb)
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -142,10 +141,10 @@ function RfiPanel() {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-muted">
-        6-max RFI(첫 오픈) 차트. Pekarstas GTO 레인지 기반 — GTO Wizard 스타일 13×13 그리드.
+        6-max 첫 오픈(RFI) 차트. Pekarstas 레인지 기준 13×13.
       </p>
       <div className="rounded-xl border border-deep-red/30 bg-deep-red/10 px-3 py-2 text-xs text-red-200">
-        펍 매니악 착취: GTO보다 타이트하게 오픈하고, 3벳 블러프(A5s 등)는 봉인. 밸류·트랩 위주.
+        펍에서는 GTO보다 타이트하게. 콜 많은 상대에겐 A5s 같은 3벳 블러프는 빼고, 센 핸드 밸류·슬로우플레이 위주.
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -190,19 +189,19 @@ const LINKS = [
   {
     href: 'https://libregto.com',
     title: 'LibreGTO',
-    desc: '무료 GTO 트레이너 · 드릴·레슨 (오픈소스)',
+    desc: '무료 연습 · 드릴·레슨',
     icon: BookOpen,
   },
   {
     href: 'https://ahtoooxa.github.io/poker-charts/',
     title: 'Poker Charts',
-    desc: '풀 프리플랍 차트 · vs-open / 3bet / 4bet',
+    desc: '프리플랍 차트 전체 (vs 오픈·3벳·4벳)',
     icon: Grid3x3,
   },
   {
     href: 'https://github.com/bupticybee/TexasSolver',
     title: 'TexasSolver',
-    desc: '데스크톱 GTO 솔버 (Pio 급, AGPL)',
+    desc: 'PC용 솔버 (무거움)',
     icon: Swords,
   },
 ];
@@ -219,10 +218,10 @@ export default function GtoLab() {
           </span>
           <div>
             <h2 className="font-display text-lg font-semibold tracking-wide text-ink sm:text-xl">
-              GTO 랩
+              프리플랍 차트
             </h2>
             <p className="mt-1 text-sm text-muted">
-              GTO Wizard급 상용 클론은 없고, MIT 오픈소스 차트·Nash 데이터를 내장했습니다.
+              오픈소스 Nash·RFI 데이터를 넣었습니다. (GTO Wizard 클론은 아님)
             </p>
           </div>
         </div>
@@ -256,7 +255,7 @@ export default function GtoLab() {
       </div>
 
       <div className="rounded-2xl border border-white/8 bg-felt-2/80 p-4 sm:p-5">
-        <h3 className="mb-3 text-sm font-semibold text-gold">더 깊은 GTO 도구</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gold">더 볼 곳</h3>
         <ul className="space-y-2">
           {LINKS.map(({ href, title, desc, icon: Icon }) => (
             <li key={href}>

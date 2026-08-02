@@ -328,49 +328,49 @@ const BUBBLE_ADVICE = {
   'leader-bubble': {
     title: '칩 리더 · 버블',
     points: [
-      '미들 스택을 60%+ VPIP로 폭군처럼 압박',
-      '숏스택끼리의 올인은 관망해도 됨',
-      '리스크 없는 스틸로 칩을 불리며 ITM 압박',
+      '미들 스택을 넓게 열어 압박한다 (VPIP 60%+)',
+      '숏스택끼리 올인은 굳이 안 끼어도 된다',
+      '싼 스틸로 칩을 불리며 ITM을 압박한다',
     ],
   },
   'middle-bubble': {
     title: '미들 스택 · 버블',
     points: [
-      '칩 리더의 오픈에는 타이트하게 방어',
-      '숏스택 스틸은 선택적으로 리샵/콜',
-      '버블 통과가 1순위 — 마지널 올인 자제',
+      '칩 리더 오픈에는 타이트하게',
+      '숏스택 스틸은 골라서 리레이즈/콜',
+      '일단 버블 통과가 우선 — 애매한 올인은 줄인다',
     ],
   },
   'short-bubble': {
     title: '숏스택 · 버블',
     points: [
-      '프리미엄만 기다리며 생존',
+      '센 핸드만 노린다',
       '폴드 에퀴티 있을 때만 푸시',
-      '블라인드에 뜯기지 않게 타이밍 재기',
+      '블라인드에 녹지 않게 타이밍을 본다',
     ],
   },
   'leader-itm': {
     title: '칩 리더 · ITM 직후',
     points: [
-      '숏스택 Any Two 올인을 마지널로도 콜해 흡수',
-      '77, KTs 급도 받아먹을 타이밍',
-      '칩으로 테이블을 계속 압박',
+      '숏스택 올인은 애매해도 콜해서 칩을 먹는다',
+      '77, KTs도 받아볼 타이밍',
+      '칩으로 계속 테이블을 누른다',
     ],
   },
   'middle-itm': {
     title: '미들 스택 · ITM 직후',
     points: [
-      '숏스택 올인은 핸드 강하면 콜, 약하면 패스',
-      '리더와 큰 팟은 피할 것',
-      '페이 점프를 노리며 선택적 공격',
+      '숏스택 올인: 핸드 세면 콜, 약하면 패스',
+      '리더와 큰 팟은 피한다',
+      '페이 점프를 보며 선택적으로 공격',
     ],
   },
   'short-itm': {
     title: '숏스택 · ITM 직후',
     points: [
-      '상금 확정 — 더블업이 목표',
-      '넓은 레인지로 푸시 가능 (Any Two 파티)',
-      '칩 리더 BB는 특히 스틸 가치 큼',
+      '상금은 이미 확정 — 더블업이 목표',
+      '푸시 레인지를 넓혀도 된다',
+      '칩 리더 BB는 스틸 가치가 크다',
     ],
   },
 };
@@ -457,7 +457,7 @@ function RoiCalc() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted">바이인·리바인 대비 기대값. “최대 2블릿” 가설을 숫자로 확인.</p>
+      <p className="text-sm text-muted">바이인·리바인 대비 기대값. 리바를 몇 번 할지 숫자로 비교해 본다.</p>
       <div className="grid grid-cols-2 gap-3">
         <Field label="바이인(원)">
           <input type="number" className={inputCls} value={buyin} onChange={(e) => setBuyin(+e.target.value || 0)} />
@@ -512,11 +512,11 @@ function CheatSheet() {
     <div className="space-y-4 text-sm leading-relaxed text-muted">
       <div className="rounded-xl border border-gold/25 bg-gold/10 p-4">
         <h3 className="mb-2 font-display text-base text-gold">터보 한 줄</h3>
-        <p className="text-ink">2블릿 맥스 · 초반 닌자 · 매니악엔 블러프 금지 · 15bb면 푸시/폴드</p>
+        <p className="text-ink">리바 1번까지 · 초반 타이트 · 콜 많은 상대엔 블러프 자제 · 15bb면 푸시/폴드</p>
       </div>
       <div>
         <h3 className="mb-2 font-semibold text-ink">UTG 오픈 (앤티 없음)</h3>
-        <p>88+, AQo+, A5s만 · AJo/KQo 금지 · 3~4bb</p>
+        <p>88+, AQo+, A5s만 · AJo/KQo 폴드 · 3~4bb</p>
       </div>
       <div>
         <h3 className="mb-2 font-semibold text-ink">15bb 잼 (앞 폴드)</h3>
@@ -528,12 +528,12 @@ function CheatSheet() {
         </ul>
       </div>
       <div>
-        <h3 className="mb-2 font-semibold text-ink">매니악 착취</h3>
-        <p>3벳 4~5x (프리미엄만) · C-bet 블러프 0% · TPTK까지 밸류 · 넛은 트랩</p>
+        <h3 className="mb-2 font-semibold text-ink">콜 많은 상대</h3>
+        <p>3벳 4~5x (프리미엄만) · C-bet 블러프 안 함 · TPTK까지 밸류 · 넛은 슬로우</p>
       </div>
       <div>
         <h3 className="mb-2 font-semibold text-ink">버블 / ITM</h3>
-        <p>리더=폭군 · 숏=생존 · ITM 후 숏 Any Two → 77도 콜</p>
+        <p>리더는 압박 · 숏은 버티기 · ITM 후 숏 올인은 77도 콜</p>
       </div>
     </div>
   );
@@ -544,15 +544,16 @@ const GLOSSARY = [
   { t: 'bb', d: '빅 블라인드 단위. 스택·벳 사이즈를 bb로 표현.' },
   { t: '앤티(Ante)', d: '매 핸드 강제 데드머니. 스틸 가치↑.' },
   { t: 'RFI', d: 'Raise First In — 앞에 모두 폴드 후 첫 레이즈.' },
-  { t: 'Iso', d: 'Isolation — 림프/매니악을 3벳·큰 사이즈로 1:1 만들기.' },
-  { t: 'TPTK', d: 'Top Pair Top Kicker — 탑페어+탑키커.' },
-  { t: '셋 마이닝', d: '로우 페어로 콜해 셋(셋)을 노리는 플레이.' },
-  { t: 'ITM', d: 'In The Money — 상금권 진입.' },
-  { t: '버블', d: '상금권 직전. 1명 탈락하면 ITM.' },
-  { t: 'VPIP', d: '자발적으로 돈을 넣은 핸드 비율.' },
-  { t: 'Chop', d: '헤즈업 등에서 상금을 칩 비율로 나누는 딜.' },
-  { t: 'Nash', d: '내시 균형. 서로 최선 응답인 GTO 상태.' },
-  { t: '폴드 에퀴티', d: '상대가 폴드해 줄 확률에서 나오는 기대값.' },
+  { t: 'Iso', d: 'Isolation. 림프·콜 스테이션을 큰 사이즈로 헤즈업 만드는 것.' },
+  { t: 'TPTK', d: 'Top Pair Top Kicker. 탑페어+탑키커.' },
+  { t: '셋 마이닝', d: '작은 페어로 콜해서 셋을 노리는 플레이.' },
+  { t: 'ITM', d: 'In The Money. 상금권 진입.' },
+  { t: '버블', d: '상금권 직전. 한 명 더 탈락하면 ITM.' },
+  { t: 'VPIP', d: '자발적으로 칩을 넣은 핸드 비율.' },
+  { t: 'Chop', d: '상금을 칩 비율로 나누는 합의.' },
+  { t: 'Nash', d: '서로 최선인 균형 전략(내시).' },
+  { t: '폴드 에퀴티', d: '상대가 폴드해 줄 때 생기는 이득.' },
+  { t: '콜 스테이션', d: '폴드를 거의 안 하고 콜만 많이 하는 상대.' },
 ];
 
 function Glossary() {
