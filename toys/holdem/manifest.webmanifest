@@ -1,0 +1,19 @@
+{
+  "name": "홀덤펍 토너먼트 가이드",
+  "short_name": "홀덤가이드",
+  "description": "터보·MTT 정리, 15bb 조회, 타이머",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0f0c",
+  "theme_color": "#0a0f0c",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

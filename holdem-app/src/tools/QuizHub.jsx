@@ -21,6 +21,7 @@ import {
   clearWrongs,
   removeWrong,
 } from './pushFoldPub.js';
+import { touchStreak } from '../lib/route.js';
 
 const QUIZ = [
   {
@@ -167,6 +168,7 @@ function ExamMode() {
     if (feedback) return;
     const correct = picked === q.answer;
     setFeedback({ correct });
+    touchStreak();
     if (correct) setScore((s) => s + 1);
     else {
       saveWrong({
@@ -293,6 +295,7 @@ function DrillMode() {
     if (feedback) return;
     const correct = picked === q.answer;
     setFeedback({ correct });
+    touchStreak();
     setStats((s) => ({ ok: s.ok + (correct ? 1 : 0), n: s.n + 1 }));
     setStreak((s) => (correct ? s + 1 : 0));
     if (!correct) {

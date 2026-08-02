@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Zap,
@@ -17,13 +17,17 @@ import {
   ArrowLeft,
   Grid3x3,
   Wrench,
+  Home,
 } from 'lucide-react';
 import GtoLab from './gto/GtoLab.jsx';
 import PracticeTools from './tools/PracticeTools.jsx';
 import QuizHub from './tools/QuizHub.jsx';
+import HomeHub from './HomeHub.jsx';
+import { readRoute, writeRoute } from './lib/route.js';
 
 /* ─── Tabs config ─── */
 const TABS = [
+  { id: 'home', label: '오늘', short: '오늘', icon: Home },
   { id: 'turbo', label: '7분 터보', short: '터보', icon: Zap },
   { id: 'mtt', label: '15분 MTT', short: 'MTT', icon: Hourglass },
   { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
@@ -477,7 +481,51 @@ function HeadsUpTab() {
 
 /* ─── App ─── */
 export default function App() {
-  const [tab, setTab] = useState('turbo');
+  const initial = readRoute();
+  const [tab, setTab] = useState(initial.tab);
+  const [tool, setTool] = useState(initial.tool);
+  const [hand, setHand] = useState(initial.hand);
+  const [pos, setPos] = useState(initial.pos);
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  const syncRoute = useCallback((next) => {
+    const state = {
+      tab: next.tab ?? tab,
+      tool: next.tool ?? tool,
+      hand: next.hand !== undefined ? next.hand : hand,
+      pos: next.pos !== undefined ? next.pos : pos,
+    };
+    if (next.tab !== undefined) setTab(next.tab);
+    if (next.tool !== undefined) setTool(next.tool);
+    if (next.hand !== undefined) setHand(next.hand);
+    if (next.pos !== undefined) setPos(next.pos);
+    writeRoute(state);
+  }, [tab, tool, hand, pos]);
+
+  useEffect(() => {
+    function onPop() {
+      const r = readRoute();
+      setTab(r.tab);
+      setTool(r.tool);
+      setHand(r.hand);
+      setPos(r.pos);
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  useEffect(() => {
+    function onBip(e) {
+      e.preventDefault();
+      setInstallPrompt(e);
+    }
+    window.addEventListener('beforeinstallprompt', onBip);
+    return () => window.removeEventListener('beforeinstallprompt', onBip);
+  }, []);
+
+  function goTab(id) {
+    syncRoute({ tab: id, tool: id === 'tools' ? tool : undefined });
+  }
 
   return (
     <div className="felt-noise min-h-dvh">
@@ -518,7 +566,7 @@ export default function App() {
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setTab(id)}
+                  onClick={() => goTab(id)}
                   className={`relative flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium transition sm:px-4 ${
                     active ? 'text-gold' : 'text-muted hover:text-ink'
                   }`}
@@ -546,11 +594,30 @@ export default function App() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.22 }}
           >
+            {tab === 'home' && (
+              <HomeHub
+                onGo={({ tab: t, tool: tl }) => syncRoute({ tab: t, tool: tl })}
+                installPrompt={installPrompt}
+                onInstall={async () => {
+                  if (!installPrompt) return;
+                  installPrompt.prompt();
+                  await installPrompt.userChoice;
+                  setInstallPrompt(null);
+                }}
+              />
+            )}
             {tab === 'turbo' && <TurboTab />}
             {tab === 'mtt' && <MttTab />}
             {tab === 'hu' && <HeadsUpTab />}
             {tab === 'gto' && <GtoLab />}
-            {tab === 'tools' && <PracticeTools />}
+            {tab === 'tools' && (
+              <PracticeTools
+                initialTool={tool}
+                initialHand={hand || undefined}
+                initialPos={pos || undefined}
+                onToolChange={(id) => syncRoute({ tab: 'tools', tool: id })}
+              />
+            )}
             {tab === 'quiz' && <QuizHub />}
           </motion.div>
         </AnimatePresence>

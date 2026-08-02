@@ -14,6 +14,7 @@ import {
 import { isShove, isCall } from '../gto/pushfoldNash.js';
 import { RFI_CHARTS, cellAction } from '../gto/rfiCharts.js';
 import { normalizeHand, shouldPush, shouldCallShove } from './pushFoldPub.js';
+import { shareUrl } from '../lib/route.js';
 
 function Card({ children, className = '' }) {
   return (
@@ -201,11 +202,19 @@ function BlindTimer() {
 }
 
 /* ─── Hand lookup ─── */
-function HandLookup() {
-  const [hand, setHand] = useState('K9o');
-  const [pos, setPos] = useState('BTN');
+function HandLookup({ initialHand, initialPos }) {
+  const [hand, setHand] = useState(initialHand || 'K9o');
+  const [pos, setPos] = useState(initialPos || 'BTN');
   const [bb, setBb] = useState(15);
   const [mode, setMode] = useState('pub'); // pub | nash | rfi
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (initialHand) setHand(initialHand);
+  }, [initialHand]);
+  useEffect(() => {
+    if (initialPos) setPos(initialPos);
+  }, [initialPos]);
 
   const norm = normalizeHand(hand);
   const result = useMemo(() => {
@@ -319,6 +328,29 @@ function HandLookup() {
           </ul>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={async () => {
+          const link = shareUrl({
+            tab: 'tools',
+            tool: 'lookup',
+            hand: norm || hand,
+            pos,
+            mode: mode === 'pub' ? undefined : mode,
+          });
+          try {
+            await navigator.clipboard.writeText(link);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            window.prompt('링크 복사', link);
+          }
+        }}
+        className="w-full rounded-xl border border-gold/30 py-2.5 text-sm font-medium text-gold"
+      >
+        {copied ? '복사됨' : '이 조회 링크 복사'}
+      </button>
     </div>
   );
 }
@@ -590,11 +622,26 @@ const TOOL_TABS = [
   { id: 'glossary', label: '용어', icon: BookOpen },
 ];
 
-export default function PracticeTools() {
-  const [tab, setTab] = useState('timer');
+export default function PracticeTools({
+  initialTool = 'timer',
+  initialHand,
+  initialPos,
+  onToolChange,
+}) {
+  const [tab, setTab] = useState(initialTool);
+
+  useEffect(() => {
+    if (initialTool) setTab(initialTool);
+  }, [initialTool]);
+
+  function changeTool(id) {
+    setTab(id);
+    onToolChange?.(id);
+  }
+
   return (
     <Card>
-      <SubTabs tabs={TOOL_TABS} value={tab} onChange={setTab} />
+      <SubTabs tabs={TOOL_TABS} value={tab} onChange={changeTool} />
       <motion.div
         key={tab}
         initial={{ opacity: 0, y: 6 }}
@@ -602,7 +649,9 @@ export default function PracticeTools() {
         transition={{ duration: 0.18 }}
       >
         {tab === 'timer' && <BlindTimer />}
-        {tab === 'lookup' && <HandLookup />}
+        {tab === 'lookup' && (
+          <HandLookup initialHand={initialHand} initialPos={initialPos} />
+        )}
         {tab === 'bubble' && <BubbleTree />}
         {tab === 'roi' && <RoiCalc />}
         {tab === 'sheet' && <CheatSheet />}
