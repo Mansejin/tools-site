@@ -144,6 +144,9 @@ function RfiPanel() {
       <p className="text-sm leading-relaxed text-muted">
         6-max RFI(첫 오픈) 차트. Pekarstas GTO 레인지 기반 — GTO Wizard 스타일 13×13 그리드.
       </p>
+      <div className="rounded-xl border border-deep-red/30 bg-deep-red/10 px-3 py-2 text-xs text-red-200">
+        펍 매니악 착취: GTO보다 타이트하게 오픈하고, 3벳 블러프(A5s 등)는 봉인. 밸류·트랩 위주.
+      </div>
 
       <div className="flex flex-wrap gap-1.5">
         {RFI_POSITIONS.map((p) => (

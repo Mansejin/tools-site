@@ -13,13 +13,14 @@ import {
   Users,
   Crown,
   AlertTriangle,
-  CheckCircle2,
   XCircle,
   ArrowLeft,
-  RotateCcw,
   Grid3x3,
+  Wrench,
 } from 'lucide-react';
 import GtoLab from './gto/GtoLab.jsx';
+import PracticeTools from './tools/PracticeTools.jsx';
+import QuizHub from './tools/QuizHub.jsx';
 
 /* ─── Tabs config ─── */
 const TABS = [
@@ -27,46 +28,8 @@ const TABS = [
   { id: 'mtt', label: '15분 MTT', short: 'MTT', icon: Hourglass },
   { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
   { id: 'gto', label: 'GTO 랩', short: 'GTO', icon: Grid3x3 },
+  { id: 'tools', label: '실전 툴', short: '툴', icon: Wrench },
   { id: 'quiz', label: '모의고사', short: '퀴즈', icon: GraduationCap },
-];
-
-/* ─── Quiz data ─── */
-const QUIZ = [
-  {
-    id: 1,
-    situation: 'UTG 포지션, 내 앞에 액션 없음. 내 카드는 AJo.',
-    question: '15bb 올인(Push)?',
-    answer: false,
-    explanation: '얼리 포지션에서 AJo 올인은 자살 행위. 콜 당하면 지고 들어감.',
-  },
-  {
-    id: 2,
-    situation: '매니악이 3bb 오픈함. 나는 BTN에서 A5s 보유.',
-    question: '3벳 블러프로 압박?',
-    answer: false,
-    explanation: '폴드를 모르는 매니악에게 3벳 블러프는 칩 헌납. 과감히 3벳 포기가 착취 전략.',
-  },
-  {
-    id: 3,
-    situation: 'BTN 포지션, 내 앞에 모두 폴드. 내 카드는 K9o.',
-    question: '15bb 올인(Push)?',
-    answer: true,
-    explanation: '뒤에 블라인드 2명뿐. 앤티와 블라인드를 스틸하기 완벽한 올인 핸드.',
-  },
-  {
-    id: 4,
-    situation: '컷오프(CO) 유저가 15bb 올인. 나는 BB에서 A3o 보유.',
-    question: '방어 콜(Call)?',
-    answer: false,
-    explanation: '내가 올인할 땐 A3o가 좋지만, 남의 올인에 콜하는 것은 상대 레인지에 철저히 지배당함.',
-  },
-  {
-    id: 5,
-    situation: 'ITM 상금 확정 직후, 5bb 숏스택이 묻지마 올인. 나는 칩 리더, 카드는 77.',
-    question: '콜(Call)?',
-    answer: true,
-    explanation: '상금 확정 직후 숏스택 레인지는 Any Two. 77로 쿨하게 받아먹을 타이밍.',
-  },
 ];
 
 const PUSH_FOLD = [
@@ -514,174 +477,6 @@ function HeadsUpTab() {
   );
 }
 
-/* ─── Quiz ─── */
-function QuizTab() {
-  const [idx, setIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState(null); // { correct, picked }
-  const [done, setDone] = useState(false);
-
-  const q = QUIZ[idx];
-
-  function answer(picked) {
-    if (feedback) return;
-    const correct = picked === q.answer;
-    setFeedback({ correct, picked });
-    if (correct) setScore((s) => s + 1);
-  }
-
-  function next() {
-    if (idx + 1 >= QUIZ.length) {
-      setDone(true);
-      setFeedback(null);
-      return;
-    }
-    setIdx((i) => i + 1);
-    setFeedback(null);
-  }
-
-  function reset() {
-    setIdx(0);
-    setScore(0);
-    setFeedback(null);
-    setDone(false);
-  }
-
-  if (done) {
-    const pct = Math.round((score / QUIZ.length) * 100);
-    return (
-      <Card className="text-center">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="space-y-4 py-4"
-        >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold/15 text-gold">
-            <GraduationCap size={32} />
-          </div>
-          <h2 className="font-display text-2xl text-gold-soft">모의고사 완료</h2>
-          <p className="text-muted">
-            {QUIZ.length}문제 중 <span className="text-2xl font-bold text-ink">{score}</span>개 정답
-            <span className="ml-2 text-gold">({pct}%)</span>
-          </p>
-          <Callout tone={pct >= 80 ? 'green' : pct >= 60 ? 'gold' : 'red'}>
-            {pct >= 80
-              ? '펍 테이블에서 숏스택 압박할 준비가 됐습니다.'
-              : pct >= 60
-                ? '기본기는 있습니다. 레인지 표를 한 번 더 외우세요.'
-                : '터보 탭의 푸시/폴드 표를 복습하고 다시 도전하세요.'}
-          </Callout>
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex items-center gap-2 rounded-xl bg-casino-green px-5 py-3 font-semibold text-white transition hover:bg-casino-green-bright"
-          >
-            <RotateCcw size={16} /> 다시 풀기
-          </button>
-        </motion.div>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span>
-          문제 {idx + 1} / {QUIZ.length}
-        </span>
-        <span className="text-gold">정답 {score}</span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-felt-4">
-        <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-casino-green to-gold"
-          animate={{ width: `${((idx + (feedback ? 1 : 0)) / QUIZ.length) * 100}%` }}
-          transition={{ duration: 0.3 }}
-        />
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={q.id}
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.25 }}
-        >
-          <Card>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-felt px-3 py-1.5 text-xs font-medium text-gold">
-              <Spade size={12} /> 상황 {q.id}
-            </div>
-            <p className="mb-3 text-[15px] leading-relaxed text-muted">{q.situation}</p>
-            <h3 className="mb-6 font-display text-xl font-semibold text-ink sm:text-2xl">
-              {q.question}
-            </h3>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                disabled={!!feedback}
-                onClick={() => answer(true)}
-                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-casino-green/50 bg-casino-green/15 px-4 py-5 font-bold text-casino-green-bright transition hover:bg-casino-green/25 disabled:opacity-60"
-              >
-                <CheckCircle2 size={28} />
-                <span>O · 올인/콜</span>
-              </button>
-              <button
-                type="button"
-                disabled={!!feedback}
-                onClick={() => answer(false)}
-                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-deep-red/50 bg-deep-red/15 px-4 py-5 font-bold text-red-300 transition hover:bg-deep-red/25 disabled:opacity-60"
-              >
-                <XCircle size={28} />
-                <span>X · 폴드</span>
-              </button>
-            </div>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
-            role="dialog"
-            aria-modal="true"
-          >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              className="w-full max-w-md rounded-2xl border border-gold/25 bg-felt-3 p-6 shadow-2xl"
-            >
-              <div
-                className={`mb-3 flex items-center gap-2 text-lg font-bold ${
-                  feedback.correct ? 'text-casino-green-bright' : 'text-red-300'
-                }`}
-              >
-                {feedback.correct ? <CheckCircle2 size={22} /> : <XCircle size={22} />}
-                {feedback.correct ? '정답!' : '오답'}
-              </div>
-              <p className="mb-2 text-sm text-gold">
-                정답: {q.answer ? 'O (올인/콜)' : 'X (폴드)'}
-              </p>
-              <p className="mb-5 text-sm leading-relaxed text-muted">{q.explanation}</p>
-              <button
-                type="button"
-                onClick={next}
-                className="w-full rounded-xl bg-gold px-4 py-3 font-semibold text-felt transition hover:bg-gold-soft"
-              >
-                {idx + 1 >= QUIZ.length ? '결과 보기' : '다음 문제'}
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 /* ─── App ─── */
 export default function App() {
   const [tab, setTab] = useState('turbo');
@@ -709,7 +504,7 @@ export default function App() {
               <span className="gold-text">토너먼트 필승 전략 바이블</span>
             </h1>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-              7분 터보 · 15분 MTT · 헤즈업 · 실전 15bb 모의고사
+              전략 · GTO · 실전 툴 · 15bb 드릴
             </p>
           </motion.div>
         </header>
@@ -757,7 +552,8 @@ export default function App() {
             {tab === 'mtt' && <MttTab />}
             {tab === 'hu' && <HeadsUpTab />}
             {tab === 'gto' && <GtoLab />}
-            {tab === 'quiz' && <QuizTab />}
+            {tab === 'tools' && <PracticeTools />}
+            {tab === 'quiz' && <QuizHub />}
           </motion.div>
         </AnimatePresence>
 
