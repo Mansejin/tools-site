@@ -1,15 +1,15 @@
 import { Home, Wrench, GraduationCap, BookOpen } from 'lucide-react';
 
 const PRIMARY = [
-  { id: 'home', label: '오늘', icon: Home },
+  { id: 'home', label: '홈', icon: Home },
   { id: 'tools', label: '도구', icon: Wrench },
   { id: 'quiz', label: '퀴즈', icon: GraduationCap },
-  { id: 'guide', label: '가이드', icon: BookOpen },
+  { id: 'guide', label: '학습', icon: BookOpen },
 ];
 
 const GUIDE_ITEMS = [
-  { id: 'turbo', label: '7분 터보' },
-  { id: 'mtt', label: '15분 MTT' },
+  { id: 'turbo', label: '터보' },
+  { id: 'mtt', label: 'MTT' },
   { id: 'hu', label: '헤즈업' },
   { id: 'gto', label: '차트' },
 ];
@@ -34,7 +34,7 @@ export default function BottomNav({ tab, onTab, guideOpen, setGuideOpen }) {
           />
           <div className="safe-bottom absolute inset-x-0 bottom-0 rounded-t-2xl border border-gold/20 bg-felt-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
-            <p className="mb-3 text-center text-sm font-medium text-gold">가이드</p>
+            <p className="mb-3 text-center text-sm font-medium text-muted">학습</p>
             <div className="grid grid-cols-2 gap-2">
               {GUIDE_ITEMS.map((g) => (
                 <button

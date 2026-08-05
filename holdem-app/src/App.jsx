@@ -30,9 +30,9 @@ import SettingsPanel from './settings/SettingsPanel.jsx';
 
 /* ─── Tabs config ─── */
 const TABS = [
-  { id: 'home', label: '오늘', short: '오늘', icon: Home },
-  { id: 'turbo', label: '7분 터보', short: '터보', icon: Zap },
-  { id: 'mtt', label: '15분 MTT', short: 'MTT', icon: Hourglass },
+  { id: 'home', label: '홈', short: '홈', icon: Home },
+  { id: 'turbo', label: '터보', short: '터보', icon: Zap },
+  { id: 'mtt', label: 'MTT', short: 'MTT', icon: Hourglass },
   { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
   { id: 'gto', label: '차트', short: '차트', icon: Grid3x3 },
   { id: 'tools', label: '도구', short: '도구', icon: Wrench },
@@ -516,50 +516,41 @@ export default function App() {
     syncRoute({ tab: id, tool: id === 'tools' ? tool : undefined });
   }
 
-  const showDesktopHeader = tab === 'home';
-
   return (
     <div className="felt-noise min-h-dvh">
-      <div className="mx-auto max-w-3xl px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-16 sm:pt-8 md:pb-16">
-        <div className="mb-3 flex items-center justify-between gap-2 sm:mb-6">
+      <div className="mx-auto max-w-5xl px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-16 sm:pt-6 md:pb-16">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <a
             href="/toys/"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-1 text-sm text-muted transition hover:text-gold"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-1 text-sm text-muted transition hover:text-ink"
           >
-            <ArrowLeft size={14} /> 장난감
+            <ArrowLeft size={14} />
+            <span className="hidden sm:inline">장난감</span>
           </a>
-          {!showDesktopHeader && (
-            <p className="truncate text-sm font-medium text-gold sm:hidden">
-              {TABS.find((t) => t.id === tab)?.label || '가이드'}
+          {tab !== 'home' && (
+            <p className="truncate text-sm font-medium text-ink">
+              {TABS.find((t) => t.id === tab)?.label || ''}
             </p>
           )}
-          <span className="w-14 sm:hidden" aria-hidden />
+          {tab !== 'home' ? (
+            <button
+              type="button"
+              onClick={() => goTab('home')}
+              className="min-h-10 rounded-lg px-2 text-sm text-muted hover:text-ink"
+            >
+              홈
+            </button>
+          ) : (
+            <span className="w-10" aria-hidden />
+          )}
         </div>
 
-        <header className={`text-center ${showDesktopHeader ? 'mb-6 sm:mb-8' : 'mb-4 hidden sm:mb-8 sm:block'}`}>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            <p className="mb-2 text-xs font-medium tracking-[0.25em] text-gold uppercase">
-              Korean Hold&apos;em Pub
-            </p>
-            <h1 className="font-display text-2xl font-bold tracking-wide sm:text-4xl">
-              <span className="gold-text">홀덤펍 토너먼트 가이드</span>
-            </h1>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted sm:mt-3 sm:text-base">
-              터보·MTT·헤즈업 정리 · 차트 · 15bb 연습
-            </p>
-          </motion.div>
-        </header>
-
-        {/* desktop / tablet top tabs */}
+        {/* desktop top tabs — slim, no hero */}
         <nav
-          className="sticky top-0 z-40 -mx-3 mb-6 hidden border-b border-gold/15 bg-felt/90 px-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:block"
-          aria-label="전략 섹션"
+          className="sticky top-0 z-40 -mx-3 mb-5 hidden border-b border-white/8 bg-felt/95 px-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:block"
+          aria-label="메뉴"
         >
-          <div className="flex gap-1 overflow-x-auto py-2 scrollbar-thin">
+          <div className="flex gap-1 overflow-x-auto py-1.5 scrollbar-thin">
             {TABS.map(({ id, label, short, icon: Icon }) => {
               const active = tab === id;
               return (
@@ -567,8 +558,8 @@ export default function App() {
                   key={id}
                   type="button"
                   onClick={() => goTab(id)}
-                  className={`relative flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium transition sm:px-4 ${
-                    active ? 'text-gold' : 'text-muted hover:text-ink'
+                  className={`relative flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    active ? 'text-ink' : 'text-muted hover:text-ink'
                   }`}
                 >
                   <Icon size={15} />
@@ -577,7 +568,7 @@ export default function App() {
                   {active && (
                     <motion.span
                       layoutId="tab-underline"
-                      className="absolute inset-x-2 -bottom-2 h-0.5 rounded-full bg-gold"
+                      className="absolute inset-x-2 -bottom-1.5 h-0.5 rounded-full bg-casino-green-bright"
                     />
                   )}
                 </button>

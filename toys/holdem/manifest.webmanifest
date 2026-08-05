@@ -1,7 +1,7 @@
 {
-  "name": "홀덤펍 토너먼트 가이드",
-  "short_name": "홀덤가이드",
-  "description": "터보·MTT 정리, 15bb 조회, 타이머",
+  "name": "Pub · 홀덤펍",
+  "short_name": "Pub",
+  "description": "홀덤펍 토너먼트 연습 · 차트 · 타이머",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

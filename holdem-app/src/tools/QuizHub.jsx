@@ -22,6 +22,7 @@ import {
   removeWrong,
 } from './pushFoldPub.js';
 import { touchStreak } from '../lib/route.js';
+import { recordAnswer } from '../lib/practiceStats.js';
 
 const QUIZ = [
   {
@@ -169,6 +170,7 @@ function ExamMode() {
     const correct = picked === q.answer;
     setFeedback({ correct });
     touchStreak();
+    recordAnswer(correct, 'exam');
     if (correct) setScore((s) => s + 1);
     else {
       saveWrong({
@@ -296,6 +298,7 @@ function DrillMode() {
     const correct = picked === q.answer;
     setFeedback({ correct });
     touchStreak();
+    recordAnswer(correct, 'drill');
     setStats((s) => ({ ok: s.ok + (correct ? 1 : 0), n: s.n + 1 }));
     setStreak((s) => (correct ? s + 1 : 0));
     if (!correct) {
