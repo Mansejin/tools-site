@@ -10,8 +10,16 @@ const ACTION_STYLE = {
   shove: 'bg-casino-green/80 text-white',
 };
 
-export default function HandGrid({ getAction, title }) {
+const FREQ_COLOR = {
+  fold: 'bg-[#3D7CB8]',
+  call: 'bg-[#5ab966]',
+  raise: 'bg-[#f03c3c]',
+  shove: 'bg-[#7d1f1f]',
+};
+
+export default function HandGrid({ getAction, getFreqs, title }) {
   const [picked, setPicked] = useState(null);
+  const freqs = picked && getFreqs ? getFreqs(picked) : null;
 
   return (
     <div>
@@ -42,11 +50,38 @@ export default function HandGrid({ getAction, title }) {
         )}
       </div>
       {picked && (
-        <p className="mt-2 rounded-lg bg-felt px-3 py-2 text-center text-sm">
-          <span className="font-semibold text-ink">{picked}</span>
-          <span className="mx-2 text-muted">·</span>
-          <span className="text-gold uppercase">{getAction(picked)}</span>
-        </p>
+        <div className="mt-2 rounded-lg bg-felt px-3 py-2 text-sm">
+          <p className="text-center">
+            <span className="font-semibold text-ink">{picked}</span>
+            <span className="mx-2 text-muted">·</span>
+            <span className="text-gold uppercase">{getAction(picked)}</span>
+          </p>
+          {freqs && (
+            <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-black/40">
+              {['raise', 'shove', 'call', 'fold'].map((k) =>
+                freqs[k] > 0 ? (
+                  <div
+                    key={k}
+                    className={`${FREQ_COLOR[k]} h-full`}
+                    style={{ width: `${freqs[k]}%` }}
+                    title={`${k} ${freqs[k]}%`}
+                  />
+                ) : null,
+              )}
+            </div>
+          )}
+          {freqs && (
+            <div className="mt-1.5 flex flex-wrap justify-center gap-x-3 gap-y-0.5 text-[11px] text-muted">
+              {['raise', 'shove', 'call', 'fold']
+                .filter((k) => freqs[k] > 0)
+                .map((k) => (
+                  <span key={k}>
+                    <span className="uppercase text-ink/80">{k}</span> {freqs[k]}%
+                  </span>
+                ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Settings2, ExternalLink, BookOpen, Swords, Grid3x3 } from 'lucide-react';
+import { Settings2, ExternalLink, BookOpen, Swords, Grid3x3, RotateCcw } from 'lucide-react';
 import SolutionPicker from './SolutionPicker.jsx';
 import PackBar from './PackBar.jsx';
 import HandGrid from './HandGrid.jsx';
 import { loadSolution, saveSolution, summaryLabel } from './solutionConfig.js';
-import { engineMeta, positionsFor, gridGetter } from './solutionEngine.js';
+import { engineMeta, gridGetter, strategyFrequencies } from './solutionEngine.js';
+import {
+  rootNode,
+  advance,
+  availableActions,
+  nodeTitle,
+  pfLabel,
+  crumbLabel,
+} from './chartTree.js';
 
 const LINKS = [
   {
@@ -27,21 +35,36 @@ const LINKS = [
   },
 ];
 
+const ACT_BTN = {
+  fold: 'bg-[#3D7CB8] text-white',
+  call: 'bg-[#5ab966] text-white',
+  raise: 'bg-[#f03c3c] text-white',
+  shove: 'bg-[#7d1f1f] text-white',
+};
+
 export default function GtoLab() {
   const [cfg, setCfg] = useState(() => loadSolution());
   const [draft, setDraft] = useState(cfg);
   const [picker, setPicker] = useState(false);
   const [packTick, setPackTick] = useState(0);
-  const positions = useMemo(() => positionsFor(cfg), [cfg]);
-  const [pos, setPos] = useState(positions[0]?.id || 'SB');
+  const [stack, setStack] = useState(() => [rootNode(cfg)]);
   const meta = useMemo(() => engineMeta(cfg), [cfg, packTick]);
 
   useEffect(() => {
-    const list = positionsFor(cfg);
-    if (!list.some((p) => p.id === pos)) setPos(list[0].id);
-  }, [cfg, pos]);
+    setStack([rootNode(cfg)]);
+  }, [cfg]);
 
-  const getAction = useMemo(() => gridGetter(cfg, { pos }), [cfg, pos, packTick]);
+  const node = stack[stack.length - 1];
+  const spot = { pos: node.seat, pfAction: node.pfAction };
+  const getAction = useMemo(
+    () => (node.terminal ? () => 'fold' : gridGetter(cfg, spot)),
+    [cfg, node.seat, node.pfAction, node.terminal, packTick],
+  );
+  const getFreqs = useMemo(
+    () => (hand) => (node.terminal ? null : strategyFrequencies(cfg, hand, spot)),
+    [cfg, node.seat, node.pfAction, node.terminal, packTick],
+  );
+  const actions = availableActions(node, cfg);
 
   const fidelityLabel =
     meta.fidelity === 'exact' ? '정확' : meta.fidelity === 'pack' ? '내 팩' : '근사';
@@ -76,25 +99,77 @@ export default function GtoLab() {
               : 'border-gold/25 bg-gold/10 text-amber-100'
           }`}
         >
-          {fidelityLabel} · {meta.note}
+          {fidelityLabel} · {meta.note} 액션을 고르면 다음 포지션 차트로 이동합니다.
         </p>
 
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {positions.map((p) => (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {stack.map((n, i) => {
+            const label =
+              i === 0
+                ? `${n.seat} ${pfLabel(n.pfAction)}`
+                : crumbFromAdvance(stack[i - 1], n, cfg);
+            return (
+              <button
+                key={`${i}-${n.seat}-${n.pfAction}-${n.terminal || ''}`}
+                type="button"
+                onClick={() => setStack(stack.slice(0, i + 1))}
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
+                  i === stack.length - 1
+                    ? 'bg-gold text-felt'
+                    : 'border border-white/10 text-muted hover:text-ink'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+          {stack.length > 1 && (
             <button
-              key={p.id}
               type="button"
-              onClick={() => setPos(p.id)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                pos === p.id ? 'bg-gold text-felt' : 'border border-white/10 text-muted'
-              }`}
+              onClick={() => setStack([rootNode(cfg)])}
+              className="ml-1 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted hover:text-ink"
+              title="처음으로"
             >
-              {p.label}
+              <RotateCcw size={12} />
+              리셋
             </button>
-          ))}
+          )}
         </div>
 
-        <HandGrid key={packTick} getAction={getAction} title={`${pos} · ${cfg.stack}bb`} />
+        {!node.terminal ? (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {actions.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setStack([...stack, advance(node, a.id, cfg)])}
+                className={`min-h-11 min-w-[5.5rem] rounded-xl px-4 text-sm font-semibold ${ACT_BTN[a.id] || ACT_BTN.raise}`}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <p className="text-sm text-amber-100">{nodeTitle(node, cfg)}</p>
+            <button
+              type="button"
+              onClick={() => setStack([rootNode(cfg)])}
+              className="rounded-lg border border-white/12 px-3 py-1.5 text-xs text-ink"
+            >
+              처음부터
+            </button>
+          </div>
+        )}
+
+        {!node.terminal && (
+          <HandGrid
+            key={`${packTick}-${node.seat}-${node.pfAction}`}
+            getAction={getAction}
+            getFreqs={getFreqs}
+            title={nodeTitle(node, cfg)}
+          />
+        )}
       </div>
 
       <div className="rounded-2xl border border-white/8 bg-felt-2/80 p-4 sm:p-5">
@@ -135,4 +210,20 @@ export default function GtoLab() {
       )}
     </div>
   );
+}
+
+function crumbFromAdvance(from, to, cfg) {
+  for (const a of availableActions(from, cfg)) {
+    const n = advance(from, a.id, cfg);
+    if (
+      n.seat === to.seat &&
+      n.pfAction === to.pfAction &&
+      n.terminal === to.terminal &&
+      n.opener === to.opener &&
+      n.threeBettor === to.threeBettor
+    ) {
+      return crumbLabel(from, a.id);
+    }
+  }
+  return `${to.seat} ${pfLabel(to.pfAction)}`;
 }

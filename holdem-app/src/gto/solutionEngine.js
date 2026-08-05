@@ -224,7 +224,7 @@ export function correctBinary(cfg, hand, spot) {
 
 const ORDER_9 = ['UTG', 'UTG1', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
 
-function seatsForPlayers(n) {
+export function seatsForPlayers(n) {
   if (n <= 2) return ['SB', 'BB'];
   if (n <= 3) return ['BTN', 'SB', 'BB'];
   if (n <= 6) return ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
