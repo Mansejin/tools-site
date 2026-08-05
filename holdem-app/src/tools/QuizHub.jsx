@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   GraduationCap,
   CheckCircle2,
@@ -123,17 +122,12 @@ function OxButtons({ disabled, onYes, onNo, yesLabel = 'O · 올인/콜', noLabe
 
 function FeedbackModal({ correct, answerLabel, explanation, onNext, nextLabel }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
+    <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
     >
-      <motion.div
-        initial={{ scale: 0.95 }}
-        animate={{ scale: 1 }}
+      <div
         className="w-full max-w-md rounded-2xl border border-gold/25 bg-felt-3 p-5 shadow-2xl sm:p-6"
       >
         <div
@@ -153,8 +147,8 @@ function FeedbackModal({ correct, answerLabel, explanation, onNext, nextLabel })
         >
           {nextLabel}
         </button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -234,17 +228,13 @@ function ExamMode() {
         <span className="text-gold">정답 {score}</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-felt-4">
-        <motion.div
+        <div
           className="h-full rounded-full bg-gradient-to-r from-casino-green to-gold"
-          animate={{ width: `${((idx + (feedback ? 1 : 0)) / QUIZ.length) * 100}%` }}
+          style={{ width: `${((idx + (feedback ? 1 : 0)) / QUIZ.length) * 100}%` }}
         />
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div
+        <div
           key={q.id}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
         >
           <Card>
             <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-felt px-3 py-1.5 text-xs font-medium text-gold">
@@ -256,9 +246,7 @@ function ExamMode() {
             </h3>
             <OxButtons disabled={!!feedback} onYes={() => answer(true)} onNo={() => answer(false)} />
           </Card>
-        </motion.div>
-      </AnimatePresence>
-      <AnimatePresence>
+        </div>
         {feedback && (
           <FeedbackModal
             correct={feedback.correct}
@@ -268,7 +256,6 @@ function ExamMode() {
             nextLabel={idx + 1 >= QUIZ.length ? '결과 보기' : '다음 문제'}
           />
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -348,12 +335,8 @@ function DrillMode() {
         </p>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
+        <div
           key={`${q.hand}-${q.pos}-${q.kind}-${stats.n}`}
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
         >
           <Card>
             <div className="mb-3 inline-flex items-center gap-2 rounded-lg bg-felt px-3 py-1.5 text-xs font-medium text-gold">
@@ -377,10 +360,8 @@ function DrillMode() {
               yesLabel={q.kind === 'push' ? 'O · 푸시' : 'O · 콜'}
             />
           </Card>
-        </motion.div>
-      </AnimatePresence>
+        </div>
 
-      <AnimatePresence>
         {feedback && (
           <FeedbackModal
             correct={feedback.correct}
@@ -394,7 +375,6 @@ function DrillMode() {
             nextLabel="다음"
           />
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -463,7 +443,6 @@ function ReviewMode({ onChange }) {
         </h3>
         <OxButtons disabled={!!feedback} onYes={() => answer(true)} onNo={() => answer(false)} />
       </Card>
-      <AnimatePresence>
         {feedback && (
           <FeedbackModal
             correct={feedback.correct}
@@ -473,7 +452,6 @@ function ReviewMode({ onChange }) {
             nextLabel={feedback.correct ? '제거됨 · 다음' : '다음'}
           />
         )}
-      </AnimatePresence>
     </div>
   );
 }

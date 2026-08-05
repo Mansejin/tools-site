@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Timer,
   Calculator,
@@ -451,12 +450,7 @@ function BubbleTree() {
         </div>
       </Field>
 
-      <motion.div
-        key={key}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-gold/25 bg-gold/10 p-4"
-      >
+      <div key={key} className="rounded-xl border border-gold/25 bg-gold/10 p-4">
         <h3 className="mb-3 font-display text-lg text-gold-soft">{advice.title}</h3>
         <ul className="space-y-2">
           {advice.points.map((p) => (
@@ -466,7 +460,7 @@ function BubbleTree() {
             </li>
           ))}
         </ul>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -655,12 +649,7 @@ export default function PracticeTools({
   return (
     <div className="rounded-2xl border border-gold/15 bg-felt-3/80 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:p-6">
       <SubTabs tabs={TOOL_TABS} value={tab} onChange={changeTool} />
-      <motion.div
-        key={tab}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18 }}
-      >
+      <div key={tab}>
         {tab === 'settings' && <SettingsPanel />}
         {tab === 'timer' && <BlindTimer />}
         {tab === 'lookup' && (
@@ -670,7 +659,7 @@ export default function PracticeTools({
         {tab === 'roi' && <RoiCalc />}
         {tab === 'sheet' && <CheatSheet />}
         {tab === 'glossary' && <Glossary />}
-      </motion.div>
+      </div>
     </div>
   );
 }

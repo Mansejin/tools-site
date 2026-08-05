@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Timer,
   Search,
@@ -124,12 +123,11 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
       <div className="grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.flatMap((g) =>
           g.items.map((item) => (
-            <motion.button
+            <button
               key={`${g.group}-${item.label}`}
               type="button"
-              whileTap={{ scale: 0.985 }}
               onClick={() => onGo({ tab: item.tab, tool: item.tool })}
-              className="flex items-center gap-3 rounded-2xl px-2.5 py-3 text-left transition hover:bg-felt-3 active:bg-felt-2"
+              className="flex items-center gap-3 rounded-2xl px-2.5 py-3 text-left transition hover:bg-felt-3 active:scale-[0.985] active:bg-felt-2"
             >
               <span
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.color}`}
@@ -140,7 +138,7 @@ export default function HomeHub({ onGo, installPrompt, onInstall }) {
                 <span className="block text-sm font-semibold text-ink">{item.label}</span>
                 <span className="block truncate text-xs text-muted">{item.desc}</span>
               </span>
-            </motion.button>
+            </button>
           )),
         )}
       </div>

@@ -1,5 +1,4 @@
-/* ponytail: runtime cache for hashed assets; bump CACHE when shell changes */
-const CACHE = 'holdem-guide-v3';
+const CACHE = 'holdem-guide-v4';
 const PRECACHE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -19,19 +18,38 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetched = fetch(request)
+  // hashed assets: cache-first; HTML: network-first (avoid stale shell)
+  if (url.pathname.includes('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((res) => {
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(CACHE).then((c) => c.put(request, copy));
+            }
+            return res;
+          }),
+      ),
+    );
+    return;
+  }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
         .then((res) => {
-          if (res && res.ok && (request.url.includes('/assets/') || request.mode === 'navigate')) {
+          if (res.ok) {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(request, copy));
           }
           return res;
         })
-        .catch(() => cached || caches.match('./index.html'));
-      return cached || fetched;
-    }),
-  );
+        .catch(() => caches.match(request) || caches.match('./index.html')),
+    );
+  }
 });

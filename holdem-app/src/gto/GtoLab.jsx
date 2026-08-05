@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Grid3x3, ExternalLink, BookOpen, Swords } from 'lucide-react';
 import {
   GRID_RANKS,
@@ -258,14 +257,9 @@ export default function GtoLab() {
           ))}
         </div>
 
-        <motion.div
-          key={panel}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <div key={panel}>
           {panel === 'nash' ? <NashPanel /> : <RfiPanel />}
-        </motion.div>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/8 bg-felt-2/80 p-4 sm:p-5">

@@ -13,8 +13,8 @@
   --color-deep-red-bright: #c0392b;
   --color-ink: #e8ebe6;
   --color-muted: #9aa89f;
-  --font-display: 'Cinzel', 'Pretendard', serif;
-  --font-sans: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --font-display: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+  --font-sans: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
 }
 
 * {

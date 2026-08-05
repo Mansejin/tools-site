@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import {
   Zap,
   Hourglass,
@@ -19,14 +18,19 @@ import {
   Wrench,
   Home,
 } from 'lucide-react';
-import GtoLab from './gto/GtoLab.jsx';
-import PracticeTools from './tools/PracticeTools.jsx';
-import QuizHub from './tools/QuizHub.jsx';
 import HomeHub from './HomeHub.jsx';
 import BottomNav, { isGuideTab } from './BottomNav.jsx';
 import { readRoute, writeRoute } from './lib/route.js';
 import { useGameSettings } from './settings/GameSettingsContext.jsx';
 import SettingsPanel from './settings/SettingsPanel.jsx';
+
+const GtoLab = lazy(() => import('./gto/GtoLab.jsx'));
+const PracticeTools = lazy(() => import('./tools/PracticeTools.jsx'));
+const QuizHub = lazy(() => import('./tools/QuizHub.jsx'));
+
+function TabFallback() {
+  return <p className="py-16 text-center text-sm text-muted">로딩…</p>;
+}
 
 /* ─── Tabs config ─── */
 const TABS = [
@@ -97,30 +101,15 @@ function Accordion({ items }) {
                 )}
                 {item.title}
               </span>
-              <motion.span
-                animate={{ rotate: isOpen ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-muted"
-              >
+              <span className={`text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`}>
                 <ChevronDown size={18} />
-              </motion.span>
+              </span>
             </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  key="body"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.22 }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-t border-white/6 px-4 py-4 text-sm leading-relaxed text-muted sm:text-[15px]">
-                    {item.body}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isOpen && (
+              <div className="border-t border-white/6 px-4 py-4 text-sm leading-relaxed text-muted sm:text-[15px]">
+                {item.body}
+              </div>
+            )}
           </div>
         );
       })}
@@ -566,10 +555,7 @@ export default function App() {
                   <span className="sm:hidden">{short}</span>
                   <span className="hidden sm:inline">{label}</span>
                   {active && (
-                    <motion.span
-                      layoutId="tab-underline"
-                      className="absolute inset-x-2 -bottom-1.5 h-0.5 rounded-full bg-casino-green-bright"
-                    />
+                    <span className="absolute inset-x-2 -bottom-1.5 h-0.5 rounded-full bg-casino-green-bright" />
                   )}
                 </button>
               );
@@ -600,47 +586,39 @@ export default function App() {
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22 }}
-          >
-            {tab === 'home' && (
-              <HomeHub
-                onGo={({ tab: t, tool: tl }) => syncRoute({ tab: t, tool: tl })}
-                installPrompt={installPrompt}
-                onInstall={async () => {
-                  if (!installPrompt) return;
-                  installPrompt.prompt();
-                  await installPrompt.userChoice;
-                  setInstallPrompt(null);
-                }}
-              />
-            )}
-            {tab === 'turbo' && (
-              <TurboTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-            )}
-            {tab === 'mtt' && (
-              <MttTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-            )}
-            {tab === 'hu' && (
-              <HeadsUpTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-            )}
-            {tab === 'gto' && <GtoLab />}
-            {tab === 'tools' && (
-              <PracticeTools
-                initialTool={tool}
-                initialHand={hand || undefined}
-                initialPos={pos || undefined}
-                onToolChange={(id) => syncRoute({ tab: 'tools', tool: id })}
-              />
-            )}
-            {tab === 'quiz' && <QuizHub />}
-          </motion.div>
-        </AnimatePresence>
+        {tab === 'home' && (
+          <HomeHub
+            onGo={({ tab: t, tool: tl }) => syncRoute({ tab: t, tool: tl })}
+            installPrompt={installPrompt}
+            onInstall={async () => {
+              if (!installPrompt) return;
+              installPrompt.prompt();
+              await installPrompt.userChoice;
+              setInstallPrompt(null);
+            }}
+          />
+        )}
+        {tab === 'turbo' && (
+          <TurboTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+        )}
+        {tab === 'mtt' && (
+          <MttTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+        )}
+        {tab === 'hu' && (
+          <HeadsUpTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
+        )}
+        <Suspense fallback={<TabFallback />}>
+          {tab === 'gto' && <GtoLab />}
+          {tab === 'tools' && (
+            <PracticeTools
+              initialTool={tool}
+              initialHand={hand || undefined}
+              initialPos={pos || undefined}
+              onToolChange={(id) => syncRoute({ tab: 'tools', tool: id })}
+            />
+          )}
+          {tab === 'quiz' && <QuizHub />}
+        </Suspense>
 
         <footer className="mt-10 hidden border-t border-white/8 pt-6 text-center text-xs text-muted md:block">
           <p>※ 학습용 정리입니다. 도박을 권하지 않습니다.</p>
