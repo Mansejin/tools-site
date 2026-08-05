@@ -24,7 +24,7 @@ import { useGameSettings } from './settings/GameSettingsContext.jsx';
 import SettingsPanel from './settings/SettingsPanel.jsx';
 
 const GtoLab = lazy(() => import('./gto/GtoLab.jsx'));
-const QuizHub = lazy(() => import('./tools/QuizHub.jsx'));
+const HandTrainer = lazy(() => import('./gto/HandTrainer.jsx'));
 
 function TabFallback() {
   return <p className="py-16 text-center text-sm text-muted">로딩…</p>;
@@ -632,7 +632,7 @@ export default function App() {
         )}
 
         <Suspense fallback={<TabFallback />}>
-          {tab === 'practice' && <QuizHub />}
+          {tab === 'practice' && <HandTrainer />}
           {tab === 'charts' && <GtoLab />}
         </Suspense>
         {tab === 'more' && (
