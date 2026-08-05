@@ -235,18 +235,23 @@ export function buildScenario(cfg, setup, hand) {
       lines.push({ seat: s, text: '폴드' });
     }
     if (hero === 'SB') {
-      lines.push({ seat: '히어로 SB', text: '액션 (오픈?)' });
+      lines.push({ seat: '히어로 SB', text: '당신 차례' });
       toCall = 0.5;
       pot = 1.5;
+      raiseTo = openBb;
     } else if (hero === 'BB') {
-      lines.push({ seat: 'SB', text: '폴드' });
-      lines.push({ seat: '히어로 BB', text: '옵션 체크/오픈' });
+      // Walk(전원 폴드)면 BB는 행동할 게 없음 → SB 림프로 바꿔 옵션(체크/고립) 훈련
+      lines.push({ seat: 'SB', text: '림프 1' });
+      pot = 2.5;
       toCall = 0;
+      raiseTo = Math.min(stack, Math.round(openBb * 1.5 * 10) / 10); // ~iso 3.3
+      villain = 'SB';
+      lines.push({ seat: '히어로 BB', text: '당신 차례' });
     } else {
-      lines.push({ seat: `히어로 ${hero}`, text: '액션 (오픈?)' });
+      lines.push({ seat: `히어로 ${hero}`, text: '당신 차례' });
       toCall = 0;
+      raiseTo = openBb;
     }
-    raiseTo = openBb;
   } else if (pf === 'vs_open' || pf === 'vs_limp' || pf === 'vs_iso') {
     const openers = seats.filter((s) => s !== 'BB' && s !== hero);
     villain = openers[Math.floor(Math.random() * openers.length)] || 'CO';
@@ -286,23 +291,35 @@ export function buildScenario(cfg, setup, hand) {
     lines.push({ seat: `히어로 ${hero}`, text: '당신 차례' });
   }
 
+  // Frequency spot: BB "open/all" is actually vs limp after the rewrite above
+  const freqPf =
+    (pf === 'open' || pf === 'from_start' || pf === 'all') && hero === 'BB' ? 'vs_limp' : pf;
+
   const enginePos =
-    pf.startsWith('vs_') && (pf === 'vs_open' || pf === 'vs_limp' || pf === 'vs_iso')
+    freqPf.startsWith('vs_') && (freqPf === 'vs_open' || freqPf === 'vs_limp' || freqPf === 'vs_iso')
       ? hero === 'SB'
         ? 'SB'
         : 'BB'
       : mapHeroSeat(hero);
 
-  const freqs = strategyFrequencies(cfg, hand, { pos: enginePos, pfAction: pf });
-  const available = ['fold'];
-  if (toCall > 0.05) available.push('call');
-  // limp-check option for BB without toCall in open case treated as check -> fold button stays, add raise
-  if (toCall <= 0.05 && (pf === 'open' || pf === 'from_start' || pf === 'all') && hero === 'BB') {
-    // check is free = map to "call" as check
-    available.push('call');
+  const freqs = strategyFrequencies(cfg, hand, { pos: enginePos, pfAction: freqPf });
+  const available = [];
+  // Option line (BB vs limp): Check / Raise only — folding the option is nonsense to offer as main line
+  const isOption = toCall <= 0.05 && hero === 'BB' && freqPf === 'vs_limp';
+  if (isOption) {
+    available.push('call', 'raise');
+    if (stack <= 25) available.push('shove');
+  } else {
+    available.push('fold');
+    if (toCall > 0.05) available.push('call');
+    if (toCall <= 0.05 && (pf === 'open' || pf === 'from_start' || pf === 'all') && hero !== 'BB') {
+      // first-in open: Raise / Fold (no check except BB which we rewrote)
+      available.push('raise');
+    } else if (stack > toCall + 0.5) {
+      available.push('raise');
+    }
+    if (stack <= 40 || freqs.shove > 0 || stack <= 20) available.push('shove');
   }
-  if (stack > toCall + 0.5) available.push('raise');
-  if (stack <= 40 || freqs.shove > 0 || stack <= 20) available.push('shove');
 
   // ensure unique
   const uniq = [...new Set(available)];
@@ -312,12 +329,18 @@ export function buildScenario(cfg, setup, hand) {
   const folded = new Set();
   for (const l of lines) {
     const seat = String(l.seat).replace(/^히어로\s+/, '');
-    if (l.text.startsWith('폴드')) folded.add(seat);
+    if (String(l.seat).startsWith('히어로')) continue; // never parse hero prompt as a posted bet
+    if (l.text.startsWith('폴드')) {
+      folded.add(seat);
+      continue;
+    }
     const m = l.text.match(/(?:오픈|림프|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
     if (m) betBySeat[seat] = Number(m[1] || (l.text.includes('림프') ? 1 : openBb));
   }
-  if (hero === 'BB') betBySeat.BB = betBySeat.BB ?? 1;
-  if (hero === 'SB' || seats.includes('SB')) betBySeat.SB = betBySeat.SB ?? 0.5;
+  // Posted blinds still in front unless moved to pot (keep simple: show blind bets)
+  if (!folded.has('BB')) betBySeat.BB = betBySeat.BB ?? 1;
+  if (!folded.has('SB')) betBySeat.SB = betBySeat.SB ?? 0.5;
+  // SB limp: already 1 in betBySeat from line
 
   const tableSeats = seats.map((id) => ({
     id,
@@ -330,7 +353,8 @@ export function buildScenario(cfg, setup, hand) {
   }));
 
   const titleBits = [];
-  if (pf === 'vs_open' || pf === 'vs_limp' || pf === 'vs_iso') titleBits.push(`${hero} vs. ${villain}`);
+  if (freqPf === 'vs_limp' && hero === 'BB') titleBits.push('BB vs. SB', 'vs 림프');
+  else if (pf === 'vs_open' || pf === 'vs_limp' || pf === 'vs_iso') titleBits.push(`${hero} vs. ${villain}`);
   else if (pf.startsWith('vs_')) titleBits.push(`${hero} vs ${villain}`);
   else titleBits.push(hero);
   const pfLabel =
@@ -346,8 +370,9 @@ export function buildScenario(cfg, setup, hand) {
       vs_iso: 'vs 고립',
       from_start: '처음부터',
       all: '모두',
-    }[pf] || pf;
-  titleBits.push(pfLabel, `${stack}bb`);
+    }[freqPf === 'vs_limp' && hero === 'BB' ? 'vs_limp' : pf] || pf;
+  if (!(freqPf === 'vs_limp' && hero === 'BB')) titleBits.push(pfLabel);
+  titleBits.push(`${stack}bb`);
 
   const spotHistory = lines.map((l, i) => {
     const seat = String(l.seat).replace(/^히어로\s+/, '');
@@ -399,12 +424,7 @@ export function buildScenario(cfg, setup, hand) {
     available: uniq,
     labels: {
       fold: 'Fold',
-      call:
-        toCall <= 0.05
-          ? hero === 'BB' && (pf === 'open' || pf === 'from_start' || pf === 'all')
-            ? 'Check'
-            : 'Call'
-          : `Call`,
+      call: toCall <= 0.05 ? 'Check' : 'Call',
       callDetail: toCall > 0.05 ? `${Math.round(toCall * 10) / 10}` : '',
       raise: 'Raise',
       raiseDetail: `${Math.round(raiseTo * 10) / 10}`,
