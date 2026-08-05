@@ -1,25 +1,34 @@
 const STREAK_KEY = 'holdem-bible-streak';
 
-const TAB_IDS = new Set(['home', 'turbo', 'mtt', 'hu', 'gto', 'tools', 'quiz']);
-const TOOL_IDS = new Set(['timer', 'lookup', 'bubble', 'roi', 'sheet', 'glossary', 'settings']);
+const TAB_IDS = new Set(['practice', 'charts', 'more']);
+const LEGACY = {
+  home: 'practice',
+  quiz: 'practice',
+  gto: 'charts',
+  tools: 'more',
+  turbo: 'more',
+  mtt: 'more',
+  hu: 'more',
+};
+const GUIDE_IDS = new Set(['turbo', 'mtt', 'hu']);
 
 export function readRoute() {
   const p = new URLSearchParams(window.location.search);
-  const tab = TAB_IDS.has(p.get('tab')) ? p.get('tab') : 'home';
-  const tool = TOOL_IDS.has(p.get('tool')) ? p.get('tool') : 'timer';
-  const hand = (p.get('hand') || '').trim() || null;
-  const pos = (p.get('pos') || '').trim().toUpperCase() || null;
+  const raw = p.get('tab');
+  const tab = TAB_IDS.has(raw) ? raw : LEGACY[raw] || 'practice';
+  const guide = GUIDE_IDS.has(p.get('guide'))
+    ? p.get('guide')
+    : GUIDE_IDS.has(raw)
+      ? raw
+      : 'turbo';
   const mode = p.get('mode') || null;
-  return { tab, tool, hand, pos, mode };
+  return { tab, guide, mode };
 }
 
-/** Build query string; omit defaults to keep links short. */
-export function buildQuery({ tab = 'home', tool, hand, pos, mode } = {}) {
+export function buildQuery({ tab = 'practice', guide, mode } = {}) {
   const p = new URLSearchParams();
-  if (tab && tab !== 'home') p.set('tab', tab);
-  if (tab === 'tools' && tool && tool !== 'timer') p.set('tool', tool);
-  if (hand) p.set('hand', hand);
-  if (pos) p.set('pos', pos);
+  if (tab && tab !== 'practice') p.set('tab', tab);
+  if (tab === 'more' && guide && guide !== 'turbo') p.set('guide', guide);
   if (mode) p.set('mode', mode);
   const s = p.toString();
   return s ? `?${s}` : '';
@@ -55,7 +64,6 @@ export function readStreak() {
   }
 }
 
-/** Call once per day when user practices or opens home. Returns { count, touched }. */
 export function touchStreak() {
   const today = todayKey();
   const prev = readStreak();

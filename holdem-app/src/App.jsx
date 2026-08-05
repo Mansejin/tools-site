@@ -15,32 +15,30 @@ import {
   XCircle,
   ArrowLeft,
   Grid3x3,
-  Wrench,
-  Home,
+  BookOpen,
+  Download,
 } from 'lucide-react';
-import HomeHub from './HomeHub.jsx';
-import BottomNav, { isGuideTab } from './BottomNav.jsx';
+import BottomNav from './BottomNav.jsx';
 import { readRoute, writeRoute } from './lib/route.js';
 import { useGameSettings } from './settings/GameSettingsContext.jsx';
 import SettingsPanel from './settings/SettingsPanel.jsx';
 
 const GtoLab = lazy(() => import('./gto/GtoLab.jsx'));
-const PracticeTools = lazy(() => import('./tools/PracticeTools.jsx'));
 const QuizHub = lazy(() => import('./tools/QuizHub.jsx'));
 
 function TabFallback() {
   return <p className="py-16 text-center text-sm text-muted">로딩…</p>;
 }
 
-/* ─── Tabs config ─── */
-const TABS = [
-  { id: 'home', label: '홈', short: '홈', icon: Home },
-  { id: 'turbo', label: '터보', short: '터보', icon: Zap },
-  { id: 'mtt', label: 'MTT', short: 'MTT', icon: Hourglass },
-  { id: 'hu', label: '헤즈업', short: 'HU', icon: Swords },
-  { id: 'gto', label: '차트', short: '차트', icon: Grid3x3 },
-  { id: 'tools', label: '도구', short: '도구', icon: Wrench },
-  { id: 'quiz', label: '퀴즈', short: '퀴즈', icon: GraduationCap },
+const MAIN_TABS = [
+  { id: 'practice', label: 'GTO 연습', short: '연습', icon: GraduationCap },
+  { id: 'charts', label: '차트 · 솔버', short: '차트', icon: Grid3x3 },
+];
+
+const GUIDE_SECTIONS = [
+  { id: 'turbo', label: '터보' },
+  { id: 'mtt', label: 'MTT' },
+  { id: 'hu', label: '헤즈업' },
 ];
 
 const PUSH_FOLD = [
@@ -454,39 +452,89 @@ function HeadsUpTab({ onOpenSettings }) {
 }
 
 
-/* ─── App ─── */
+
+function MorePage({ guide, setGuide, installPrompt, onInstall }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const openSettings = () => setSettingsOpen(true);
+
+  if (settingsOpen) {
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(false)}
+          className="text-sm text-muted hover:text-ink"
+        >
+          ← 가이드로
+        </button>
+        <SettingsPanel />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-lg font-semibold text-ink">가이드</h1>
+        <p className="mt-1 text-xs text-muted">펍 구조 정리 · 참고용</p>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+        {GUIDE_SECTIONS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setGuide(c.id)}
+            className={`min-h-10 shrink-0 rounded-full px-3.5 text-sm font-medium ${
+              guide === c.id ? 'bg-gold text-felt' : 'border border-white/12 text-muted'
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+      {guide === 'turbo' && <TurboTab onOpenSettings={openSettings} />}
+      {guide === 'mtt' && <MttTab onOpenSettings={openSettings} />}
+      {guide === 'hu' && <HeadsUpTab onOpenSettings={openSettings} />}
+
+      {installPrompt && (
+        <button
+          type="button"
+          onClick={onInstall}
+          className="mx-auto flex items-center gap-1.5 py-3 text-xs text-muted/70 hover:text-muted"
+        >
+          <Download size={12} />
+          홈 화면에 추가
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const initial = readRoute();
   const [tab, setTab] = useState(initial.tab);
-  const [tool, setTool] = useState(initial.tool);
-  const [hand, setHand] = useState(initial.hand);
-  const [pos, setPos] = useState(initial.pos);
+  const [guide, setGuide] = useState(initial.guide);
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [guideOpen, setGuideOpen] = useState(false);
 
-  const syncRoute = useCallback((next) => {
-    const state = {
-      tab: next.tab ?? tab,
-      tool: next.tool ?? tool,
-      hand: next.hand !== undefined ? next.hand : hand,
-      pos: next.pos !== undefined ? next.pos : pos,
-    };
-    if (next.tab !== undefined) setTab(next.tab);
-    if (next.tool !== undefined) setTool(next.tool);
-    if (next.hand !== undefined) setHand(next.hand);
-    if (next.pos !== undefined) setPos(next.pos);
-    writeRoute(state);
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, [tab, tool, hand, pos]);
+  const syncRoute = useCallback(
+    (next) => {
+      const state = {
+        tab: next.tab ?? tab,
+        guide: next.guide ?? guide,
+      };
+      if (next.tab !== undefined) setTab(next.tab);
+      if (next.guide !== undefined) setGuide(next.guide);
+      writeRoute(state);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    },
+    [tab, guide],
+  );
 
   useEffect(() => {
     function onPop() {
       const r = readRoute();
       setTab(r.tab);
-      setTool(r.tool);
-      setHand(r.hand);
-      setPos(r.pos);
-      setGuideOpen(false);
+      setGuide(r.guide);
     }
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -502,8 +550,21 @@ export default function App() {
   }, []);
 
   function goTab(id) {
-    syncRoute({ tab: id, tool: id === 'tools' ? tool : undefined });
+    syncRoute({ tab: id });
   }
+
+  function goGuide(id) {
+    syncRoute({ tab: 'more', guide: id ?? guide });
+  }
+
+  async function onInstall() {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
+
+  const onMore = tab === 'more';
 
   return (
     <div className="felt-noise min-h-dvh">
@@ -516,130 +577,79 @@ export default function App() {
             <ArrowLeft size={14} />
             <span className="hidden sm:inline">장난감</span>
           </a>
-          {tab !== 'home' && (
-            <p className="truncate text-sm font-medium text-ink">
-              {TABS.find((t) => t.id === tab)?.label || ''}
-            </p>
-          )}
-          {tab !== 'home' ? (
-            <button
-              type="button"
-              onClick={() => goTab('home')}
-              className="min-h-10 rounded-lg px-2 text-sm text-muted hover:text-ink"
-            >
-              홈
-            </button>
-          ) : (
-            <span className="w-10" aria-hidden />
-          )}
+
+          <div className="flex items-center gap-1">
+            {onMore ? (
+              <button
+                type="button"
+                onClick={() => goTab('practice')}
+                className="min-h-10 rounded-lg px-2 text-sm text-muted hover:text-ink"
+              >
+                닫기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => goGuide()}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 text-sm text-muted transition hover:bg-felt-3 hover:text-ink"
+                aria-label="가이드"
+                title="가이드"
+              >
+                <BookOpen size={16} />
+                <span className="hidden sm:inline">가이드</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* desktop top tabs — slim, no hero */}
-        <nav
-          className="sticky top-0 z-40 -mx-3 mb-5 hidden border-b border-white/8 bg-felt/95 px-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:block"
-          aria-label="메뉴"
-        >
-          <div className="flex gap-1 overflow-x-auto py-1.5 scrollbar-thin">
-            {TABS.map(({ id, label, short, icon: Icon }) => {
-              const active = tab === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => goTab(id)}
-                  className={`relative flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                    active ? 'text-ink' : 'text-muted hover:text-ink'
-                  }`}
-                >
-                  <Icon size={15} />
-                  <span className="sm:hidden">{short}</span>
-                  <span className="hidden sm:inline">{label}</span>
-                  {active && (
-                    <span className="absolute inset-x-2 -bottom-1.5 h-0.5 rounded-full bg-casino-green-bright" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-
-        {/* mobile: compact chip row for guide context only */}
-        {isGuideTab(tab) && (
-          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin md:hidden">
-            {[
-              { id: 'turbo', label: '터보' },
-              { id: 'mtt', label: 'MTT' },
-              { id: 'hu', label: 'HU' },
-              { id: 'gto', label: '차트' },
-            ].map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => goTab(c.id)}
-                className={`min-h-10 shrink-0 rounded-full px-3.5 text-sm font-medium ${
-                  tab === c.id ? 'bg-gold text-felt' : 'border border-white/12 text-muted'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+        {!onMore && (
+          <nav
+            className="sticky top-0 z-40 -mx-3 mb-5 hidden border-b border-white/8 bg-felt/95 px-3 backdrop-blur-md sm:-mx-6 sm:px-6 md:block"
+            aria-label="메뉴"
+          >
+            <div className="flex gap-1 overflow-x-auto py-1.5 scrollbar-thin">
+              {MAIN_TABS.map(({ id, label, icon: Icon }) => {
+                const active = tab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => goTab(id)}
+                    className={`relative flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      active ? 'text-ink' : 'text-muted hover:text-ink'
+                    }`}
+                  >
+                    <Icon size={15} />
+                    {label}
+                    {active && (
+                      <span className="absolute inset-x-2 -bottom-1.5 h-0.5 rounded-full bg-casino-green-bright" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
         )}
 
-        {tab === 'home' && (
-          <HomeHub
-            onGo={({ tab: t, tool: tl }) => syncRoute({ tab: t, tool: tl })}
+        <Suspense fallback={<TabFallback />}>
+          {tab === 'practice' && <QuizHub />}
+          {tab === 'charts' && <GtoLab />}
+        </Suspense>
+        {tab === 'more' && (
+          <MorePage
+            guide={guide}
+            setGuide={(g) => syncRoute({ tab: 'more', guide: g })}
             installPrompt={installPrompt}
-            onInstall={async () => {
-              if (!installPrompt) return;
-              installPrompt.prompt();
-              await installPrompt.userChoice;
-              setInstallPrompt(null);
-            }}
+            onInstall={onInstall}
           />
         )}
-        {tab === 'turbo' && (
-          <TurboTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-        )}
-        {tab === 'mtt' && (
-          <MttTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-        )}
-        {tab === 'hu' && (
-          <HeadsUpTab onOpenSettings={() => syncRoute({ tab: 'tools', tool: 'settings' })} />
-        )}
-        <Suspense fallback={<TabFallback />}>
-          {tab === 'gto' && <GtoLab />}
-          {tab === 'tools' && (
-            <PracticeTools
-              initialTool={tool}
-              initialHand={hand || undefined}
-              initialPos={pos || undefined}
-              onToolChange={(id) => syncRoute({ tab: 'tools', tool: id })}
-            />
-          )}
-          {tab === 'quiz' && <QuizHub />}
-        </Suspense>
 
         <footer className="mt-10 hidden border-t border-white/8 pt-6 text-center text-xs text-muted md:block">
-          <p>※ 학습용 정리입니다. 도박을 권하지 않습니다.</p>
-          <p className="mt-1">
-            <a href="/toys/" className="hover:text-gold">
-              장난감
-            </a>
-            {' · '}
-            <a href="/" className="hover:text-gold">
-              도구함
-            </a>
-          </p>
+          <p>※ 학습용입니다. 도박을 권하지 않습니다.</p>
         </footer>
       </div>
 
-      <BottomNav
-        tab={tab}
-        onTab={goTab}
-        guideOpen={guideOpen}
-        setGuideOpen={setGuideOpen}
-      />
+      {!onMore && <BottomNav tab={tab} onTab={goTab} />}
     </div>
   );
 }

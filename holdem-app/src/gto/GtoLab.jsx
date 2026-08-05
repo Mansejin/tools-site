@@ -231,10 +231,10 @@ export default function GtoLab() {
           </span>
           <div>
             <h2 className="font-display text-lg font-semibold tracking-wide text-ink sm:text-xl">
-              프리플랍 차트
+              차트 · 솔버
             </h2>
             <p className="mt-1 text-sm text-muted">
-              오픈소스 Nash·RFI 데이터를 넣었습니다. (GTO Wizard 클론은 아님)
+              Nash 푸시/폴드 · RFI. 아래 외부 솔버로 더 깊게.
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-const CACHE = 'holdem-guide-v4';
+const CACHE = 'holdem-guide-v5';
 const PRECACHE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', (event) => {
