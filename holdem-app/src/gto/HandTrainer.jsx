@@ -235,38 +235,36 @@ function LiveSeat({ seat, angle, cards }) {
 function HistoryStrip({ spots, hero }) {
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-      {spots.map((sp, i) => (
-        <div
-          key={`${sp.seat}-${i}`}
-          className={`w-[5.5rem] shrink-0 rounded-lg border px-1.5 py-1 ${
-            sp.active ? 'border-white/30 bg-[#2a2a2a]' : 'border-white/8 bg-[#1a1a1a]'
-          }`}
-        >
-          <div className="mb-1 flex justify-between text-[10px] text-muted">
-            <span className={sp.seat === hero || sp.active ? 'text-ink' : ''}>{sp.seat}</span>
-            <span>{sp.stack}</span>
-          </div>
-          {sp.active ? (
-            <p className="py-2 text-center text-[10px] text-amber-200/90">행동을 선택해 주세요</p>
-          ) : (
-            <div className="space-y-0.5">
-              {sp.actions
-                .filter((a) => a.taken || a.id === 'fold' || a.id === 'raise' || a.id === 'shove')
-                .slice(0, 3)
-                .map((a) => (
+      {spots.map((sp, i) => {
+        const taken = sp.actions.filter((a) => a.taken);
+        return (
+          <div
+            key={`${sp.seat}-${i}`}
+            className={`w-[5.75rem] shrink-0 rounded-lg border px-1.5 py-1 ${
+              sp.active ? 'border-white/30 bg-[#2a2a2a]' : 'border-white/8 bg-[#1a1a1a]'
+            }`}
+          >
+            <div className="mb-1 flex justify-between text-[10px] text-muted">
+              <span className={sp.seat === hero || sp.active ? 'font-semibold text-ink' : ''}>{sp.seat}</span>
+              <span className="tabular-nums">{sp.stackLeft ?? sp.stack}</span>
+            </div>
+            {sp.active ? (
+              <p className="py-2 text-center text-[10px] text-amber-200/90">당신 차례</p>
+            ) : (
+              <div className="space-y-0.5">
+                {(taken.length ? taken : [{ id: 'na', label: '—' }]).map((a) => (
                   <div
                     key={a.id}
-                    className={`rounded px-1 py-0.5 text-[10px] ${
-                      a.taken ? 'bg-white/15 text-ink' : 'text-muted/50'
-                    }`}
+                    className="rounded bg-white/12 px-1 py-0.5 text-[10px] font-medium text-ink"
                   >
                     {a.label}
                   </div>
                 ))}
-            </div>
-          )}
-        </div>
-      ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

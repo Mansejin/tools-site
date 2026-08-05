@@ -306,15 +306,42 @@ export function buildScenario(cfg, setup, hand) {
     }
     lines.push({ seat: `히어로 ${hero}`, text: '당신 차례' });
   } else {
-    // vs 3bet / 4bet path: hero opened, villain 3bet
-    villain = hero === 'BTN' ? 'BB' : 'BTN';
+    // vs 3bet / 4bet / squeeze / raise-call: hero opened, villain 3bet, blinds fold, hero acts
+    villain = hero === 'BTN' ? 'BB' : hero === 'SB' ? 'BB' : 'BTN';
+    const three = threeBetTo(cfg);
+    const threeAmt = pf === 'vs_squeeze' ? three + 3 : three;
+
+    for (const s of before(hero)) {
+      if (s === 'SB' || s === 'BB') continue;
+      lines.push({ seat: s, text: '폴드' });
+    }
     lines.push({ seat: `히어로 ${hero}`, text: `오픈 ${openBb}bb` });
     pot = 1.5 + openBb;
-    const three = threeBetTo(cfg);
-    lines.push({ seat: villain, text: pf === 'vs_squeeze' ? `스퀴즈 ${three + 3}bb` : `3벳 ${three}bb` });
-    pot = 1.5 + openBb + three;
-    toCall = three - openBb;
-    raiseTo = Math.min(stack, three * 2.4);
+
+    // folds between opener and 3bettor (e.g. BTN→SB already skipped)
+    for (const s of seats) {
+      if (s === hero || s === villain) continue;
+      const hi = ORDER_9.indexOf(hero);
+      const vi = ORDER_9.indexOf(villain);
+      const si = ORDER_9.indexOf(s);
+      if (hi < vi && si > hi && si < vi) lines.push({ seat: s, text: '폴드' });
+    }
+
+    lines.push({
+      seat: villain,
+      text: pf === 'vs_squeeze' ? `스퀴즈 ${threeAmt}bb` : `3벳 ${threeAmt}bb`,
+    });
+    pot = 1.5 + openBb + threeAmt;
+
+    // Remaining players after 3bet fold (SB/BB) before action returns to opener
+    for (const s of seats) {
+      if (s === hero || s === villain) continue;
+      const already = lines.some((l) => String(l.seat).replace(/^히어로\s+/, '') === s);
+      if (!already) lines.push({ seat: s, text: '폴드' });
+    }
+
+    toCall = threeAmt - openBb;
+    raiseTo = Math.min(stack, Math.round(threeAmt * 2.4 * 10) / 10);
     lines.push({ seat: `히어로 ${hero}`, text: '당신 차례' });
   }
 
@@ -354,20 +381,23 @@ export function buildScenario(cfg, setup, hand) {
   // Seat board state for live table (GTOW-style)
   const betBySeat = {};
   const folded = new Set();
+  // Blinds are always posted first (remain in pot even after fold)
+  if (seats.includes('BB')) betBySeat.BB = 1;
+  if (seats.includes('SB')) betBySeat.SB = 0.5;
   for (const l of lines) {
     const seat = String(l.seat).replace(/^히어로\s+/, '');
-    if (String(l.seat).startsWith('히어로')) continue; // never parse hero prompt as a posted bet
+    if (String(l.seat).startsWith('히어로') && l.text === '당신 차례') continue;
     if (l.text.startsWith('폴드')) {
       folded.add(seat);
       continue;
     }
+    // Hero open line still counts as a posted bet
     const m = l.text.match(/(?:오픈|림프|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
-    if (m) betBySeat[seat] = Number(m[1] || (l.text.includes('림프') ? 1 : openBb));
+    if (m) {
+      const who = seat;
+      betBySeat[who] = Number(m[1] || (l.text.includes('림프') ? 1 : openBb));
+    }
   }
-  // Posted blinds still in front unless moved to pot (keep simple: show blind bets)
-  if (!folded.has('BB')) betBySeat.BB = betBySeat.BB ?? 1;
-  if (!folded.has('SB')) betBySeat.SB = betBySeat.SB ?? 0.5;
-  // SB limp: already 1 in betBySeat from line
 
   const tableSeats = seats.map((id) => ({
     id,
@@ -404,29 +434,35 @@ export function buildScenario(cfg, setup, hand) {
   const spotHistory = lines.map((l, i) => {
     const seat = String(l.seat).replace(/^히어로\s+/, '');
     const fold = l.text.includes('폴드');
-    const call = l.text.includes('콜') || l.text.includes('체크');
+    const call = l.text.includes('콜') || l.text.includes('체크') || l.text.includes('림프');
     const allin = l.text.includes('올인');
-    const raiseM = l.text.match(/(?:오픈|림프|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
+    const raiseM = l.text.match(/(?:오픈|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
+    const limp = l.text.includes('림프');
     const raise = !!raiseM;
-    const raiseAmt = raiseM?.[1] || (l.text.includes('림프') ? '1' : String(openBb));
-    const isHeroLine = String(l.seat).startsWith('히어로') || i === lines.length - 1;
+    const raiseAmt = raiseM?.[1] || String(openBb);
+    const isActiveHero = String(l.seat).startsWith('히어로') && l.text === '당신 차례';
+    let actions;
+    if (isActiveHero) {
+      actions = [];
+    } else if (fold) {
+      actions = [{ id: 'fold', label: 'Fold', taken: true }];
+    } else if (limp) {
+      actions = [{ id: 'call', label: `Limp ${raiseAmt === openBb ? '1' : raiseAmt}`, taken: true }];
+    } else if (raise) {
+      actions = [{ id: 'raise', label: l.text.includes('3벳') ? `3bet ${raiseAmt}` : l.text.includes('스퀴즈') ? `Squeeze ${raiseAmt}` : `Raise ${raiseAmt}`, taken: true }];
+    } else if (call) {
+      actions = [{ id: 'call', label: 'Call', taken: true }];
+    } else if (allin) {
+      actions = [{ id: 'shove', label: `Allin ${stack}`, taken: true }];
+    } else {
+      actions = [{ id: 'na', label: l.text, taken: true }];
+    }
     return {
       seat,
-      stack: seat === 'SB' && !raise && !allin ? Math.round((stack - 0.5) * 10) / 10 : stack,
-      active: isHeroLine && i === lines.length - 1,
-      actions: isHeroLine && i === lines.length - 1
-        ? [
-            { id: 'fold', label: 'Fold', taken: false },
-            { id: 'call', label: 'Call', taken: false },
-            { id: 'raise', label: `Raise ${raiseTo}`, taken: false },
-            { id: 'shove', label: `Allin ${stack}`, taken: false },
-          ]
-        : [
-            { id: 'fold', label: 'Fold', taken: fold },
-            ...(call ? [{ id: 'call', label: 'Call', taken: true }] : []),
-            { id: 'raise', label: raise ? `Raise ${raiseAmt}` : `Raise ${openBb}`, taken: raise },
-            { id: 'shove', label: `Allin ${stack}`, taken: allin },
-          ],
+      stack,
+      stackLeft: Math.round((stack - (betBySeat[seat] || 0)) * 10) / 10,
+      active: isActiveHero,
+      actions,
     };
   });
 
