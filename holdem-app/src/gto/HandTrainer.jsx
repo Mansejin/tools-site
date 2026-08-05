@@ -101,13 +101,13 @@ function MiniCard({ r, s, large }) {
   );
 }
 
-function FreqStrip({ freqs }) {
+function FreqStrip({ freqs, available, checkLabel }) {
   const rows = [
     { id: 'shove', label: 'Allin', color: ACT_COLOR.shove },
     { id: 'raise', label: 'Raise', color: ACT_COLOR.raise },
-    { id: 'call', label: 'Call', color: ACT_COLOR.call },
+    { id: 'call', label: checkLabel ? 'Check' : 'Call', color: ACT_COLOR.call },
     { id: 'fold', label: 'Fold', color: ACT_COLOR.fold },
-  ];
+  ].filter((r) => !available?.length || available.includes(r.id));
   return (
     <div className="space-y-1.5">
       <div className="flex h-2 overflow-hidden rounded-full bg-black/40">
@@ -121,7 +121,7 @@ function FreqStrip({ freqs }) {
           ) : null,
         )}
       </div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-4">
+      <div className={`grid gap-x-3 gap-y-0.5 text-[11px] ${rows.length <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
         {rows.map((r) => (
           <div key={r.id} className="flex justify-between gap-2 tabular-nums" style={{ color: r.color }}>
             <span>{r.label}</span>
@@ -376,7 +376,7 @@ function DrillScreen({ cfg, setup, onExit }) {
 
   function pick(action) {
     if (feedback) return;
-    const scored = scoreChoice(scene.freqs, action);
+    const scored = scoreChoice(scene.freqs, action, scene.available);
     setFeedback({ action, ...scored });
     touchStreak();
     const ok = scored.grade === 'best' || scored.grade === 'good';
@@ -544,7 +544,11 @@ function DrillScreen({ cfg, setup, onExit }) {
         </div>
         {feedback ? (
           <>
-            <FreqStrip freqs={scene.freqs} />
+            <FreqStrip
+              freqs={scene.freqs}
+              available={scene.available}
+              checkLabel={scene.labels?.call === 'Check'}
+            />
             {feedback.grade === 'blunder' && (
               <p className="mt-2 flex items-start gap-1 text-[11px] text-rose-300/90">
                 <AlertTriangle size={12} className="mt-0.5 shrink-0" />

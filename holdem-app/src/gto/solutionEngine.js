@@ -128,7 +128,16 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
   const short = stack <= 20;
 
   // Personal pack wins when the hand is defined for this spot
-  const packed = packFrequencies(hand, { pfAction: pf, pos }, stack);
+  let packed = packFrequencies(hand, { pfAction: pf, pos }, stack);
+  // BB option (vs limp): fold is illegal — fold mass → check(call)
+  if (packed && (pf === 'vs_limp' || pf === 'vs_iso')) {
+    packed = norm({
+      fold: 0,
+      call: (packed.call || 0) + (packed.fold || 0),
+      raise: packed.raise || 0,
+      shove: packed.shove || 0,
+    });
+  }
   if (packed) return packed;
 
   const mode = isHuLike(cfg) || isShort(cfg) ? 'nash_pushfold' : 'rfi';
@@ -144,8 +153,23 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
     return norm({ fold: 90, call: 10 });
   }
 
-  // BB / blinds defending vs open / limp / iso
-  if (['vs_open', 'vs_limp', 'vs_iso'].includes(pf) || pos === 'BB') {
+  // BB vs limp / iso — free option: NEVER fold (check = call)
+  if (pf === 'vs_limp' || pf === 'vs_iso') {
+    if (short && isShove(hand, effectiveStack(Math.min(stack, 25), cfg.format))) {
+      return norm({ shove: 70, raise: 20, call: 10, fold: 0 });
+    }
+    if (PREMIUM_3BET.has(hand) || FOURBET.has(hand)) {
+      return norm({ raise: 90, call: 10, fold: 0 });
+    }
+    if (STRONG_CALL.has(hand) || cellAction(RFI_CHARTS.BTN, hand) !== 'fold') {
+      return norm({ raise: 40, call: 60, fold: 0 });
+    }
+    // Trash: check back 100%
+    return norm({ call: 100, fold: 0 });
+  }
+
+  // Defend vs open (fold legal)
+  if (pf === 'vs_open') {
     if (mode === 'nash_pushfold' || short) {
       const eff = effectiveStack(Math.min(stack, 25), cfg.format);
       if (isCall(hand, eff)) {
@@ -155,7 +179,6 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
       if (PREMIUM_3BET.has(hand)) return norm({ raise: 60, call: 25, fold: 15 });
       return norm({ fold: 100 });
     }
-    // deep BB vs open
     if (PREMIUM_3BET.has(hand)) return norm({ raise: 55, call: 35, fold: 10 });
     if (STRONG_CALL.has(hand) || cellAction(RFI_CHARTS.BTN, hand) !== 'fold') {
       return norm({ call: 70, fold: 20, raise: 10 });
@@ -181,9 +204,13 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
   return norm({ fold: 100 });
 }
 
-export function scoreChoice(freqs, choice) {
+/** Score only among legal buttons when available is passed. */
+export function scoreChoice(freqs, choice, available) {
+  const keys =
+    available?.length > 0 ? available : ['fold', 'call', 'raise', 'shove'];
   const f = freqs[choice] || 0;
-  const best = Math.max(freqs.fold || 0, freqs.call || 0, freqs.raise || 0, freqs.shove || 0);
+  const best = Math.max(...keys.map((k) => freqs[k] || 0));
+  if (f <= 0 && best > 0) return { grade: 'blunder', label: '실수', pts: 0, freq: 0 };
   if (f <= 0) return { grade: 'blunder', label: '실수', pts: 0, freq: 0 };
   if (f >= best) return { grade: 'best', label: '최적', pts: 100, freq: f };
   if (f >= 25) return { grade: 'good', label: '적절', pts: f, freq: f };
