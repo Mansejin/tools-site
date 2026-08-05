@@ -9,26 +9,20 @@ const LEGACY = {
   turbo: 'more',
   mtt: 'more',
   hu: 'more',
+  guide: 'more',
 };
-const GUIDE_IDS = new Set(['turbo', 'mtt', 'hu']);
 
 export function readRoute() {
   const p = new URLSearchParams(window.location.search);
   const raw = p.get('tab');
   const tab = TAB_IDS.has(raw) ? raw : LEGACY[raw] || 'practice';
-  const guide = GUIDE_IDS.has(p.get('guide'))
-    ? p.get('guide')
-    : GUIDE_IDS.has(raw)
-      ? raw
-      : 'turbo';
   const mode = p.get('mode') || null;
-  return { tab, guide, mode };
+  return { tab, mode };
 }
 
-export function buildQuery({ tab = 'practice', guide, mode } = {}) {
+export function buildQuery({ tab = 'practice', mode } = {}) {
   const p = new URLSearchParams();
   if (tab && tab !== 'practice') p.set('tab', tab);
-  if (tab === 'more' && guide && guide !== 'turbo') p.set('guide', guide);
   if (mode) p.set('mode', mode);
   const s = p.toString();
   return s ? `?${s}` : '';
