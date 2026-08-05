@@ -288,10 +288,81 @@ export function buildScenario(cfg, setup, hand) {
     available.push('call');
   }
   if (stack > toCall + 0.5) available.push('raise');
-  if (stack <= 40 || freqs.shove > 0 || short) available.push('shove');
+  if (stack <= 40 || freqs.shove > 0 || stack <= 20) available.push('shove');
 
   // ensure unique
   const uniq = [...new Set(available)];
+
+  // Seat board state for live table (GTOW-style)
+  const betBySeat = {};
+  const folded = new Set();
+  for (const l of lines) {
+    const seat = String(l.seat).replace(/^히어로\s+/, '');
+    if (l.text.startsWith('폴드')) folded.add(seat);
+    const m = l.text.match(/(?:오픈|림프|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
+    if (m) betBySeat[seat] = Number(m[1] || (l.text.includes('림프') ? 1 : openBb));
+  }
+  if (hero === 'BB') betBySeat.BB = betBySeat.BB ?? 1;
+  if (hero === 'SB' || seats.includes('SB')) betBySeat.SB = betBySeat.SB ?? 0.5;
+
+  const tableSeats = seats.map((id) => ({
+    id,
+    stack: Math.round((stack - (betBySeat[id] || 0)) * 10) / 10,
+    bet: betBySeat[id] || 0,
+    folded: folded.has(id) && id !== hero,
+    isHero: id === hero,
+    isDealer: id === 'BTN' || (seats.length <= 2 && id === 'SB'),
+    isActive: id === hero,
+  }));
+
+  const titleBits = [];
+  if (pf === 'vs_open' || pf === 'vs_limp' || pf === 'vs_iso') titleBits.push(`${hero} vs. ${villain}`);
+  else if (pf.startsWith('vs_')) titleBits.push(`${hero} vs ${villain}`);
+  else titleBits.push(hero);
+  const pfLabel =
+    {
+      open: '오픈',
+      vs_open: 'vs 오픈',
+      vs_3bet: 'vs 3벳',
+      vs_4bet: 'vs 4벳',
+      vs_5bet: 'vs 5벳',
+      vs_raise_call: 'vs 레이즈-콜',
+      vs_squeeze: 'vs 스퀴즈',
+      vs_limp: 'vs 림프',
+      vs_iso: 'vs 고립',
+      from_start: '처음부터',
+      all: '모두',
+    }[pf] || pf;
+  titleBits.push(pfLabel, `${stack}bb`);
+
+  const spotHistory = lines.map((l, i) => {
+    const seat = String(l.seat).replace(/^히어로\s+/, '');
+    const fold = l.text.includes('폴드');
+    const call = l.text.includes('콜') || l.text.includes('체크');
+    const allin = l.text.includes('올인');
+    const raiseM = l.text.match(/(?:오픈|림프|3벳|스퀴즈|레이즈)\s*([\d.]+)?/);
+    const raise = !!raiseM;
+    const raiseAmt = raiseM?.[1] || (l.text.includes('림프') ? '1' : String(openBb));
+    const isHeroLine = String(l.seat).startsWith('히어로') || i === lines.length - 1;
+    return {
+      seat,
+      stack: seat === 'SB' && !raise && !allin ? Math.round((stack - 0.5) * 10) / 10 : stack,
+      active: isHeroLine && i === lines.length - 1,
+      actions: isHeroLine && i === lines.length - 1
+        ? [
+            { id: 'fold', label: 'Fold', taken: false },
+            { id: 'call', label: 'Call', taken: false },
+            { id: 'raise', label: `Raise ${raiseTo}`, taken: false },
+            { id: 'shove', label: `Allin ${stack}`, taken: false },
+          ]
+        : [
+            { id: 'fold', label: 'Fold', taken: fold },
+            ...(call ? [{ id: 'call', label: 'Call', taken: true }] : []),
+            { id: 'raise', label: raise ? `Raise ${raiseAmt}` : `Raise ${openBb}`, taken: raise },
+            { id: 'shove', label: `Allin ${stack}`, taken: allin },
+          ],
+    };
+  });
 
   return {
     hand,
@@ -300,7 +371,11 @@ export function buildScenario(cfg, setup, hand) {
     pfAction: pf,
     enginePos,
     lines,
+    title: titleBits.join(', '),
+    tableSeats,
+    spotHistory,
     pot: Math.round(pot * 10) / 10,
+    potOdds: toCall > 0 ? Math.round((toCall / (pot + toCall)) * 1000) / 10 : 0,
     toCall: Math.round(Math.max(0, toCall) * 10) / 10,
     raiseTo: Math.round(raiseTo * 10) / 10,
     openBb,
@@ -309,15 +384,18 @@ export function buildScenario(cfg, setup, hand) {
     freqs,
     available: uniq,
     labels: {
-      fold: '폴드',
+      fold: 'Fold',
       call:
         toCall <= 0.05
           ? hero === 'BB' && (pf === 'open' || pf === 'from_start' || pf === 'all')
-            ? '체크'
-            : '콜'
-          : `콜 ${Math.round(toCall * 10) / 10}bb`,
-      raise: `레이즈 → ${Math.round(raiseTo * 10) / 10}bb`,
-      shove: `올인 ${stack}bb`,
+            ? 'Check'
+            : 'Call'
+          : `Call`,
+      callDetail: toCall > 0.05 ? `${Math.round(toCall * 10) / 10}` : '',
+      raise: 'Raise',
+      raiseDetail: `${Math.round(raiseTo * 10) / 10}`,
+      shove: 'Allin',
+      shoveDetail: `${stack}`,
     },
   };
 }

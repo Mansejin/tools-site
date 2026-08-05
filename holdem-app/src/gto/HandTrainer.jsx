@@ -6,6 +6,9 @@ import {
   Play,
   SlidersHorizontal,
   AlertTriangle,
+  Square,
+  FastForward,
+  RotateCcw,
 } from 'lucide-react';
 import SolutionPicker from './SolutionPicker.jsx';
 import { loadSolution, saveSolution, summaryLabel } from './solutionConfig.js';
@@ -44,6 +47,13 @@ const PF_ACTIONS = [
   { id: 'from_start', label: '처음부터' },
 ];
 
+const ACT_COLOR = {
+  fold: '#3D7CB8',
+  call: '#5ab966',
+  raise: '#f03c3c',
+  shove: '#7d1f1f',
+};
+
 const TRAIN_KEY = 'holdem-train-setup-v1';
 
 function loadTrainSetup() {
@@ -76,43 +86,48 @@ function rankSuitCards(hand) {
   ];
 }
 
-function PlayingCard({ r, s }) {
+function MiniCard({ r, s, large }) {
   const red = s === '♥' || s === '♦';
   return (
     <div
-      className={`flex h-24 w-[4.25rem] flex-col justify-between rounded-xl border-2 bg-white p-2 shadow-lg sm:h-28 sm:w-20 ${
-        red ? 'border-red-200 text-red-600' : 'border-zinc-200 text-zinc-900'
-      }`}
+      className={`flex flex-col justify-between rounded-md border bg-white shadow ${
+        large ? 'h-14 w-10 p-1 sm:h-16 sm:w-11' : 'h-9 w-6 p-0.5'
+      } ${red ? 'border-red-200 text-red-600' : 'border-zinc-300 text-zinc-900'}`}
     >
-      <span className="text-lg font-bold leading-none sm:text-xl">{r}</span>
-      <span className="self-end text-2xl leading-none">{s}</span>
+      <span className={`font-bold leading-none ${large ? 'text-sm' : 'text-[10px]'}`}>{r}</span>
+      <span className={`self-end leading-none ${large ? 'text-base' : 'text-xs'}`}>{s}</span>
     </div>
   );
 }
 
-function FreqBars({ freqs, picked }) {
+function FreqStrip({ freqs }) {
   const rows = [
-    { id: 'fold', label: '폴드', color: 'bg-zinc-400' },
-    { id: 'call', label: '콜/체크', color: 'bg-sky-400' },
-    { id: 'raise', label: '레이즈', color: 'bg-casino-green-bright' },
-    { id: 'shove', label: '올인', color: 'bg-rose-400' },
+    { id: 'shove', label: 'Allin', color: ACT_COLOR.shove },
+    { id: 'raise', label: 'Raise', color: ACT_COLOR.raise },
+    { id: 'call', label: 'Call', color: ACT_COLOR.call },
+    { id: 'fold', label: 'Fold', color: ACT_COLOR.fold },
   ];
   return (
-    <div className="space-y-2">
-      {rows.map((r) => (
-        <div key={r.id} className="flex items-center gap-2 text-xs">
-          <span className={`w-14 shrink-0 ${picked === r.id ? 'font-bold text-ink' : 'text-muted'}`}>
-            {r.label}
-          </span>
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
+    <div className="space-y-1.5">
+      <div className="flex h-2 overflow-hidden rounded-full bg-black/40">
+        {rows.map((r) =>
+          (freqs[r.id] || 0) > 0.05 ? (
             <div
-              className={`h-full rounded-full ${r.color}`}
-              style={{ width: `${freqs[r.id] || 0}%` }}
+              key={r.id}
+              style={{ width: `${freqs[r.id]}%`, background: r.color }}
+              title={`${r.label} ${freqs[r.id]}%`}
             />
+          ) : null,
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-4">
+        {rows.map((r) => (
+          <div key={r.id} className="flex justify-between gap-2 tabular-nums" style={{ color: r.color }}>
+            <span>{r.label}</span>
+            <span>{freqs[r.id] || 0}%</span>
           </div>
-          <span className="w-8 text-right tabular-nums text-muted">{freqs[r.id] || 0}%</span>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -164,6 +179,93 @@ function TableSetup({ hero, onHero, players }) {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function LiveSeat({ seat, angle, cards }) {
+  const rad = ((angle - 90) * Math.PI) / 180;
+  const x = 50 + Math.cos(rad) * 42;
+  const y = 50 + Math.sin(rad) * 40;
+  return (
+    <div
+      className="absolute -translate-x-1/2 -translate-y-1/2"
+      style={{ left: `${x}%`, top: `${y}%` }}
+    >
+      <div
+        className={`relative flex min-w-[4.5rem] flex-col items-center rounded-xl px-2 py-1.5 text-center ${
+          seat.isActive
+            ? 'bg-[#3f3f3f] ring-1 ring-white/25'
+            : seat.folded
+              ? 'bg-[#262626] opacity-55'
+              : 'bg-[#2a2a2a]'
+        }`}
+      >
+        <span className="text-[11px] font-semibold text-white/90">{seat.id}</span>
+        <span className="text-[10px] tabular-nums text-white/60">{seat.stack}</span>
+        {seat.isDealer && (
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[8px] font-bold text-black">
+            D
+          </span>
+        )}
+      </div>
+      {seat.bet > 0 && (
+        <div className="mt-1 text-center text-[10px] font-medium tabular-nums text-amber-200/90">
+          {seat.bet}
+        </div>
+      )}
+      {seat.isHero && cards && (
+        <div className="mt-1 flex justify-center gap-0.5">
+          {cards.map((c, i) => (
+            <MiniCard key={i} r={c.r} s={c.s} large />
+          ))}
+        </div>
+      )}
+      {!seat.isHero && !seat.folded && seat.bet > 0 && (
+        <div className="mt-1 flex justify-center gap-0.5">
+          <div className="h-7 w-5 rounded border border-white/10 bg-[#2f2f2f]" />
+          <div className="h-7 w-5 rounded border border-white/10 bg-[#2f2f2f]" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryStrip({ spots, hero }) {
+  return (
+    <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+      {spots.map((sp, i) => (
+        <div
+          key={`${sp.seat}-${i}`}
+          className={`w-[5.5rem] shrink-0 rounded-lg border px-1.5 py-1 ${
+            sp.active ? 'border-white/30 bg-[#2a2a2a]' : 'border-white/8 bg-[#1a1a1a]'
+          }`}
+        >
+          <div className="mb-1 flex justify-between text-[10px] text-muted">
+            <span className={sp.seat === hero || sp.active ? 'text-ink' : ''}>{sp.seat}</span>
+            <span>{sp.stack}</span>
+          </div>
+          {sp.active ? (
+            <p className="py-2 text-center text-[10px] text-amber-200/90">행동을 선택해 주세요</p>
+          ) : (
+            <div className="space-y-0.5">
+              {sp.actions
+                .filter((a) => a.taken || a.id === 'fold' || a.id === 'raise' || a.id === 'shove')
+                .slice(0, 3)
+                .map((a) => (
+                  <div
+                    key={a.id}
+                    className={`rounded px-1 py-0.5 text-[10px] ${
+                      a.taken ? 'bg-white/15 text-ink' : 'text-muted/50'
+                    }`}
+                  >
+                    {a.label}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -259,7 +361,9 @@ function SetupScreen({ cfg, setup, setSetup, onStart, onOpenSolution }) {
 function DrillScreen({ cfg, setup, onExit }) {
   const [scene, setScene] = useState(() => randomSpot(cfg, setup));
   const [feedback, setFeedback] = useState(null);
-  const [stats, setStats] = useState({ pts: 0, n: 0, best: 0 });
+  const [streak, setStreak] = useState(0);
+  const [stats, setStats] = useState({ pts: 0, n: 0, best: 0, wrong: 0 });
+  const [rng] = useState(() => Math.floor(Math.random() * 100));
   const meta = engineMeta(cfg);
 
   function deal() {
@@ -272,11 +376,14 @@ function DrillScreen({ cfg, setup, onExit }) {
     const scored = scoreChoice(scene.freqs, action);
     setFeedback({ action, ...scored });
     touchStreak();
-    recordAnswer(scored.grade === 'best' || scored.grade === 'good', 'drill');
+    const ok = scored.grade === 'best' || scored.grade === 'good';
+    recordAnswer(ok, 'drill');
+    setStreak((s) => (ok ? s + 1 : 0));
     setStats((s) => ({
       pts: s.pts + scored.pts,
       n: s.n + 1,
       best: s.best + (scored.grade === 'best' ? 1 : 0),
+      wrong: s.wrong + (ok ? 0 : 1),
     }));
   }
 
@@ -286,117 +393,189 @@ function DrillScreen({ cfg, setup, onExit }) {
   }, [cfg, setup.hero, setup.pfAction]);
 
   const cards = rankSuitCards(scene.hand);
-  const avg = stats.n ? Math.round(stats.pts / stats.n) : 0;
-  const gradeColor =
-    feedback?.grade === 'best'
-      ? 'text-casino-green-bright'
-      : feedback?.grade === 'good'
-        ? 'text-sky-300'
-        : feedback?.grade === 'meh'
-          ? 'text-amber-300'
-          : 'text-rose-300';
+  const gtoScore = stats.n ? Math.round(stats.pts / stats.n) : 0;
+  const angleOf = (id) => SEATS_9.find((s) => s.id === id)?.angle ?? 0;
 
-  const btnClass = (id) => {
-    const base =
-      'min-h-14 rounded-xl px-2 text-sm font-bold transition disabled:opacity-40 sm:text-base';
-    if (id === 'fold') return `${base} border border-white/15 bg-felt text-ink`;
-    if (id === 'call') return `${base} bg-sky-700 text-white`;
-    if (id === 'raise') return `${base} bg-casino-green text-white`;
-    return `${base} bg-rose-700 text-white`;
+  const actionLabel = (id) => {
+    const L = scene.labels;
+    if (id === 'fold') return L.fold;
+    if (id === 'call') return L.callDetail ? `${L.call} ${L.callDetail}` : L.call;
+    if (id === 'raise') return `${L.raise} ${L.raiseDetail}`;
+    return `${L.shove} ${L.shoveDetail}`;
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <button type="button" onClick={onExit} className="text-sm text-muted hover:text-ink">
-          ← 설정
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-[#1e1e1e] px-2 py-1.5">
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-rose-300 hover:bg-white/5"
+          title="세션 멈추기"
+        >
+          <Square size={16} fill="currentColor" />
         </button>
-        <p className="truncate text-xs text-muted">
-          점수 {avg} · 최적 {stats.best}/{stats.n || 0}
-        </p>
+        <button
+          type="button"
+          onClick={deal}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-white/5 hover:text-ink"
+          title="다음 핸드"
+        >
+          <FastForward size={18} />
+        </button>
+        <button
+          type="button"
+          onClick={deal}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-white/5 hover:text-ink"
+          title="핸드 다시 하기"
+        >
+          <RotateCcw size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-white/5 hover:text-ink"
+          title="세션 설정"
+        >
+          <Settings2 size={16} />
+        </button>
+        <div className="ml-1 min-w-0 flex-1 truncate text-xs text-muted">
+          <span className="text-ink/90">{scene.title || `${scene.hero} · ${scene.stack}bb`}</span>
+        </div>
+        <span className="shrink-0 rounded-md bg-white/5 px-2 py-1 text-[11px] tabular-nums text-muted">
+          RNG {rng}
+        </span>
+        <span className="shrink-0 rounded-md bg-white/5 px-2 py-1 text-[11px] tabular-nums text-amber-200/80">
+          🔥 {streak}
+        </span>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-felt-3 p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-          <span>
-            {cfg.stack}bb · {scene.hero} · 팟 {scene.pot}bb
-          </span>
-          <span className="truncate text-[11px]">{summaryLabel(cfg)}</span>
+      {/* History spots */}
+      <HistoryStrip spots={scene.spotHistory || []} hero={scene.hero} />
+
+      {/* Live table */}
+      <div className="relative mx-auto aspect-[1.15/1] w-full max-w-xl sm:aspect-[1.35/1]">
+        <div className="absolute inset-[14%] rounded-[50%] border border-[#4D4D4D] bg-gradient-to-b from-[#163528] to-[#0c1f16]" />
+        <div className="absolute left-1/2 top-[42%] w-[70%] max-w-xs -translate-x-1/2 -translate-y-1/2 text-center">
+          <p className="mb-1 truncate text-[11px] text-white/50">{scene.title}</p>
+          <p className="text-sm font-semibold tabular-nums text-white">
+            {scene.pot} bb
+            {scene.potOdds > 0 && (
+              <span className="ml-2 text-[11px] font-normal text-white/45">{scene.potOdds}%</span>
+            )}
+          </p>
+          <p className="mt-0.5 text-[10px] text-white/35">팟 · 시작 1.5bb</p>
         </div>
 
-        {/* Action history */}
-        <div className="mb-4 max-h-28 space-y-1 overflow-y-auto rounded-xl bg-felt/80 px-3 py-2 text-xs">
-          {scene.lines.map((l, i) => (
-            <div key={i} className="flex justify-between gap-2">
-              <span className="font-medium text-gold-soft">{l.seat}</span>
-              <span className="text-muted">{l.text}</span>
-            </div>
-          ))}
-        </div>
+        {(scene.tableSeats || []).map((seat) => (
+          <LiveSeat
+            key={seat.id}
+            seat={seat}
+            angle={angleOf(seat.id)}
+            cards={seat.isHero ? cards : null}
+          />
+        ))}
 
-        <div className="mb-4 flex justify-center gap-3">
-          {cards.map((c, i) => (
-            <PlayingCard key={i} r={c.r} s={c.s} />
-          ))}
-        </div>
+        {/* Quick result toast */}
+        {feedback && (
+          <div
+            className="absolute left-1/2 top-[58%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-lg"
+            style={{
+              background: feedback.grade === 'blunder' || feedback.grade === 'meh' ? '#3a1515' : '#14301a',
+              color: feedback.grade === 'blunder' || feedback.grade === 'meh' ? '#ff8a8a' : '#aafbb2',
+            }}
+          >
+            {feedback.grade === 'blunder' || feedback.grade === 'meh' ? (
+              <XCircle size={16} />
+            ) : (
+              <CheckCircle2 size={16} />
+            )}
+            {actionLabel(feedback.action)}
+            <span className="font-normal opacity-80">{feedback.freq}%</span>
+          </div>
+        )}
+      </div>
 
-        <p className="mb-1 text-center text-lg font-semibold text-ink">{scene.hand}</p>
-        <p className="mb-5 text-center text-sm text-muted">
-          스택 {scene.stack}bb
-          {scene.toCall > 0 ? ` · 콜까지 ${scene.toCall}bb` : ''}
-        </p>
-
-        <div
-          className={`grid gap-2 ${
-            scene.available.length >= 4 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
-          }`}
-        >
-          {scene.available.map((id) => (
+      {/* Action bar — GTOW colors */}
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${Math.min(scene.available.length, 4)}, minmax(0, 1fr))` }}
+      >
+        {scene.available.map((id) => {
+          const wrong =
+            feedback &&
+            feedback.action === id &&
+            (feedback.grade === 'blunder' || feedback.grade === 'meh');
+          const right =
+            feedback &&
+            feedback.action === id &&
+            (feedback.grade === 'best' || feedback.grade === 'good');
+          return (
             <button
               key={id}
               type="button"
               disabled={!!feedback}
               onClick={() => pick(id)}
-              className={btnClass(id)}
+              className="relative min-h-[3.25rem] overflow-hidden rounded-lg px-2 text-sm font-bold text-white shadow disabled:opacity-90 sm:min-h-14 sm:text-base"
+              style={{ background: ACT_COLOR[id] }}
             >
-              {scene.labels[id]}
+              <span className="relative z-10 drop-shadow">
+                {actionLabel(id)}
+                {wrong && ' ⚠'}
+                {right && feedback.grade === 'best' && ' ✓✓'}
+                {right && feedback.grade === 'good' && ' ✓'}
+              </span>
             </button>
-          ))}
-        </div>
-
-        <p className="mt-3 text-center text-[11px] text-muted">
-          {meta.fidelity === 'exact' ? '정확' : '근사'} · Spot · {meta.note}
-        </p>
+          );
+        })}
       </div>
 
-      {feedback && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-3 sm:items-center">
-          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-felt-3 p-5 shadow-2xl">
-            <div className={`mb-2 flex items-center gap-2 text-lg font-bold ${gradeColor}`}>
-              {feedback.grade === 'blunder' ? <XCircle size={22} /> : <CheckCircle2 size={22} />}
-              {feedback.label}
-              <span className="text-sm font-medium text-muted">· {feedback.freq}% 라인</span>
-            </div>
+      {/* Info panel */}
+      <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-3">
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <span className="font-medium text-ink">전략 · 전체 빈도</span>
+          <span className="text-muted">
+            {meta.fidelity === 'exact' ? '정확' : '근사'} · {scene.hand}
+          </span>
+        </div>
+        {feedback ? (
+          <>
+            <FreqStrip freqs={scene.freqs} />
             {feedback.grade === 'blunder' && (
-              <p className="mb-2 flex items-start gap-1.5 text-xs text-rose-200/90">
-                <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+              <p className="mt-2 flex items-start gap-1 text-[11px] text-rose-300/90">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                 GTO 빈도 0%에 가까운 수입니다.
               </p>
             )}
-            <p className="mb-3 text-sm text-muted">
-              선택: <span className="text-ink">{scene.labels[feedback.action]}</span>
-            </p>
-            <FreqBars freqs={scene.freqs} picked={feedback.action} />
             <button
               type="button"
               onClick={deal}
-              className="mt-5 w-full min-h-12 rounded-xl bg-casino-green-bright font-semibold text-felt"
+              className="mt-3 w-full min-h-11 rounded-lg bg-[#aafbb2] text-sm font-bold text-black"
             >
-              다음 핸드
+              다음 핸드 · E
             </button>
-          </div>
+          </>
+        ) : (
+          <p className="text-[11px] leading-relaxed text-muted">{meta.note}</p>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+        <div className="rounded-lg border border-white/8 bg-[#1a1a1a] px-2 py-2">
+          <p className="text-muted">핸드</p>
+          <p className="text-base font-semibold tabular-nums text-ink">{stats.n}</p>
         </div>
-      )}
+        <div className="rounded-lg border border-white/8 bg-[#1a1a1a] px-2 py-2">
+          <p className="text-muted">GTOW 점수</p>
+          <p className="text-base font-semibold tabular-nums text-ink">{gtoScore}%</p>
+        </div>
+        <div className="rounded-lg border border-white/8 bg-[#1a1a1a] px-2 py-2">
+          <p className="text-muted">실수</p>
+          <p className="text-base font-semibold tabular-nums text-rose-300">{stats.wrong}</p>
+        </div>
+      </div>
     </div>
   );
 }
