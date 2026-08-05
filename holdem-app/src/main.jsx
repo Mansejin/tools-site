@@ -12,8 +12,12 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 );
 
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {});
+// Drop PWA SW — GH Pages + CDN caching kept users stuck on old builds.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((r) => r.unregister());
   });
+}
+if (typeof caches !== 'undefined') {
+  caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
 }
