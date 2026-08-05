@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Settings2, ExternalLink, BookOpen, Swords, Grid3x3 } from 'lucide-react';
 import SolutionPicker from './SolutionPicker.jsx';
+import PackBar from './PackBar.jsx';
 import HandGrid from './HandGrid.jsx';
 import { loadSolution, saveSolution, summaryLabel } from './solutionConfig.js';
 import { engineMeta, positionsFor, gridGetter } from './solutionEngine.js';
@@ -9,7 +10,7 @@ const LINKS = [
   {
     href: 'https://wasm-postflop.pages.dev/',
     title: 'WASM Postflop',
-    desc: '브라우저 포스트플랍 솔버 (오픈소스)',
+    desc: '브라우저 포스트플랍 솔버 → 결과 핸드를 JSON 팩으로 옮겨 넣기',
     icon: Swords,
   },
   {
@@ -21,7 +22,7 @@ const LINKS = [
   {
     href: 'https://github.com/bupticybee/TexasSolver',
     title: 'TexasSolver',
-    desc: 'PC용 솔버',
+    desc: 'PC용 솔버 · export를 팩 JSON에 맞춰 저장',
     icon: Grid3x3,
   },
 ];
@@ -30,19 +31,25 @@ export default function GtoLab() {
   const [cfg, setCfg] = useState(() => loadSolution());
   const [draft, setDraft] = useState(cfg);
   const [picker, setPicker] = useState(false);
+  const [packTick, setPackTick] = useState(0);
   const positions = useMemo(() => positionsFor(cfg), [cfg]);
   const [pos, setPos] = useState(positions[0]?.id || 'SB');
-  const meta = useMemo(() => engineMeta(cfg), [cfg]);
+  const meta = useMemo(() => engineMeta(cfg), [cfg, packTick]);
 
   useEffect(() => {
     const list = positionsFor(cfg);
     if (!list.some((p) => p.id === pos)) setPos(list[0].id);
   }, [cfg, pos]);
 
-  const getAction = useMemo(() => gridGetter(cfg, { pos }), [cfg, pos]);
+  const getAction = useMemo(() => gridGetter(cfg, { pos }), [cfg, pos, packTick]);
+
+  const fidelityLabel =
+    meta.fidelity === 'exact' ? '정확' : meta.fidelity === 'pack' ? '내 팩' : '근사';
 
   return (
     <div className="space-y-5">
+      <PackBar onChange={() => setPackTick((t) => t + 1)} />
+
       <div className="rounded-2xl border border-white/10 bg-felt-3/80 p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -64,12 +71,12 @@ export default function GtoLab() {
 
         <p
           className={`mb-4 rounded-xl border px-3 py-2 text-xs leading-relaxed ${
-            meta.fidelity === 'exact'
+            meta.fidelity === 'exact' || meta.fidelity === 'pack'
               ? 'border-casino-green/30 bg-casino-green/10 text-emerald-100'
               : 'border-gold/25 bg-gold/10 text-amber-100'
           }`}
         >
-          {meta.fidelity === 'exact' ? '정확' : '근사'} · {meta.note}
+          {fidelityLabel} · {meta.note}
         </p>
 
         <div className="mb-4 flex flex-wrap gap-1.5">
@@ -87,11 +94,11 @@ export default function GtoLab() {
           ))}
         </div>
 
-        <HandGrid getAction={getAction} title={`${pos} · ${cfg.stack}bb`} />
+        <HandGrid key={packTick} getAction={getAction} title={`${pos} · ${cfg.stack}bb`} />
       </div>
 
       <div className="rounded-2xl border border-white/8 bg-felt-2/80 p-4 sm:p-5">
-        <h3 className="mb-3 text-sm font-semibold text-gold">외부 솔버</h3>
+        <h3 className="mb-3 text-sm font-semibold text-gold">외부 솔버 → 팩</h3>
         <ul className="space-y-2">
           {LINKS.map(({ href, title, desc, icon: Icon }) => (
             <li key={href}>

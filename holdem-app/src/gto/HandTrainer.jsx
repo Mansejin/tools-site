@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import SolutionPicker from './SolutionPicker.jsx';
+import PackBar from './PackBar.jsx';
 import { loadSolution, saveSolution, summaryLabel } from './solutionConfig.js';
 import { engineMeta, randomSpot, scoreChoice } from './solutionEngine.js';
 import { touchStreak } from '../lib/route.js';
@@ -270,9 +271,11 @@ function HistoryStrip({ spots, hero }) {
   );
 }
 
-function SetupScreen({ cfg, setup, setSetup, onStart, onOpenSolution }) {
+function SetupScreen({ cfg, setup, setSetup, onStart, onOpenSolution, packTick, onPack }) {
   return (
     <div className="space-y-5">
+      <PackBar onChange={onPack} />
+
       <TableSetup
         hero={setup.hero}
         onHero={(hero) => setSetup(saveTrainSetup({ ...setup, hero }))}
@@ -536,7 +539,7 @@ function DrillScreen({ cfg, setup, onExit }) {
         <div className="mb-2 flex items-center justify-between text-xs">
           <span className="font-medium text-ink">전략 · 전체 빈도</span>
           <span className="text-muted">
-            {meta.fidelity === 'exact' ? '정확' : '근사'} · {scene.hand}
+            {meta.fidelity === 'exact' ? '정확' : meta.fidelity === 'pack' ? '내 팩' : '근사'} · {scene.hand}
           </span>
         </div>
         {feedback ? (
@@ -586,6 +589,7 @@ export default function HandTrainer() {
   const [picker, setPicker] = useState(false);
   const [setup, setSetup] = useState(() => loadTrainSetup());
   const [phase, setPhase] = useState('setup');
+  const [packTick, setPackTick] = useState(0);
 
   return (
     <div>
@@ -594,6 +598,8 @@ export default function HandTrainer() {
           cfg={cfg}
           setup={setup}
           setSetup={setSetup}
+          packTick={packTick}
+          onPack={() => setPackTick((t) => t + 1)}
           onStart={() => setPhase('drill')}
           onOpenSolution={() => {
             setDraft(cfg);
@@ -601,7 +607,12 @@ export default function HandTrainer() {
           }}
         />
       ) : (
-        <DrillScreen cfg={cfg} setup={setup} onExit={() => setPhase('setup')} />
+        <DrillScreen
+          key={packTick}
+          cfg={cfg}
+          setup={setup}
+          onExit={() => setPhase('setup')}
+        />
       )}
 
       {picker && (

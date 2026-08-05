@@ -5,6 +5,7 @@
 
 import { isShove, isCall, handFromGrid, GRID_RANKS } from './pushfoldNash.js';
 import { RFI_CHARTS, cellAction } from './rfiCharts.js';
+import { packFrequencies, packSummary } from './myPack.js';
 
 function tightness(format) {
   if (format === 'icm') return 0.72;
@@ -42,21 +43,29 @@ export function positionsFor(cfg) {
 }
 
 export function engineMeta(cfg) {
+  const pack = packSummary();
+  const packNote = pack ? ` · 내 팩「${pack.name}」${pack.nHands}핸드` : '';
   if (isHuLike(cfg) || isShort(cfg)) {
     return {
       mode: 'nash_pushfold',
       note:
-        cfg.stack > 25
+        (cfg.stack > 25
           ? `딥스택 푸시/폴드는 25bb Nash로 클램프.`
-          : `헤즈업 Nash 푸시/폴드${cfg.format === 'icm' ? ' + ICM 타이트닝' : ''}.`,
+          : `헤즈업 Nash 푸시/폴드${cfg.format === 'icm' ? ' + ICM 타이트닝' : ''}.`) + packNote,
       fidelity:
-        cfg.stack <= 25 && (cfg.format === 'chipev' || cfg.format === 'hu') ? 'exact' : 'approx',
+        pack || (cfg.stack <= 25 && (cfg.format === 'chipev' || cfg.format === 'hu'))
+          ? pack
+            ? 'pack'
+            : 'exact'
+          : 'approx',
+      pack,
     };
   }
   return {
     mode: 'rfi',
-    note: `6-max RFI · ${cfg.players}인 매핑${cfg.betSize === 'multi' ? ' · 혼합빈도' : ''}.`,
-    fidelity: 'approx',
+    note: `6-max RFI · ${cfg.players}인 매핑${cfg.betSize === 'multi' ? ' · 혼합빈도' : ''}.${packNote}`,
+    fidelity: pack ? 'pack' : 'approx',
+    pack,
   };
 }
 
@@ -115,9 +124,14 @@ export function actionFor(cfg, hand, spot = {}) {
 export function strategyFrequencies(cfg, hand, spot = {}) {
   const pf = spot.pfAction || 'open';
   const pos = spot.pos || 'BTN';
-  const meta = engineMeta(cfg);
   const stack = cfg.stack;
   const short = stack <= 20;
+
+  // Personal pack wins when the hand is defined for this spot
+  const packed = packFrequencies(hand, { pfAction: pf, pos }, stack);
+  if (packed) return packed;
+
+  const mode = isHuLike(cfg) || isShort(cfg) ? 'nash_pushfold' : 'rfi';
 
   // Face 3-bet / 4-bet / squeeze as aggressor
   if (['vs_3bet', 'vs_4bet', 'vs_5bet', 'vs_squeeze', 'vs_raise_call'].includes(pf)) {
@@ -132,7 +146,7 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
 
   // BB / blinds defending vs open / limp / iso
   if (['vs_open', 'vs_limp', 'vs_iso'].includes(pf) || pos === 'BB') {
-    if (meta.mode === 'nash_pushfold' || short) {
+    if (mode === 'nash_pushfold' || short) {
       const eff = effectiveStack(Math.min(stack, 25), cfg.format);
       if (isCall(hand, eff)) {
         if (isShove(hand, Math.min(eff, 12)) && stack <= 15) return norm({ shove: 70, call: 25, fold: 5 });
@@ -150,7 +164,7 @@ export function strategyFrequencies(cfg, hand, spot = {}) {
   }
 
   // Open / RFI / from start / all
-  if (meta.mode === 'nash_pushfold' || short) {
+  if (mode === 'nash_pushfold' || short) {
     const eff = effectiveStack(Math.min(stack, 25), cfg.format);
     if (isShove(hand, eff)) return norm({ shove: 100 });
     return norm({ fold: 100 });
