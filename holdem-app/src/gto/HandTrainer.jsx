@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Settings2, CheckCircle2, XCircle, Play, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Settings2,
+  CheckCircle2,
+  XCircle,
+  Play,
+  SlidersHorizontal,
+  AlertTriangle,
+} from 'lucide-react';
 import SolutionPicker from './SolutionPicker.jsx';
 import { loadSolution, saveSolution, summaryLabel } from './solutionConfig.js';
-import {
-  actionFor,
-  correctBinary,
-  engineMeta,
-  randomSpot,
-} from './solutionEngine.js';
+import { engineMeta, randomSpot, scoreChoice } from './solutionEngine.js';
 import { touchStreak } from '../lib/route.js';
 import { recordAnswer } from '../lib/practiceStats.js';
 
@@ -62,15 +64,6 @@ function saveTrainSetup(s) {
   return s;
 }
 
-/** Map table seat → engine position key */
-function mapHeroToEnginePos(hero, pfAction) {
-  if (pfAction === 'vs_open' || hero === 'BB') return 'BB';
-  if (hero === 'SB') return 'SB';
-  if (hero === 'UTG1' || hero === 'LJ' || hero === 'HJ') return 'MP';
-  if (['UTG', 'MP', 'CO', 'BTN'].includes(hero)) return hero === 'MP' ? 'MP' : hero;
-  return 'BTN';
-}
-
 function rankSuitCards(hand) {
   const r1 = hand[0];
   const r2 = hand[1];
@@ -87,12 +80,39 @@ function PlayingCard({ r, s }) {
   const red = s === '♥' || s === '♦';
   return (
     <div
-      className={`flex h-24 w-16 flex-col justify-between rounded-xl border-2 bg-white p-2 shadow-lg sm:h-28 sm:w-20 ${
+      className={`flex h-24 w-[4.25rem] flex-col justify-between rounded-xl border-2 bg-white p-2 shadow-lg sm:h-28 sm:w-20 ${
         red ? 'border-red-200 text-red-600' : 'border-zinc-200 text-zinc-900'
       }`}
     >
       <span className="text-lg font-bold leading-none sm:text-xl">{r}</span>
       <span className="self-end text-2xl leading-none">{s}</span>
+    </div>
+  );
+}
+
+function FreqBars({ freqs, picked }) {
+  const rows = [
+    { id: 'fold', label: '폴드', color: 'bg-zinc-400' },
+    { id: 'call', label: '콜/체크', color: 'bg-sky-400' },
+    { id: 'raise', label: '레이즈', color: 'bg-casino-green-bright' },
+    { id: 'shove', label: '올인', color: 'bg-rose-400' },
+  ];
+  return (
+    <div className="space-y-2">
+      {rows.map((r) => (
+        <div key={r.id} className="flex items-center gap-2 text-xs">
+          <span className={`w-14 shrink-0 ${picked === r.id ? 'font-bold text-ink' : 'text-muted'}`}>
+            {r.label}
+          </span>
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
+            <div
+              className={`h-full rounded-full ${r.color}`}
+              style={{ width: `${freqs[r.id] || 0}%` }}
+            />
+          </div>
+          <span className="w-8 text-right tabular-nums text-muted">{freqs[r.id] || 0}%</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -148,7 +168,7 @@ function TableSetup({ hero, onHero, players }) {
   );
 }
 
-function SetupScreen({ cfg, setCfg, setup, setSetup, onStart, onOpenSolution }) {
+function SetupScreen({ cfg, setup, setSetup, onStart, onOpenSolution }) {
   return (
     <div className="space-y-5">
       <TableSetup
@@ -188,8 +208,7 @@ function SetupScreen({ cfg, setCfg, setup, setSetup, onStart, onOpenSolution }) 
           </div>
           {setup.start !== 'preflop' && (
             <p className="mt-1.5 text-[11px] text-amber-200/90">
-              공개 DB는 프리플랍 중심입니다. 플랍·직접 설정도 선택 가능하나 연습은 프리플랍 노드로
-              진행합니다.
+              공개 DB는 프리플랍 중심 — 연습은 프리플랍 노드로 진행합니다.
             </p>
           )}
         </div>
@@ -238,29 +257,27 @@ function SetupScreen({ cfg, setCfg, setup, setSetup, onStart, onOpenSolution }) 
 }
 
 function DrillScreen({ cfg, setup, onExit }) {
-  const enginePos = mapHeroToEnginePos(setup.hero, setup.pfAction);
-  const [spot, setSpot] = useState(() => {
-    const s = randomSpot(cfg);
-    return { ...s, pos: enginePos };
-  });
+  const [scene, setScene] = useState(() => randomSpot(cfg, setup));
   const [feedback, setFeedback] = useState(null);
-  const [stats, setStats] = useState({ ok: 0, n: 0 });
-  const meta = useMemo(() => engineMeta(cfg), [cfg]);
-  const gtoAction = actionFor(cfg, spot.hand, { pos: enginePos });
+  const [stats, setStats] = useState({ pts: 0, n: 0, best: 0 });
+  const meta = engineMeta(cfg);
 
   function deal() {
     setFeedback(null);
-    const s = randomSpot(cfg);
-    setSpot({ ...s, pos: enginePos });
+    setScene(randomSpot(cfg, setup));
   }
 
-  function answer(aggressive) {
+  function pick(action) {
     if (feedback) return;
-    const correct = aggressive === correctBinary(cfg, spot.hand, { pos: enginePos });
-    setFeedback({ correct });
+    const scored = scoreChoice(scene.freqs, action);
+    setFeedback({ action, ...scored });
     touchStreak();
-    recordAnswer(correct, 'drill');
-    setStats((x) => ({ ok: x.ok + (correct ? 1 : 0), n: x.n + 1 }));
+    recordAnswer(scored.grade === 'best' || scored.grade === 'good', 'drill');
+    setStats((s) => ({
+      pts: s.pts + scored.pts,
+      n: s.n + 1,
+      best: s.best + (scored.grade === 'best' ? 1 : 0),
+    }));
   }
 
   useEffect(() => {
@@ -268,13 +285,25 @@ function DrillScreen({ cfg, setup, onExit }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg, setup.hero, setup.pfAction]);
 
-  const cards = rankSuitCards(spot.hand);
-  const yesLabel =
-    enginePos === 'BB' || setup.pfAction.startsWith('vs_')
-      ? '콜 / 공격'
-      : gtoAction === 'raise'
-        ? '레이즈 / 오픈'
-        : '푸시 / 공격';
+  const cards = rankSuitCards(scene.hand);
+  const avg = stats.n ? Math.round(stats.pts / stats.n) : 0;
+  const gradeColor =
+    feedback?.grade === 'best'
+      ? 'text-casino-green-bright'
+      : feedback?.grade === 'good'
+        ? 'text-sky-300'
+        : feedback?.grade === 'meh'
+          ? 'text-amber-300'
+          : 'text-rose-300';
+
+  const btnClass = (id) => {
+    const base =
+      'min-h-14 rounded-xl px-2 text-sm font-bold transition disabled:opacity-40 sm:text-base';
+    if (id === 'fold') return `${base} border border-white/15 bg-felt text-ink`;
+    if (id === 'call') return `${base} bg-sky-700 text-white`;
+    if (id === 'raise') return `${base} bg-casino-green text-white`;
+    return `${base} bg-rose-700 text-white`;
+  };
 
   return (
     <div className="space-y-4">
@@ -283,66 +312,85 @@ function DrillScreen({ cfg, setup, onExit }) {
           ← 설정
         </button>
         <p className="truncate text-xs text-muted">
-          {setup.hero} · {PF_ACTIONS.find((a) => a.id === setup.pfAction)?.label} ·{' '}
-          {stats.n ? `${Math.round((stats.ok / stats.n) * 100)}%` : '—'}
+          점수 {avg} · 최적 {stats.best}/{stats.n || 0}
         </p>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-felt-3 p-4 sm:p-6">
-        <p className="mb-4 text-center text-sm text-muted">
-          {cfg.stack}bb · {setup.hero} · {summaryLabel(cfg)}
-        </p>
-        <div className="mb-6 flex justify-center gap-3">
+      <div className="rounded-2xl border border-white/10 bg-felt-3 p-4 sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+          <span>
+            {cfg.stack}bb · {scene.hero} · 팟 {scene.pot}bb
+          </span>
+          <span className="truncate text-[11px]">{summaryLabel(cfg)}</span>
+        </div>
+
+        {/* Action history */}
+        <div className="mb-4 max-h-28 space-y-1 overflow-y-auto rounded-xl bg-felt/80 px-3 py-2 text-xs">
+          {scene.lines.map((l, i) => (
+            <div key={i} className="flex justify-between gap-2">
+              <span className="font-medium text-gold-soft">{l.seat}</span>
+              <span className="text-muted">{l.text}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-4 flex justify-center gap-3">
           {cards.map((c, i) => (
             <PlayingCard key={i} r={c.r} s={c.s} />
           ))}
         </div>
-        <p className="mb-1 text-center text-sm text-muted">
-          <span className="font-semibold text-ink">{spot.hand}</span>
+
+        <p className="mb-1 text-center text-lg font-semibold text-ink">{scene.hand}</p>
+        <p className="mb-5 text-center text-sm text-muted">
+          스택 {scene.stack}bb
+          {scene.toCall > 0 ? ` · 콜까지 ${scene.toCall}bb` : ''}
         </p>
-        <h3 className="mb-6 text-center text-xl font-semibold text-ink">어떻게 할까?</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            disabled={!!feedback}
-            onClick={() => answer(true)}
-            className="min-h-14 rounded-xl bg-casino-green text-base font-bold text-white disabled:opacity-50"
-          >
-            {yesLabel}
-          </button>
-          <button
-            type="button"
-            disabled={!!feedback}
-            onClick={() => answer(false)}
-            className="min-h-14 rounded-xl border border-white/15 bg-felt text-base font-bold text-ink disabled:opacity-50"
-          >
-            폴드
-          </button>
+
+        <div
+          className={`grid gap-2 ${
+            scene.available.length >= 4 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+          }`}
+        >
+          {scene.available.map((id) => (
+            <button
+              key={id}
+              type="button"
+              disabled={!!feedback}
+              onClick={() => pick(id)}
+              className={btnClass(id)}
+            >
+              {scene.labels[id]}
+            </button>
+          ))}
         </div>
+
         <p className="mt-3 text-center text-[11px] text-muted">
-          {meta.fidelity === 'exact' ? '정확' : '근사'} · Spot 모드 (한 결정)
+          {meta.fidelity === 'exact' ? '정확' : '근사'} · Spot · {meta.note}
         </p>
       </div>
 
       {feedback && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
-          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-felt-3 p-5">
-            <div
-              className={`mb-3 flex items-center gap-2 text-lg font-bold ${
-                feedback.correct ? 'text-casino-green-bright' : 'text-rose-300'
-              }`}
-            >
-              {feedback.correct ? <CheckCircle2 size={22} /> : <XCircle size={22} />}
-              {feedback.correct ? '정답' : '오답'}
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-3 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-felt-3 p-5 shadow-2xl">
+            <div className={`mb-2 flex items-center gap-2 text-lg font-bold ${gradeColor}`}>
+              {feedback.grade === 'blunder' ? <XCircle size={22} /> : <CheckCircle2 size={22} />}
+              {feedback.label}
+              <span className="text-sm font-medium text-muted">· {feedback.freq}% 라인</span>
             </div>
-            <p className="mb-1 text-sm text-gold">
-              GTO: {gtoAction.toUpperCase()} · {spot.hand} @ {setup.hero}
+            {feedback.grade === 'blunder' && (
+              <p className="mb-2 flex items-start gap-1.5 text-xs text-rose-200/90">
+                <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                GTO 빈도 0%에 가까운 수입니다.
+              </p>
+            )}
+            <p className="mb-3 text-sm text-muted">
+              선택: <span className="text-ink">{scene.labels[feedback.action]}</span>
             </p>
-            <p className="mb-5 text-sm text-muted">{meta.note}</p>
+            <FreqBars freqs={scene.freqs} picked={feedback.action} />
             <button
               type="button"
               onClick={deal}
-              className="w-full min-h-12 rounded-xl bg-casino-green-bright font-semibold text-felt"
+              className="mt-5 w-full min-h-12 rounded-xl bg-casino-green-bright font-semibold text-felt"
             >
               다음 핸드
             </button>
@@ -358,14 +406,13 @@ export default function HandTrainer() {
   const [draft, setDraft] = useState(cfg);
   const [picker, setPicker] = useState(false);
   const [setup, setSetup] = useState(() => loadTrainSetup());
-  const [phase, setPhase] = useState('setup'); // setup | drill
+  const [phase, setPhase] = useState('setup');
 
   return (
     <div>
       {phase === 'setup' ? (
         <SetupScreen
           cfg={cfg}
-          setCfg={setCfg}
           setup={setup}
           setSetup={setSetup}
           onStart={() => setPhase('drill')}

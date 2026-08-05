@@ -102,12 +102,7 @@ export default function SolutionPicker({ value, onChange, onApply, onClose }) {
             </Section>
             <Section title="프리플랍 벳 사이즈">
               {BET_SIZES.map((s) => (
-                <Chip
-                  key={s.id}
-                  active={v.betSize === s.id}
-                  badge={s.id === 'single' ? 'NEW' : null}
-                  onClick={() => set({ betSize: s.id })}
-                >
+                <Chip key={s.id} active={v.betSize === s.id} onClick={() => set({ betSize: s.id })}>
                   {s.label}
                 </Chip>
               ))}
