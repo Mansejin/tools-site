@@ -25,7 +25,10 @@
   <link rel="alternate" hreflang="ko" href="https://mansejin.com/">
   <link rel="alternate" hreflang="en" href="https://mansejin.com/en/">
   <link rel="alternate" hreflang="x-default" href="https://mansejin.com/en/">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script>
     (function () {
@@ -42,7 +45,7 @@
   <div class="page">
     <header class="site-header">
       <div class="header-top">
-        <a class="toys-link" href="toys/">🎲 장난감</a>
+        <a class="toys-link" href="toys/">장난감</a>
         <div class="header-actions">
           <label class="theme-switch">
             <input type="checkbox" class="theme-switch-input" role="switch">
@@ -54,10 +57,18 @@
           <a class="github-link" href="https://github.com/Mansejin" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </div>
-      <p class="hero-emoji">🧰</p>
-      <h1>만세진 도구함</h1>
-      <p class="subtitle">내가 불편해서 만든 것들</p>
+      <section class="identity" aria-labelledby="brand">
+        <p id="brand" class="brand">만세진 도구함</p>
+        <h1 class="hero-lead">내가 불편해서 만든 것들</h1>
+        <p class="purpose">바이브 코딩으로 만든 실무·실생활 유틸을 모아 두는 런치패드. 필요한 도구를 골라 바로 쓰세요.</p>
+        <div class="identity-rule" aria-hidden="true"></div>
+      </section>
     </header>
+
+    <div class="block-head">
+      <h2>도구</h2>
+      <p>실제로 쓰려고 만든 것</p>
+    </div>
 
     <div class="filters" id="filters" hidden></div>
 
@@ -65,24 +76,13 @@
       <p class="loading">불러오는 중…</p>
     </main>
 
-    <!-- footer-ad temporarily removed
-    <aside class="footer-ad" aria-label="광고">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-3303755480199835"
-           data-ad-slot="PLACEHOLDER"
-           data-ad-format="horizontal"
-           data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </aside>
-    -->
-
     <footer class="site-footer">
       <p>
         <a href="toys/">장난감</a> ·
         <a href="en/">English</a> ·
         <button type="button" class="footer-link-btn" data-bug-report>버그 신고</button>
       </p>
+      <p>만세진 · 불편하면 만든다</p>
     </footer>
   </div>
 

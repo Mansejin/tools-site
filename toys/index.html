@@ -15,7 +15,10 @@
   <meta name="description" content="쓸 데 없는 게 필요하면 눌러보세요.">
   <meta property="og:url" content="https://mansejin.com/toys/">
   <link rel="canonical" href="https://mansejin.com/toys/">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <script>
     (function () {
@@ -44,51 +47,53 @@
           <a class="github-link" href="https://github.com/Mansejin" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </div>
-      <p class="hero-emoji">🎲</p>
-      <h1>장난감</h1>
-      <p class="subtitle toys-subtitle">쓸 데 없는 게 필요하면 눌러보세요.<br>진지하게 쓰지 마세요.</p>
+      <section class="identity compact" aria-labelledby="brand">
+        <p id="brand" class="brand">장난감</p>
+        <h1 class="hero-lead">쓸 데 없는 게 필요하면 눌러보세요</h1>
+        <p class="purpose">진지하게 쓰지 마세요. 도구함과는 별도 레인입니다.</p>
+        <div class="identity-rule" aria-hidden="true"></div>
+      </section>
     </header>
+
+    <div class="block-head">
+      <h2>목록</h2>
+      <p>누르면 열림</p>
+    </div>
 
     <nav class="toys-grid" aria-label="장난감 목록">
       <a class="toys-card" href="excuse/">
-        <span class="toys-card-emoji">🏃‍♂️</span>
         <span class="toys-card-title">지각 핑계 생성기</span>
         <span class="toys-card-desc">늦었을 때 그럴듯한 핑계가 필요하면</span>
       </a>
       <a class="toys-card" href="hair/">
-        <span class="toys-card-emoji">🧑‍🦲</span>
         <span class="toys-card-title">탈모 확률 계산기</span>
         <span class="toys-card-desc">과학적 알고리즘으로 정밀 분석 (진짜임)</span>
       </a>
       <a class="toys-card" href="poker/">
-        <span class="toys-card-emoji">🃏</span>
         <span class="toys-card-title">콜 할까 말까?</span>
         <span class="toys-card-desc">홀덤 톡방 의사결정 도우미 (책임 안 짐)</span>
       </a>
       <a class="toys-card" href="holdem/">
-        <span class="toys-card-emoji">♠</span>
         <span class="toys-card-title">Pub · 홀덤펍</span>
         <span class="toys-card-desc">GTO 연습 · 차트 · 솔버</span>
       </a>
       <a class="toys-card" href="coupon/">
-        <span class="toys-card-emoji">💕</span>
         <span class="toys-card-title">커플 쿠폰 뽑기</span>
         <span class="toys-card-desc">남친·여친 이용권 쿠폰팩! 레어카드도 숨어있어</span>
       </a>
       <a class="toys-card" href="chess/">
-        <span class="toys-card-emoji">♟️</span>
         <span class="toys-card-title">오프닝 드릴</span>
         <span class="toys-card-desc">레퍼토리 암기 + 이론 끝에서 엔진 이어치기</span>
       </a>
       <a class="toys-card" href="lotto/">
-        <span class="toys-card-emoji">🎱</span>
         <span class="toys-card-title">로또 심층 분석기</span>
         <span class="toys-card-desc">역대 통계(빈도·공백·조합형·동반)로 번호 뽑기</span>
       </a>
     </nav>
 
     <footer class="site-footer">
-      <p><a href="../">도구함</a> · <a href="mailto:sae3648@gmail.com">버그 신고</a></p>
+      <p><a href="../">도구함</a> · <button type="button" class="footer-link-btn" onclick="location.href='mailto:sae3648@gmail.com'">버그 신고</button></p>
+      <p>toys · 만세진</p>
     </footer>
   </div>
   <script src="../js/theme.js"></script>
