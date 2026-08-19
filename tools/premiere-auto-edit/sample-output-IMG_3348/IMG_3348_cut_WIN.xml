@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xmeml>
+<xmeml version="5">
+  <sequence id="sequence-1">
+    <name>IMG_3348 [러프컷]</name>
+    <duration>51964</duration>
+    <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+    <media>
+      <video>
+        <format>
+          <samplecharacteristics>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <width>1920</width><height>1080</height>
+            <pixelaspectratio>square</pixelaspectratio>
+          </samplecharacteristics>
+        </format>
+        <track>
+          <clipitem id="cv0">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>0</start><end>6218</end>
+            <in>0</in><out>6218</out>
+            <file id="file-1">
+              <name>IMG_3348.MOV</name>
+              <pathurl>file:///C:/Users/sea36/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/%EA%B0%95%EC%9D%98/IMG_3348.MOV</pathurl>
+              <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+              <duration>52897</duration>
+              <media>
+                <video><samplecharacteristics><rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate><width>1920</width><height>1080</height>
+                  <pixelaspectratio>square</pixelaspectratio></samplecharacteristics></video>
+                <audio><samplecharacteristics><depth>16</depth><samplerate>48000</samplerate></samplecharacteristics>
+                  <channelcount>2</channelcount></audio>
+              </media>
+            </file>
+            <link><linkclipref>cv0</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>1</clipindex></link>
+            <link><linkclipref>ca0</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>1</clipindex></link>
+          </clipitem><clipitem id="cv1">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6218</start><end>6767</end>
+            <in>6304</in><out>6853</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv1</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>2</clipindex></link>
+            <link><linkclipref>ca1</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>2</clipindex></link>
+          </clipitem><clipitem id="cv2">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6767</start><end>6972</end>
+            <in>6892</in><out>7097</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv2</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>3</clipindex></link>
+            <link><linkclipref>ca2</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>3</clipindex></link>
+          </clipitem><clipitem id="cv3">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6972</start><end>13866</end>
+            <in>7202</in><out>14096</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv3</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>4</clipindex></link>
+            <link><linkclipref>ca3</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>4</clipindex></link>
+          </clipitem><clipitem id="cv4">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>13866</start><end>14566</end>
+            <in>14159</in><out>14859</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv4</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>5</clipindex></link>
+            <link><linkclipref>ca4</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>5</clipindex></link>
+          </clipitem><clipitem id="cv5">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>14566</start><end>18409</end>
+            <in>14867</in><out>18710</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv5</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>6</clipindex></link>
+            <link><linkclipref>ca5</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>6</clipindex></link>
+          </clipitem><clipitem id="cv6">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18409</start><end>18577</end>
+            <in>18718</in><out>18886</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv6</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>7</clipindex></link>
+            <link><linkclipref>ca6</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>7</clipindex></link>
+          </clipitem><clipitem id="cv7">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18577</start><end>18664</end>
+            <in>18895</in><out>18982</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv7</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>8</clipindex></link>
+            <link><linkclipref>ca7</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>8</clipindex></link>
+          </clipitem><clipitem id="cv8">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18664</start><end>19336</end>
+            <in>18990</in><out>19662</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv8</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>9</clipindex></link>
+            <link><linkclipref>ca8</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>9</clipindex></link>
+          </clipitem><clipitem id="cv9">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>19336</start><end>19837</end>
+            <in>19730</in><out>20231</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv9</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>10</clipindex></link>
+            <link><linkclipref>ca9</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>10</clipindex></link>
+          </clipitem><clipitem id="cv10">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>19837</start><end>21937</end>
+            <in>20242</in><out>22342</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv10</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>11</clipindex></link>
+            <link><linkclipref>ca10</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>11</clipindex></link>
+          </clipitem><clipitem id="cv11">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>21937</start><end>22911</end>
+            <in>22356</in><out>23330</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv11</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>12</clipindex></link>
+            <link><linkclipref>ca11</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>12</clipindex></link>
+          </clipitem><clipitem id="cv12">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>22911</start><end>24705</end>
+            <in>23340</in><out>25134</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv12</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>13</clipindex></link>
+            <link><linkclipref>ca12</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>13</clipindex></link>
+          </clipitem><clipitem id="cv13">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>24705</start><end>26151</end>
+            <in>25144</in><out>26590</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv13</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>14</clipindex></link>
+            <link><linkclipref>ca13</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>14</clipindex></link>
+          </clipitem><clipitem id="cv14">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26151</start><end>26331</end>
+            <in>26596</in><out>26776</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv14</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>15</clipindex></link>
+            <link><linkclipref>ca14</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>15</clipindex></link>
+          </clipitem><clipitem id="cv15">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26331</start><end>26428</end>
+            <in>26814</in><out>26911</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv15</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>16</clipindex></link>
+            <link><linkclipref>ca15</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>16</clipindex></link>
+          </clipitem><clipitem id="cv16">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26428</start><end>28195</end>
+            <in>26960</in><out>28727</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv16</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>17</clipindex></link>
+            <link><linkclipref>ca16</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>17</clipindex></link>
+          </clipitem><clipitem id="cv17">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>28195</start><end>28594</end>
+            <in>28811</in><out>29210</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv17</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>18</clipindex></link>
+            <link><linkclipref>ca17</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>18</clipindex></link>
+          </clipitem><clipitem id="cv18">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>28594</start><end>29766</end>
+            <in>29252</in><out>30424</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv18</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>19</clipindex></link>
+            <link><linkclipref>ca18</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>19</clipindex></link>
+          </clipitem><clipitem id="cv19">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>29766</start><end>30074</end>
+            <in>30441</in><out>30749</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv19</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>20</clipindex></link>
+            <link><linkclipref>ca19</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>20</clipindex></link>
+          </clipitem><clipitem id="cv20">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>30074</start><end>33261</end>
+            <in>30754</in><out>33941</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv20</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>21</clipindex></link>
+            <link><linkclipref>ca20</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>21</clipindex></link>
+          </clipitem><clipitem id="cv21">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>33261</start><end>35438</end>
+            <in>33966</in><out>36143</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv21</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>22</clipindex></link>
+            <link><linkclipref>ca21</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>22</clipindex></link>
+          </clipitem><clipitem id="cv22">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>35438</start><end>36263</end>
+            <in>36163</in><out>36988</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv22</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>23</clipindex></link>
+            <link><linkclipref>ca22</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>23</clipindex></link>
+          </clipitem><clipitem id="cv23">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>36263</start><end>36491</end>
+            <in>37013</in><out>37241</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv23</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>24</clipindex></link>
+            <link><linkclipref>ca23</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>24</clipindex></link>
+          </clipitem><clipitem id="cv24">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>36491</start><end>41234</end>
+            <in>37262</in><out>42005</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv24</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>25</clipindex></link>
+            <link><linkclipref>ca24</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>25</clipindex></link>
+          </clipitem><clipitem id="cv25">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>41234</start><end>41467</end>
+            <in>42072</in><out>42305</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv25</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>26</clipindex></link>
+            <link><linkclipref>ca25</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>26</clipindex></link>
+          </clipitem><clipitem id="cv26">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>41467</start><end>42731</end>
+            <in>42310</in><out>43574</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv26</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>27</clipindex></link>
+            <link><linkclipref>ca26</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>27</clipindex></link>
+          </clipitem><clipitem id="cv27">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>42731</start><end>43534</end>
+            <in>43609</in><out>44412</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv27</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>28</clipindex></link>
+            <link><linkclipref>ca27</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>28</clipindex></link>
+          </clipitem><clipitem id="cv28">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>43534</start><end>45292</end>
+            <in>44437</in><out>46195</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv28</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>29</clipindex></link>
+            <link><linkclipref>ca28</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>29</clipindex></link>
+          </clipitem><clipitem id="cv29">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45292</start><end>45521</end>
+            <in>46204</in><out>46433</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv29</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>30</clipindex></link>
+            <link><linkclipref>ca29</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>30</clipindex></link>
+          </clipitem><clipitem id="cv30">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45521</start><end>45857</end>
+            <in>46441</in><out>46777</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv30</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>31</clipindex></link>
+            <link><linkclipref>ca30</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>31</clipindex></link>
+          </clipitem><clipitem id="cv31">
+            <name>IMG_3348.MOV</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45857</start><end>51964</end>
+            <in>46790</in><out>52897</out>
+            <file id="file-1"/>
+            <link><linkclipref>cv31</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>32</clipindex></link>
+            <link><linkclipref>ca31</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>32</clipindex></link>
+          </clipitem>
+        </track>
+      </video>
+      <audio>
+        <format><samplecharacteristics><depth>16</depth><samplerate>48000</samplerate></samplecharacteristics></format>
+        <track>
+          <clipitem id="ca0">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>0</start><end>6218</end>
+            <in>0</in><out>6218</out>
+            <file id="file-2">
+              <name>IMG_3348_cut_audio.wav</name>
+              <pathurl>file:///C:/Users/sea36/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/%EA%B0%95%EC%9D%98/IMG_3348_cut_audio.wav</pathurl>
+              <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+              <duration>52897</duration>
+              <media>
+                <audio><samplecharacteristics><depth>16</depth><samplerate>48000</samplerate></samplecharacteristics>
+                  <channelcount>2</channelcount></audio>
+              </media>
+            </file>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv0</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>1</clipindex></link>
+            <link><linkclipref>ca0</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>1</clipindex></link>
+          </clipitem><clipitem id="ca1">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6218</start><end>6767</end>
+            <in>6304</in><out>6853</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv1</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>2</clipindex></link>
+            <link><linkclipref>ca1</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>2</clipindex></link>
+          </clipitem><clipitem id="ca2">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6767</start><end>6972</end>
+            <in>6892</in><out>7097</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv2</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>3</clipindex></link>
+            <link><linkclipref>ca2</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>3</clipindex></link>
+          </clipitem><clipitem id="ca3">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>6972</start><end>13866</end>
+            <in>7202</in><out>14096</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv3</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>4</clipindex></link>
+            <link><linkclipref>ca3</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>4</clipindex></link>
+          </clipitem><clipitem id="ca4">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>13866</start><end>14566</end>
+            <in>14159</in><out>14859</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv4</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>5</clipindex></link>
+            <link><linkclipref>ca4</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>5</clipindex></link>
+          </clipitem><clipitem id="ca5">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>14566</start><end>18409</end>
+            <in>14867</in><out>18710</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv5</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>6</clipindex></link>
+            <link><linkclipref>ca5</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>6</clipindex></link>
+          </clipitem><clipitem id="ca6">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18409</start><end>18577</end>
+            <in>18718</in><out>18886</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv6</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>7</clipindex></link>
+            <link><linkclipref>ca6</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>7</clipindex></link>
+          </clipitem><clipitem id="ca7">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18577</start><end>18664</end>
+            <in>18895</in><out>18982</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv7</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>8</clipindex></link>
+            <link><linkclipref>ca7</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>8</clipindex></link>
+          </clipitem><clipitem id="ca8">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>18664</start><end>19336</end>
+            <in>18990</in><out>19662</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv8</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>9</clipindex></link>
+            <link><linkclipref>ca8</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>9</clipindex></link>
+          </clipitem><clipitem id="ca9">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>19336</start><end>19837</end>
+            <in>19730</in><out>20231</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv9</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>10</clipindex></link>
+            <link><linkclipref>ca9</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>10</clipindex></link>
+          </clipitem><clipitem id="ca10">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>19837</start><end>21937</end>
+            <in>20242</in><out>22342</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv10</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>11</clipindex></link>
+            <link><linkclipref>ca10</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>11</clipindex></link>
+          </clipitem><clipitem id="ca11">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>21937</start><end>22911</end>
+            <in>22356</in><out>23330</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv11</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>12</clipindex></link>
+            <link><linkclipref>ca11</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>12</clipindex></link>
+          </clipitem><clipitem id="ca12">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>22911</start><end>24705</end>
+            <in>23340</in><out>25134</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv12</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>13</clipindex></link>
+            <link><linkclipref>ca12</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>13</clipindex></link>
+          </clipitem><clipitem id="ca13">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>24705</start><end>26151</end>
+            <in>25144</in><out>26590</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv13</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>14</clipindex></link>
+            <link><linkclipref>ca13</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>14</clipindex></link>
+          </clipitem><clipitem id="ca14">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26151</start><end>26331</end>
+            <in>26596</in><out>26776</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv14</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>15</clipindex></link>
+            <link><linkclipref>ca14</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>15</clipindex></link>
+          </clipitem><clipitem id="ca15">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26331</start><end>26428</end>
+            <in>26814</in><out>26911</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv15</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>16</clipindex></link>
+            <link><linkclipref>ca15</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>16</clipindex></link>
+          </clipitem><clipitem id="ca16">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>26428</start><end>28195</end>
+            <in>26960</in><out>28727</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv16</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>17</clipindex></link>
+            <link><linkclipref>ca16</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>17</clipindex></link>
+          </clipitem><clipitem id="ca17">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>28195</start><end>28594</end>
+            <in>28811</in><out>29210</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv17</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>18</clipindex></link>
+            <link><linkclipref>ca17</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>18</clipindex></link>
+          </clipitem><clipitem id="ca18">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>28594</start><end>29766</end>
+            <in>29252</in><out>30424</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv18</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>19</clipindex></link>
+            <link><linkclipref>ca18</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>19</clipindex></link>
+          </clipitem><clipitem id="ca19">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>29766</start><end>30074</end>
+            <in>30441</in><out>30749</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv19</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>20</clipindex></link>
+            <link><linkclipref>ca19</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>20</clipindex></link>
+          </clipitem><clipitem id="ca20">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>30074</start><end>33261</end>
+            <in>30754</in><out>33941</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv20</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>21</clipindex></link>
+            <link><linkclipref>ca20</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>21</clipindex></link>
+          </clipitem><clipitem id="ca21">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>33261</start><end>35438</end>
+            <in>33966</in><out>36143</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv21</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>22</clipindex></link>
+            <link><linkclipref>ca21</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>22</clipindex></link>
+          </clipitem><clipitem id="ca22">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>35438</start><end>36263</end>
+            <in>36163</in><out>36988</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv22</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>23</clipindex></link>
+            <link><linkclipref>ca22</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>23</clipindex></link>
+          </clipitem><clipitem id="ca23">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>36263</start><end>36491</end>
+            <in>37013</in><out>37241</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv23</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>24</clipindex></link>
+            <link><linkclipref>ca23</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>24</clipindex></link>
+          </clipitem><clipitem id="ca24">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>36491</start><end>41234</end>
+            <in>37262</in><out>42005</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv24</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>25</clipindex></link>
+            <link><linkclipref>ca24</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>25</clipindex></link>
+          </clipitem><clipitem id="ca25">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>41234</start><end>41467</end>
+            <in>42072</in><out>42305</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv25</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>26</clipindex></link>
+            <link><linkclipref>ca25</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>26</clipindex></link>
+          </clipitem><clipitem id="ca26">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>41467</start><end>42731</end>
+            <in>42310</in><out>43574</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv26</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>27</clipindex></link>
+            <link><linkclipref>ca26</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>27</clipindex></link>
+          </clipitem><clipitem id="ca27">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>42731</start><end>43534</end>
+            <in>43609</in><out>44412</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv27</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>28</clipindex></link>
+            <link><linkclipref>ca27</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>28</clipindex></link>
+          </clipitem><clipitem id="ca28">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>43534</start><end>45292</end>
+            <in>44437</in><out>46195</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv28</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>29</clipindex></link>
+            <link><linkclipref>ca28</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>29</clipindex></link>
+          </clipitem><clipitem id="ca29">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45292</start><end>45521</end>
+            <in>46204</in><out>46433</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv29</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>30</clipindex></link>
+            <link><linkclipref>ca29</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>30</clipindex></link>
+          </clipitem><clipitem id="ca30">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45521</start><end>45857</end>
+            <in>46441</in><out>46777</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv30</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>31</clipindex></link>
+            <link><linkclipref>ca30</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>31</clipindex></link>
+          </clipitem><clipitem id="ca31">
+            <name>IMG_3348_cut_audio.wav</name>
+            <rate><timebase>30</timebase><ntsc>FALSE</ntsc></rate>
+            <start>45857</start><end>51964</end>
+            <in>46790</in><out>52897</out>
+            <file id="file-2"/>
+            <sourcetrack><mediatype>audio</mediatype><trackindex>1</trackindex></sourcetrack>
+            
+            <link><linkclipref>cv31</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>32</clipindex></link>
+            <link><linkclipref>ca31</linkclipref><mediatype>audio</mediatype><trackindex>1</trackindex><clipindex>32</clipindex></link>
+          </clipitem>
+        </track>
+      </audio>
+    </media>
+  </sequence>
+</xmeml>
