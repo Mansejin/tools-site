@@ -238,27 +238,42 @@
     return `<div class="project-card project-card--static">${inner}</div>`;
   }
 
+  function categoryFromHash(categories) {
+    const id = location.hash.replace(/^#/, "");
+    return categories.some((c) => c.id === id) ? id : categories[0]?.id;
+  }
+
   function renderProjects(data) {
     const tabsEl = document.getElementById("projectTabs");
     const gridEl = document.getElementById("projectGrid");
     if (!tabsEl || !gridEl) return;
 
     const categories = data.projects.categories;
-    let activeId = categories[0]?.id;
 
     function showCategory(id) {
-      activeId = id;
       tabsEl.querySelectorAll(".project-tab").forEach((tab) => {
         tab.classList.toggle("is-active", tab.dataset.category === id);
       });
 
       const cat = categories.find((c) => c.id === id);
+      const hub = cat?.hubUrl
+        ? `<p class="project-hub"><a href="${escapeHtml(cat.hubUrl)}">제작 노트 · 현황</a></p>`
+        : "";
+
       if (!cat || !cat.items.length) {
-        gridEl.innerHTML = `<p class="project-empty">아직 등록된 프로젝트가 없습니다.<br><code>portfolio/data/portfolio.json</code>에 항목을 추가해 주세요.</p>`;
+        const line = cat?.empty
+          ? escapeHtml(cat.empty)
+          : "아직 등록된 프로젝트가 없습니다.";
+        const more = cat?.hubUrl
+          ? `<br><a href="${escapeHtml(cat.hubUrl)}">칼럼에서 현황 보기</a>`
+          : "";
+        gridEl.innerHTML = `${hub}<p class="project-empty">${line}${more}</p>`;
         return;
       }
-      gridEl.innerHTML = cat.items.map(renderProjectCard).join("");
+      gridEl.innerHTML = hub + cat.items.map(renderProjectCard).join("");
     }
+
+    const activeId = categoryFromHash(categories);
 
     tabsEl.innerHTML = categories
       .map(
@@ -268,10 +283,23 @@
       .join("");
 
     tabsEl.querySelectorAll(".project-tab").forEach((tab) => {
-      tab.addEventListener("click", () => showCategory(tab.dataset.category));
+      tab.addEventListener("click", () => {
+        const id = tab.dataset.category;
+        if (location.hash.replace(/^#/, "") !== id) {
+          history.replaceState(null, "", "#" + id);
+        }
+        showCategory(id);
+      });
+    });
+
+    window.addEventListener("hashchange", () => {
+      showCategory(categoryFromHash(categories));
     });
 
     showCategory(activeId);
+    if (categories.some((c) => c.id === location.hash.replace(/^#/, ""))) {
+      document.getElementById("projects")?.scrollIntoView();
+    }
   }
 
   function renderAbout(data) {

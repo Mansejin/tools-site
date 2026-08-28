@@ -94,6 +94,13 @@ portfolio.projects.categories = [
   { id: "viral", label: "바이럴 광고", items: projects.viral },
   { id: "youtube", label: "유튜브", items: projects.youtube },
   { id: "personal", label: "개인 작품", items: projects.personal },
+  {
+    id: "ai-video",
+    label: "생성형 AI",
+    hubUrl: "/portfolio/ai/",
+    empty: "최소 비용으로 만든 생성 영상을 여기에 올립니다. 아직 공개 편이 없습니다.",
+    items: [],
+  },
 ];
 
 fs.writeFileSync("portfolio/data/portfolio.json", JSON.stringify(portfolio, null, 2) + "\n");

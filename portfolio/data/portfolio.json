@@ -129,7 +129,7 @@
     ]
   },
   "projects": {
-    "description": "담당한 프로젝트를 최신순으로 구성했습니다. 각 배너를 클릭하시면 영상을 확인하실 수 있습니다.",
+    "description": "담당한 프로젝트를 최신순으로 구성했습니다. 생성형 AI 탭은 회사 일과 별개인 개인 랩입니다.",
     "categories": [
       {
         "id": "campaign",
@@ -318,6 +318,13 @@
             "url": "https://www.youtube.com/watch?v=AGu4kQuizV4"
           }
         ]
+      },
+      {
+        "id": "ai-video",
+        "label": "생성형 AI",
+        "hubUrl": "/portfolio/ai/",
+        "empty": "최소 비용으로 만든 생성 영상을 여기에 올립니다. 아직 공개 편이 없습니다.",
+        "items": []
       }
     ]
   },
@@ -337,6 +344,12 @@
         "url": "https://www.youtube.com/channel/UCNRdBrbFlH9NFwyrK_Sy7rQ",
         "email": "exitforpoor@gmail.com",
         "type": "youtube"
+      },
+      {
+        "name": "생성형 AI 비디오",
+        "description": "최소 비용으로 만들고 올리는 개인 랩. 회사 일과 별개.",
+        "url": "https://mansejin.com/portfolio/ai/",
+        "type": "lab"
       },
       {
         "name": "만세진 도구함",

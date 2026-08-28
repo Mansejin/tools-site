@@ -688,6 +688,12 @@ html[data-theme="dark"] .skill-level--top {
   color: var(--text-tertiary);
 }
 
+.project-hub {
+  grid-column: 1 / -1;
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+}
+
 .project-empty {
   grid-column: 1 / -1;
   text-align: center;
@@ -696,6 +702,11 @@ html[data-theme="dark"] .skill-level--top {
   font-size: 0.9375rem;
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
+}
+
+.project-empty a {
+  display: inline-block;
+  margin-top: 8px;
 }
 
 /* ── About channels ── */

@@ -4,6 +4,8 @@
 
 - 라이브: https://mansejin.com
 - 장난감(핑계 등): https://mansejin.com/toys/
+- 포트폴리오: https://mansejin.com/portfolio/
+- 생성형 AI 비디오 노트: https://mansejin.com/portfolio/ai/
 - 구 주소 `tools.mansejin.com` → `mansejin.com` 으로 자동 이동
 
 ## 도구 추가 방법
