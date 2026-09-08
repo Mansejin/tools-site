@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fpractice\u002F[situationId]\u002F[lessonId]","\u002Fsituations\u002F[id]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

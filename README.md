@@ -3,6 +3,7 @@
 만세진 잔잔바리 도구 모음 페이지. GitHub Pages + `mansejin.com` 루트 도메인.
 
 - 라이브: https://mansejin.com
+- Travel English: https://mansejin.com/travel-english/
 - 장난감(핑계 등): https://mansejin.com/toys/
 - 포트폴리오: https://mansejin.com/portfolio/
 - 생성형 AI 비디오 노트: https://mansejin.com/portfolio/ai/

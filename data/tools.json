@@ -1,5 +1,25 @@
 [
   {
+    "id": "travel-english",
+    "name": "Travel English",
+    "tagline": {
+      "ko": "여행에서 바로 쓰는 영어, 상황별·단계별 연습",
+      "en": "Travel English drills by situation and level"
+    },
+    "description": {
+      "ko": "공항·호텔·식당·길찾기·쇼핑·응급 장면을 Survival → Conversation → Trouble 단계로 연습합니다. 레벨 체크, 듣기(TTS), 진행 저장 포함.",
+      "en": "Practice airport, hotel, restaurant, getting around, shopping, and emergency phrases across Survival → Conversation → Trouble. Includes a level check, browser TTS, and local progress."
+    },
+    "tags": {
+      "ko": ["웹", "영어", "여행"],
+      "en": ["Web", "English", "Travel"]
+    },
+    "url": "/travel-english/",
+    "github": "https://github.com/Mansejin/travel-english",
+    "platform": "Web",
+    "status": "beta"
+  },
+  {
     "id": "clipboard-paste-jpg",
     "name": "clipboard-paste-jpg",
     "tagline": {
