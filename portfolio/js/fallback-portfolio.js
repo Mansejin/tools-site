@@ -139,7 +139,7 @@
           {
             "title": "25년 로지텍 + 젠지 프로시리즈 광고",
             "client": "Logitech G",
-            "year": "2025",
+            "year": "",
             "url": "https://www.youtube.com/watch?v=1jMuLGX5bTY"
           },
           {
@@ -233,6 +233,12 @@
             "client": "Logitech G",
             "year": "",
             "url": "https://www.youtube.com/watch?v=-sfl51qJQYg"
+          },
+          {
+            "title": "MX MASTER 3 기업 바이럴",
+            "client": "Logitech",
+            "year": "",
+            "url": ""
           },
           {
             "title": "로지텍G + KT 바이럴 콘텐츠",
