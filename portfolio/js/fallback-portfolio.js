@@ -14,7 +14,7 @@
     "intro": "8년차 영상 PD로서, 영상 제작사에서 영상 편집자로 커리어를 시작해 다양한 역할을 경험했습니다. 점차 역할의 범위를 확장하며 영상에 대한 전문 지식은 물론, 마케팅 및 브랜딩에 대한 깊은 이해를 쌓아왔습니다. 현재는 광고대행사의 콘텐츠 팀에서 프로젝트 매니저로 재직중이며, 창의적 콘텐츠 제작과 효과적인 브랜드 커뮤니케이션 전략을 주도하고 있습니다."
   },
   "profile": {
-    "resumeUrl": "https://drive.google.com/file/d/1fEBLsWi6lwOUOWBcKOYjSnQpRw2JB1K0/view?usp=sharing",
+    "resumeUrl": "/portfolio/files/resume.pdf",
     "resumeLabel": "오세진 이력서",
     "career": {
       "totalYears": 8,
