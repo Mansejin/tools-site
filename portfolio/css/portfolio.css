@@ -286,12 +286,14 @@ a:hover {
   cursor: zoom-out;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .photo-lightbox.is-open {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .photo-lightbox-image {
@@ -930,6 +932,36 @@ html[data-theme="dark"] .skill-level--top {
 .contact-cta:hover {
   background: var(--blue-hover);
   color: #fff;
+}
+
+.portfolio-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 1100;
+  transform: translateX(-50%) translateY(12px);
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(25, 31, 40, 0.92);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.portfolio-toast.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+html[data-theme="dark"] .portfolio-toast {
+  background: rgba(230, 237, 243, 0.95);
+  color: #0d1117;
 }
 
 /* ── Footer ── */

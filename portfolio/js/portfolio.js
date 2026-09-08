@@ -391,20 +391,52 @@
     el.innerHTML = `<ul class="work-list">${data.howIWork.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
   }
 
+  function showToast(message) {
+    let toast = document.getElementById("portfolioToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "portfolioToast";
+      toast.className = "portfolio-toast";
+      toast.setAttribute("role", "status");
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("is-visible");
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => toast.classList.remove("is-visible"), 2200);
+  }
+
   function renderContact(data) {
     const el = document.getElementById("contactContent");
     if (!el) return;
     const c = data.contact;
+    const email = String(c.email || "").trim();
     el.innerHTML = `
       <div class="card contact-card">
         <h2>Contact</h2>
         <div class="contact-links">
-          <p class="contact-item">✉️ <a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a></p>
+          <p class="contact-item">✉️ <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
           <p class="contact-item">📱 <a href="tel:${escapeHtml(c.phone.replace(/\s/g, ""))}">${escapeHtml(c.phone)}</a></p>
           <p class="contact-item">📍 ${escapeHtml(c.location)}</p>
         </div>
-        <a class="contact-cta" href="mailto:${escapeHtml(c.email)}">이메일 보내기</a>
+        <a class="contact-cta" href="mailto:${escapeHtml(email)}">이메일 보내기</a>
       </div>`;
+
+    const cta = el.querySelector(".contact-cta");
+    if (cta && email) {
+      cta.addEventListener("click", async (event) => {
+        event.preventDefault();
+        let copied = false;
+        try {
+          await navigator.clipboard.writeText(email);
+          copied = true;
+        } catch {
+          /* ignore — mailto fallback below */
+        }
+        window.location.href = `mailto:${email}`;
+        showToast(copied ? "이메일 주소를 복사했습니다" : email);
+      });
+    }
   }
 
   async function init() {
