@@ -1,0 +1,22 @@
+{
+  "name": "siyan-upload-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Watch a NAS folder and auto-upload draft videos to YouTube",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "auth": "node scripts/auth-youtube.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "googleapis": "^148.0.0"
+  }
+}

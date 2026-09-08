@@ -1,0 +1,24 @@
+services:
+  api:
+    build: .
+    container_name: siyan-upload-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${SIYAN_HOST_PORT:-8800}:8800"
+    environment:
+      PORT: "8800"
+      DATA_DIR: /app/data
+      WATCH_DIR: /watch
+      DONE_DIR: /done
+      FAIL_DIR: /fail
+    volumes:
+      - siyan_data:/app/data
+      # NAS 공유폴더 경로를 호스트에 맞게 수정
+      - ${SIYAN_WATCH_HOST:-/volume1/04. 콘텐츠/_시안_inbox}:/watch
+      - ${SIYAN_DONE_HOST:-/volume1/04. 콘텐츠/_시안_done}:/done
+      - ${SIYAN_FAIL_HOST:-/volume1/04. 콘텐츠/_시안_fail}:/fail
+
+volumes:
+  siyan_data:

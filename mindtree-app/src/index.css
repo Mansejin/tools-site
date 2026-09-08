@@ -8,8 +8,8 @@
   --border: #e8e2d9;
   --border-light: #f0ebe3;
   --text-primary: #2c2825;
-  --text-secondary: #6b6560;
-  --text-muted: #9a938c;
+  --text-secondary: #4f4944;
+  --text-muted: #7a736c;
   --accent: #e07a3a;
   --accent-soft: #f0a06a;
   --accent-dim: #c96830;
@@ -513,6 +513,7 @@ body {
 
 .thought-canvas {
   position: relative;
+  flex: 1;
   background: var(--bg-deep);
   overflow: hidden;
   min-height: 0;
@@ -551,178 +552,481 @@ body {
   background: var(--bg-deep);
 }
 
+.neural-canvas .react-flow__node {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.neural-canvas .react-flow__node.neural-entering {
+  /* 등장 bloom과 위치 transition이 겹치지 않게 */
+  transition: none !important;
+}
+
 .neural-canvas .react-flow__edge-path {
   stroke-linecap: round;
+  transition: stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease;
+}
+
+/* ── 신경망 등장: 노드가 부모에서 피어나듯 ── */
+@keyframes neural-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.08) translateX(-18px);
+    filter: blur(8px);
+  }
+  40% {
+    opacity: 0.85;
+    filter: blur(1px);
+  }
+  70% {
+    transform: scale(1.05) translateX(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes neural-edge-grow {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 280;
+  }
+  35% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes neural-root-ripple {
+  0% {
+    box-shadow:
+      0 4px 20px rgba(224, 122, 58, 0.14),
+      0 0 0 0 rgba(224, 122, 58, 0.35);
+  }
+  40% {
+    box-shadow:
+      0 4px 24px rgba(224, 122, 58, 0.22),
+      0 0 0 18px rgba(224, 122, 58, 0.1);
+  }
+  100% {
+    box-shadow:
+      0 4px 20px rgba(224, 122, 58, 0.14),
+      0 0 0 48px rgba(224, 122, 58, 0);
+  }
+}
+
+@keyframes neural-root-ripple-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.1);
+  }
+}
+
+.react-flow__node.neural-entering .neural-wrap {
+  animation: neural-bloom 0.78s cubic-bezier(0.16, 1.05, 0.3, 1) both;
+  animation-delay: var(--neural-delay, 0ms);
+  transform-origin: left center;
+}
+
+.react-flow__node.neural-entering.is-root-node .neural-wrap {
+  transform-origin: center center;
+  animation-name: neural-bloom-root;
+}
+
+@keyframes neural-bloom-root {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.7);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.react-flow__edge.neural-entering .react-flow__edge-path {
+  stroke-dasharray: 280;
+  stroke-dashoffset: 280;
+  animation: neural-edge-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--neural-delay, 0ms);
+}
+
+.neural-node.root.is-blooming {
+  animation: neural-root-ripple 0.95s ease-out;
+}
+
+.neural-wrap.is-root.is-blooming::before,
+.neural-wrap.is-root.is-blooming::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(224, 122, 58, 0.45);
+  pointer-events: none;
+  z-index: 0;
+  animation: neural-root-ripple-ring 0.9s ease-out forwards;
+}
+
+.neural-wrap.is-root.is-blooming::after {
+  animation-delay: 0.12s;
+  border-color: rgba(224, 122, 58, 0.28);
 }
 
 .neural-wrap {
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.35s ease;
 }
 
 .neural-wrap.dimmed {
-  opacity: 0.22;
+  /* 포커스 강조는 유지하되 전체 트리 구조는 읽을 수 있게 */
+  opacity: 0.7;
+}
+
+.neural-wrap.dimmed .neural-node {
+  border-color: rgba(160, 148, 136, 0.45);
+  color: var(--text-muted);
+}
+
+.neural-wrap.is-root {
+  position: relative;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node.neural-entering .neural-wrap,
+  .react-flow__edge.neural-entering .react-flow__edge-path,
+  .neural-node.root.is-blooming,
+  .neural-wrap.is-root.is-blooming::before,
+  .neural-wrap.is-root.is-blooming::after,
+  .neural-wrap.is-root.is-collapsed .neural-node.root {
+    animation: none !important;
+  }
+
+  .react-flow__node {
+    transition: none !important;
+  }
 }
 
 .neural-node {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 22px;
-  max-width: 120px;
-  padding: 2px 10px;
-  border: 1px solid rgba(200, 190, 180, 0.55);
+  align-items: stretch;
+  max-width: 220px;
+  min-height: 28px;
+  border: 1px solid rgba(140, 128, 116, 0.72);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--text-secondary);
-  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text-primary);
+  font-size: 0.8rem;
   line-height: 1.3;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s, background 0.2s, transform 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s, background 0.2s, width 0.25s, height 0.25s;
   font-family: inherit;
   white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(44, 40, 37, 0.04);
+}
+
+.neural-node-body {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 3px 11px;
+}
+
+.neural-node.with-controls .neural-node-body {
+  padding-right: 8px;
+}
+
+.neural-node-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 
 .neural-node.root {
-  border-color: rgba(224, 122, 58, 0.45);
+  position: relative;
+  width: 80px;
+  height: 80px;
+  min-height: 80px;
+  max-width: 80px;
+  border-radius: 50%;
+  border-width: 2px;
+  border-color: rgba(224, 122, 58, 0.55);
   color: var(--text-primary);
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  font-size: 1.15rem;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(224, 122, 58, 0.14);
+  overflow: visible;
+  align-items: center;
+  justify-content: center;
+}
+
+.neural-node.root .neural-node-body {
+  position: relative;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* 루트: 글자가 아니라 원 전체(테두리 포함)가 히트 영역 */
+.neural-node.root .neural-node-main {
+  position: absolute;
+  inset: -2px;
+  width: auto;
+  height: auto;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.neural-node.root .neural-label {
+  max-width: 56px;
+  text-align: center;
+  font-family: var(--font-serif);
+  pointer-events: none;
+}
+
+.neural-node.root.with-controls {
+  /* 원형은 유지하고, 컨트롤은 옆 슬롯으로 */
+  overflow: visible;
 }
 
 .neural-node.active,
 .neural-wrap.selected .neural-node {
   border-color: var(--accent);
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 2px var(--accent-glow), 0 0 12px rgba(224, 122, 58, 0.12);
-  transform: scale(1.04);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .neural-label {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100px;
+  max-width: 110px;
 }
 
 .neural-input {
-  width: 88px;
+  width: 100px;
   border: none;
   background: transparent;
   color: var(--text-primary);
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   line-height: 1.3;
   outline: none;
   padding: 0;
   font-family: inherit;
 }
 
-.neural-add {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid rgba(200, 190, 180, 0.6);
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
+.neural-node.root .neural-input {
+  width: 48px;
+  text-align: center;
+  font-size: 1rem;
+  font-family: var(--font-serif);
+}
+
+.neural-fold-badge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.neural-add:hover,
-.neural-add:active {
-  opacity: 1;
-  border-color: var(--accent-soft);
-  color: var(--accent);
-}
-
-.neural-fold {
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
+  border: 1px solid rgba(224, 122, 58, 0.22);
   border-radius: 999px;
-  border: 1px solid rgba(200, 190, 180, 0.55);
-  background: rgba(255, 255, 255, 0.65);
-  color: var(--text-muted);
-  font-size: 0.62rem;
+  font-size: 0.68rem;
+  line-height: 1;
+  color: var(--accent-dim);
+  background: rgba(255, 255, 255, 0.92);
+  flex-shrink: 0;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.neural-node.root .neural-fold-badge {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  transform: translate(-50%, 50%);
+  min-width: 20px;
+  height: 20px;
+  background: #fff;
+  border: 1px solid rgba(224, 122, 58, 0.35);
+  color: var(--accent-dim);
+  box-shadow: 0 1px 4px rgba(44, 40, 37, 0.08);
+}
+
+.neural-fold-badge:hover,
+.neural-fold-badge:focus-visible {
+  color: var(--accent);
+  background: var(--accent-bg);
+  outline: none;
+}
+
+.neural-fold-badge.collapsed {
+  color: var(--accent-dim);
+  background: var(--accent-bg);
+  border-color: rgba(224, 122, 58, 0.4);
+  font-weight: 600;
+  min-width: 20px;
+}
+
+.neural-node-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 4px 0 3px;
+  border-left: 1px solid rgba(224, 122, 58, 0.18);
+  background: transparent;
+}
+
+.neural-ctrl {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(160, 148, 136, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(90, 82, 74, 0.92);
+  font-size: 0.9rem;
   line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   flex-shrink: 0;
-  opacity: 0.55;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s, transform 0.15s;
+  font-family: inherit;
+  font-weight: 400;
+  opacity: 0.92;
+  transition: opacity 0.15s, color 0.15s, background 0.15s, border-color 0.15s;
 }
 
-.neural-wrap:hover .neural-fold,
-.neural-wrap.selected .neural-fold {
+.neural-ctrl:hover,
+.neural-ctrl:focus-visible {
   opacity: 1;
-}
-
-.neural-fold.collapsed {
-  opacity: 1;
-  border-color: rgba(224, 122, 58, 0.45);
-  background: var(--accent-bg);
   color: var(--accent-dim);
-  font-weight: 600;
+  background: rgba(224, 122, 58, 0.1);
+  border-color: rgba(224, 122, 58, 0.22);
+  outline: none;
 }
 
-.neural-fold:hover,
-.neural-fold:active {
-  border-color: var(--accent-soft);
+.neural-ctrl-add:hover,
+.neural-ctrl-add:focus-visible {
   color: var(--accent);
-  transform: scale(1.06);
 }
 
-.fold-count {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+.neural-ctrl-del:hover,
+.neural-ctrl-del:focus-visible {
+  color: var(--danger);
+  background: rgba(196, 92, 74, 0.08);
 }
 
-.fold-mark {
-  font-size: 0.78rem;
-  font-weight: 500;
+.neural-wrap.is-editing .neural-node-controls {
+  display: none;
+}
+
+.neural-node.root .neural-node-controls {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 14px);
+  transform: translateX(-50%);
+  border-left: none;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 3px 5px;
+  gap: 2px;
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(44, 40, 37, 0.07);
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.neural-node.root .neural-ctrl {
+  width: 22px;
+  height: 22px;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.neural-wrap.is-root.is-collapsed .neural-node.root {
+  cursor: pointer;
+  box-shadow: 0 6px 28px rgba(224, 122, 58, 0.18);
+  animation: neural-root-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes neural-root-breathe {
+  0%, 100% {
+    box-shadow: 0 6px 24px rgba(224, 122, 58, 0.14), 0 0 0 0 rgba(224, 122, 58, 0.12);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(224, 122, 58, 0.22), 0 0 0 10px rgba(224, 122, 58, 0.06);
+  }
+}
+
+.neural-handle-root {
+  /* 선 출발점을 원 우측 중앙에 고정 — +는 아래쪽에 분리 */
+  top: 50% !important;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.header-action {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.65rem;
+  transition: border-color 0.15s, color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.header-action:hover:not(:disabled) {
+  border-color: var(--accent-soft);
+  color: var(--accent-dim);
+  background: var(--accent-bg);
+}
+
+.header-action:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .neural-wrap.is-collapsed .neural-node {
   border-color: rgba(224, 122, 58, 0.35);
-}
-
-.neural-delete {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid rgba(200, 190, 180, 0.6);
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.neural-delete:hover,
-.neural-delete:active {
-  opacity: 1;
-  border-color: #e8c4bc;
-  color: var(--danger);
 }
 
 .neural-handle {
@@ -735,20 +1039,43 @@ body {
   opacity: 0 !important;
 }
 
+.thought-canvas.scroll-locked {
+  touch-action: none;
+}
+
+.thought-canvas.scroll-locked .react-flow__pane {
+  cursor: default;
+}
+
+.neural-canvas .neural-root-edge .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
 @media (max-width: 768px) {
-  .neural-node {
-    min-height: 20px;
-    max-width: 96px;
-    padding: 2px 8px;
-    font-size: 0.64rem;
+  .neural-node.root {
+    width: 64px;
+    height: 64px;
+    min-height: 64px;
+    max-width: 64px;
+    font-size: 1rem;
+  }
+
+  .neural-node:not(.root) {
+    min-height: 22px;
+    max-width: 110px;
+    font-size: 0.74rem;
+  }
+
+  .neural-node:not(.root) .neural-node-body {
+    padding: 2px 9px;
   }
 
   .neural-label {
-    max-width: 76px;
+    max-width: 90px;
   }
 
   .neural-input {
-    width: 72px;
+    width: 84px;
     font-size: 16px;
   }
 }
@@ -962,11 +1289,6 @@ body {
 /* ── Mobile ── */
 
 @media (max-width: 768px) {
-  .thought-canvas {
-    flex: 1;
-    min-height: 0;
-  }
-
   .react-flow__node-thought {
     pointer-events: all;
   }
