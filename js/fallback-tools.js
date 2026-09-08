@@ -29,34 +29,6 @@ const FALLBACK_TOOLS = [
     platform: "Windows 10/11",
     status: "stable",
   },
-  {
-    id: "ticket-queue",
-    name: "ticket-queue-api",
-    tagline: {
-      ko: "선착순 예매 대기열 (Redis, ~1천 명)",
-      en: "FCFS ticketing wait-queue (Redis, ~1k)",
-    },
-    description: {
-      ko: "Redis 선착순 예매 대기열 서버. 줄서기 멱등(clientId), Active TTL, Lua 좌석 차감, SQLite 예매 영속 저장. NAS Docker로 띄운 뒤 열기에서 API 주소를 연결하세요.",
-      en: "Redis FCFS wait-queue API with idempotent clientId join, Active TTL, Lua seat deduction, and SQLite booking persistence. Run on NAS Docker, then connect the web client to your API URL.",
-    },
-    tags: {
-      ko: ["백엔드", "Redis", "예매"],
-      en: ["Backend", "Redis", "Ticketing"],
-    },
-    url: "/ticket-queue/",
-    github: "https://github.com/Mansejin/tools-site/tree/main/ticket-queue-api",
-    install: {
-      ko: "1. ticket-queue-api는 NAS 자동 배포(main push)\n2. https://mansejin.com/ticket-queue/ 열기\n3. 기본 API: http://ohola.synology.me:8790\n4. (선택) ticket-queue/config.json 의 apiBase 수정",
-      en: "1. ticket-queue-api auto-deploys on NAS (main push)\n2. Open https://mansejin.com/ticket-queue/\n3. Default API: http://ohola.synology.me:8790\n4. Optional: edit apiBase in ticket-queue/config.json",
-    },
-    installAdvanced: {
-      ko: "Docker:\ncd ticket-queue-api\ndocker compose up --build\n\n부하 테스트:\nUSERS=1000 npm run loadtest",
-      en: "Docker:\ncd ticket-queue-api\ndocker compose up --build\n\nLoad test:\nUSERS=1000 npm run loadtest",
-    },
-    platform: "Node 20+ · Redis 7",
-    status: "beta",
-  },
 ];
 
 /** Shown only in offline/file preview — not on the live site. */
