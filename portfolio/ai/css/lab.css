@@ -25,6 +25,11 @@
   line-height: 1.7;
 }
 
+.lab-back {
+  margin-top: 28px;
+  font-size: 0.9375rem;
+}
+
 .lab-block {
   margin-top: 48px;
 }
