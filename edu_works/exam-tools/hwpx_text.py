@@ -11,9 +11,9 @@ import argparse
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from hwpx.decode import extract_plain_text
-from hwpx.package import find_section_xmls
-from hwpx.xmlutil import paragraph_texts
+from exam_hwpx.decode import extract_plain_text
+from exam_hwpx.package import find_section_xmls
+from exam_hwpx.xmlutil import paragraph_texts
 
 
 def paragraph_texts_from_xml(xml_bytes: bytes) -> List[str]:

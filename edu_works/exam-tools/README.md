@@ -20,15 +20,14 @@ Python 3.10+ / UTF-8 기준입니다.
 
 ## 스크립트
 
-### HWPX 백엔드 (`python -m hwpx`)
+### HWPX 백엔드 (`python -m exam_hwpx`)
 
-개발단 디코드/인코드. 사용자 UI의 구조 분석 탭은 없다.
+PyPI [`python-hwpx`](https://github.com/airmang/python-hwpx) 기반. 로컬 래퍼 패키지명은 `exam_hwpx`.
 
 ```bash
-python -m hwpx make-fixture
-python -m hwpx decode hwpx/fixtures/sample_exam.hwpx -o sample.ir.json
-python -m hwpx encode --questions sample.ir.json --template hwpx/fixtures/template.hwpx -o filled.hwpx
-python -m hwpx fill --template hwpx/fixtures/template.hwpx --data map.json -o filled.hwpx
+python -m exam_hwpx make-fixture
+python -m exam_hwpx decode examdata/naesin/배방고_2026_2_1_기말_기하.hwpx -o sample.ir.json
+python -m exam_hwpx encode --questions sample.ir.json --template exam_hwpx/fixtures/template.hwpx -o filled.hwpx
 ```
 
 형식 정의: [exam_formats/hwpx_v1.json](exam_formats/hwpx_v1.json)

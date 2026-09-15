@@ -144,18 +144,15 @@ def encode_plain_paragraphs(
     paragraphs: Sequence[str],
     output: Union[str, Path],
 ) -> Path:
-    """문단 목록만으로 최소 .hwpx 생성 (개발/테스트용)."""
+    """문단 목록만으로 .hwpx 생성 (python-hwpx)."""
+    from hwpx import HwpxDocument as LibDoc
+
     out = Path(output)
-    with tempfile.TemporaryDirectory(prefix="hwpx_min_") as tmp:
-        root = Path(tmp) / "pkg"
-        contents = root / "Contents"
-        contents.mkdir(parents=True)
-        (contents / "section0.xml").write_text(
-            build_minimal_section_xml(paragraphs),
-            encoding="utf-8",
-        )
-        (root / "mimetype").write_text(
-            "application/hwp+zip",
-            encoding="utf-8",
-        )
-        return pack_directory(root, out)
+    doc = LibDoc.new()
+    try:
+        for text in paragraphs:
+            doc.add_paragraph(str(text))
+        doc.save_to_path(str(out))
+    finally:
+        doc.close()
+    return out

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""HWPX 디코드/인코드 백엔드.
+"""HWPX 디코드/인코드 — PyPI `python-hwpx` 백엔드 + 시험도구 래퍼.
 
-개발단에서 시험지 형식을 고정하고, 웹은 이 API만 쓴다.
+CLI: `python -m exam_hwpx ...`  (패키지명 `hwpx`는 라이브러리와 충돌 방지)
 """
 
 from __future__ import annotations

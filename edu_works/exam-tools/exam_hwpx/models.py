@@ -40,6 +40,7 @@ class HwpxDocument:
     plain_text: str = ""
     member_count: int = 0
     kind_guess: str = ""  # template | exam | unknown
+    meta: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -59,6 +60,7 @@ class HwpxDocument:
                 }
                 for q in self.questions
             ],
+            "meta": dict(self.meta),
         }
 
     @classmethod
@@ -86,6 +88,7 @@ class HwpxDocument:
             plain_text=str(data.get("plain_text") or ""),
             member_count=int(data.get("member_count") or 0),
             kind_guess=str(data.get("kind_guess") or ""),
+            meta=dict(data.get("meta") or {}),
         )
 
 

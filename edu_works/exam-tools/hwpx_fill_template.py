@@ -14,8 +14,8 @@ from typing import Dict, Mapping, Optional
 
 import pandas as pd
 
-from hwpx.encode import apply_replacements, fill_unpacked_dir
-from hwpx.package import find_section0, pack_directory
+from exam_hwpx.encode import apply_replacements, fill_unpacked_dir
+from exam_hwpx.package import find_section0, pack_directory
 
 
 def load_replacements_json(path: Path) -> Dict[str, str]:

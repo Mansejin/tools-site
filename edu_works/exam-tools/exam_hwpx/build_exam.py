@@ -25,9 +25,27 @@ def _mm(v: float) -> int:
     return int(round(v * 7200 / 25.4))
 
 
-# 마이일타 해설 코퍼스(27종): A4 + 신문형 2단.
-# 학교 시험지 관례: A3 가로 + 2단 → 기본 생성 프로필은 a3_2col.
+# 마이일타 해설 코퍼스: A4 + 신문형 2단.
+# 내신판 학교 시험지(배방고·예당고 2026): JIS B4(257×364) + 2단 → 시험지 기본.
+# A3 가로는 별도 프로필로 유지.
 PAGE_PROFILES = {
+    "b4_2col": {
+        "label": "JIS B4 · 2단 (내신판 학교 시험지 실측)",
+        "landscape": "WIDELY",
+        "width": 72852,  # 257 mm
+        "height": 103180,  # 364 mm
+        "margin": {
+            "header": 4251,  # 15 mm
+            "footer": 4251,
+            "gutter": 0,
+            "left": 5102,  # 18 mm
+            "right": 5102,
+            "top": 3401,  # 12 mm
+            "bottom": 4251,  # 15 mm
+        },
+        "col_count": 2,
+        "col_gap": 2268,  # 내신판 sameGap
+    },
     "a4_2col": {
         "label": "A4 세로 · 2단 (마이일타 해설 코퍼스와 동일)",
         "landscape": "WIDELY",
@@ -43,10 +61,10 @@ PAGE_PROFILES = {
             "bottom": _mm(10),
         },
         "col_count": 2,
-        "col_gap": 1700,  # 코퍼스 sameGap
+        "col_gap": 1700,
     },
     "a3_2col": {
-        "label": "A3 가로 · 2단 (시험지 기본)",
+        "label": "A3 가로 · 2단",
         "landscape": "WIDELY",
         "width": _mm(420),
         "height": _mm(297),
@@ -63,7 +81,7 @@ PAGE_PROFILES = {
         "col_gap": 1700,
     },
 }
-DEFAULT_PAGE_PROFILE = "a3_2col"
+DEFAULT_PAGE_PROFILE = "b4_2col"
 
 
 def _find_skeleton() -> Optional[Path]:
@@ -255,8 +273,9 @@ def write_question_hwpx(
     """객관식 1문항 HWPX. 가능하면 코퍼스 HWPX를 골격으로 사용.
 
     page_profile:
-      - a3_2col: A3 가로 + 2단 (시험지 기본)
-      - a4_2col: A4 + 2단 (마이일타 해설 코퍼스와 동일)
+      - b4_2col: JIS B4 + 2단 (내신판 학교 시험지 기본)
+      - a3_2col: A3 가로 + 2단
+      - a4_2col: A4 + 2단 (마이일타 해설)
     """
     if page_profile not in PAGE_PROFILES:
         raise KeyError(f"unknown page profile: {page_profile}")

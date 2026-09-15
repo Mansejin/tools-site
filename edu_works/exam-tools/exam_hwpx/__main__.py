@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CLI: python -m hwpx decode|encode|fill|make-fixture"""
+"""CLI: python -m exam_hwpx decode|encode|fill|make-fixture"""
 
 from __future__ import annotations
 
@@ -169,7 +169,7 @@ def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="python -m hwpx", description="HWPX 디코드/인코드 백엔드")
+    p = argparse.ArgumentParser(prog="python -m exam_hwpx", description="HWPX 디코드/인코드 (python-hwpx)")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     d = sub.add_parser("decode", help="HWPX → JSON IR")
@@ -217,9 +217,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     y.add_argument(
         "--page-profile",
-        choices=["a3_2col", "a4_2col"],
-        default="a3_2col",
-        help="용지/단 프로필 (기본: A3 가로 2단)",
+        choices=["b4_2col", "a3_2col", "a4_2col"],
+        default="b4_2col",
+        help="용지/단 프로필 (기본: 내신판 B4 2단)",
     )
     y.set_defaults(func=cmd_make_yunsa_sample)
     return p
