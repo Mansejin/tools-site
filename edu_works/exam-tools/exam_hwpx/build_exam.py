@@ -30,6 +30,8 @@ __all__ = [
 CIRCLED = "①②③④⑤"
 # B4 2단 한 칸 ≈ 106mm — 그림은 거의 단 폭
 DEFAULT_IMAGE_WIDTH_MM = 100.0
+# 마이일타 윤리 선지: LEFT + 내어쓰기(~1349 HWPUNIT ≈ 4.8mm)
+CHOICE_HANG_MM = 4.8
 
 
 def _numbered_stem(stem: str, number: int) -> str:
@@ -49,6 +51,23 @@ def _choice_line(index: int, text: str) -> str:
     mark = CIRCLED[index - 1] if 1 <= index <= 5 else f"{index})"
     # 일반 공백 1칸으로 통일 (전각/탭 금지)
     return f"{mark} {body}"
+
+
+def _apply_choice_paragraph_format(doc: HwpxDocument) -> None:
+    """선지 문단: 왼쪽 정렬 + 내어쓰기(줄바꿈 시 번호 열 고정)."""
+    indexes = [
+        i
+        for i, para in enumerate(doc.paragraphs)
+        if (getattr(para, "text", None) or "").lstrip()[:1] in CIRCLED
+    ]
+    if not indexes:
+        return
+    doc.styles.apply_paragraph_format(
+        paragraph_indexes=indexes,
+        alignment="left",
+        indent_left_mm=CHOICE_HANG_MM,
+        first_line_indent_mm=-CHOICE_HANG_MM,
+    )
 
 
 def write_question_hwpx(
@@ -95,6 +114,7 @@ def write_question_hwpx(
                     fmt = "jpg"
                 doc.add_picture(data, fmt, width_mm=float(image_width_mm))
 
+        _apply_choice_paragraph_format(doc)
         doc.save_to_path(str(out))
     finally:
         doc.close()
