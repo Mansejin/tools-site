@@ -3,7 +3,10 @@
 
 표준 템플릿:
   - venn_gap_eul: 갑/을 <보기> 박스 + 벤다이어그램 (A·B·C)
-  - flowchart_gap_eul: 갑/을 탐구 순서도 (간단판)
+  - flowchart_gap_eul: 갑/을 탐구 순서도
+  - dialogue_gap_eul: 가상 대화 <보기>
+  - table_gap_eul: 갑/을 비교표
+  - blank_bogi: ㄱ·ㄴ·ㄷ <보기>
 """
 
 from __future__ import annotations
@@ -13,7 +16,13 @@ from typing import List, Literal, Optional, Sequence, Tuple
 
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 
-FigureKind = Literal["venn_gap_eul", "flowchart_gap_eul"]
+FigureKind = Literal[
+    "venn_gap_eul",
+    "flowchart_gap_eul",
+    "dialogue_gap_eul",
+    "table_gap_eul",
+    "blank_bogi",
+]
 
 LINE_GAP = 6
 PARA_GAP = 14
@@ -361,9 +370,140 @@ def render_flowchart_gap_eul(
     return output
 
 
+def render_dialogue_gap_eul(
+    output: Path,
+    *,
+    lines: Optional[Sequence[str]] = None,
+    title: str = "<보기>",
+    size: Tuple[int, int] = (1100, 220),
+) -> Path:
+    """가상 대화(또는 갑/을 진술) <보기> 박스만."""
+    body = list(
+        lines
+        or [
+            "갑: 도덕 법칙은 보편화 가능해야 하며, 행위의 동기가 의무이어야 한다.",
+            "을: 행위의 옳고 그름은 그 결과가 가져오는 행복의 총량에 달려 있다.",
+        ]
+    )
+    img = Image.new("RGB", size, "white")
+    draw = ImageDraw.Draw(img)
+    font = _font(26)
+    title_font = _font(24)
+    top = max(10, _text_size(draw, title, title_font)[1] // 2 + 4)
+    _draw_dialogue_box(
+        draw,
+        x0=30,
+        y0=top,
+        x1=size[0] - 30,
+        lines=body,
+        font=font,
+        title=title,
+        title_font=title_font,
+    )
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    img.save(output, format="PNG")
+    return output
+
+
+def render_table_gap_eul(
+    output: Path,
+    *,
+    headers: Optional[Sequence[str]] = None,
+    rows: Optional[Sequence[Sequence[str]]] = None,
+    size: Tuple[int, int] = (1100, 360),
+) -> Path:
+    """갑/을 비교표."""
+    hdr = list(headers or ["구분", "갑", "을"])
+    data = [list(r) for r in (rows or [
+        ["도덕의 근거", "선의지·의무", "쾌락·고통의 양"],
+        ["판단 기준", "정언명령", "유용성"],
+        ["인간 이해", "목적 그 자체", "쾌락 추구 존재"],
+    ])]
+    img = Image.new("RGB", size, "white")
+    draw = ImageDraw.Draw(img)
+    font = _font(24)
+    font_b = _font(26)
+    x0, y0 = 40, 30
+    x1, y1 = size[0] - 40, size[1] - 30
+    cols = len(hdr)
+    row_n = 1 + len(data)
+    cw = (x1 - x0) // cols
+    rh = (y1 - y0) // row_n
+    draw.rectangle((x0, y0, x1, y1), outline="black", width=2)
+    for c in range(1, cols):
+        x = x0 + c * cw
+        draw.line((x, y0, x, y1), fill="black", width=2)
+    for r in range(1, row_n):
+        y = y0 + r * rh
+        draw.line((x0, y, x1, y), fill="black", width=2)
+
+    def cell(r: int, c: int, text: str, bold: bool = False):
+        f = font_b if bold else font
+        tw, th = _text_size(draw, text, f)
+        cx = x0 + c * cw + (cw - tw) // 2
+        cy = y0 + r * rh + (rh - th) // 2
+        bbox = draw.textbbox((0, 0), text, font=f)
+        draw.text((cx - bbox[0], cy - bbox[1]), text, fill="black", font=f)
+
+    for c, htext in enumerate(hdr):
+        cell(0, c, htext, bold=True)
+    for r, row in enumerate(data):
+        for c, val in enumerate(row):
+            cell(r + 1, c, val, bold=(c == 0))
+
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    img.save(output, format="PNG")
+    return output
+
+
+def render_blank_bogi(
+    output: Path,
+    *,
+    items: Optional[Sequence[str]] = None,
+    title: str = "<보기>",
+    size: Tuple[int, int] = (1100, 260),
+) -> Path:
+    """ㄱ·ㄴ·ㄷ 진술 <보기>."""
+    body = list(
+        items
+        or [
+            "ㄱ. 도덕적 행위는 의무 의식에서 비롯되어야 한다.",
+            "ㄴ. 쾌락의 질적 차이를 인정할 수 있다.",
+            "ㄷ. 인간을 수단으로만 대우해서는 안 된다.",
+        ]
+    )
+    img = Image.new("RGB", size, "white")
+    draw = ImageDraw.Draw(img)
+    font = _font(26)
+    title_font = _font(24)
+    top = max(10, _text_size(draw, title, title_font)[1] // 2 + 4)
+    _draw_dialogue_box(
+        draw,
+        x0=30,
+        y0=top,
+        x1=size[0] - 30,
+        lines=body,
+        font=font,
+        title=title,
+        title_font=title_font,
+    )
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    img.save(output, format="PNG")
+    return output
+
+
 def render_figure(kind: FigureKind, output: Path) -> Path:
     if kind == "venn_gap_eul":
         return render_venn_gap_eul(output)
     if kind == "flowchart_gap_eul":
         return render_flowchart_gap_eul(output)
+    if kind == "dialogue_gap_eul":
+        return render_dialogue_gap_eul(output)
+    if kind == "table_gap_eul":
+        return render_table_gap_eul(output)
+    if kind == "blank_bogi":
+        return render_blank_bogi(output)
     raise ValueError(f"unknown figure kind: {kind}")

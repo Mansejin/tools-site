@@ -6,7 +6,7 @@ CLI: `python -m exam_hwpx ...`  (패키지명 `hwpx`는 라이브러리와 충�
 
 from __future__ import annotations
 
-from .build_exam import write_question_hwpx
+from .build_exam import write_question_hwpx, write_questions_hwpx
 from .decode import decode_hwpx, extract_plain_text
 from .encode import (
     encode_document,
@@ -16,7 +16,14 @@ from .encode import (
     fill_unpacked_dir,
     mapping_from_questions,
 )
-from .figures import render_figure, render_flowchart_gap_eul, render_venn_gap_eul
+from .figures import (
+    render_blank_bogi,
+    render_dialogue_gap_eul,
+    render_figure,
+    render_flowchart_gap_eul,
+    render_table_gap_eul,
+    render_venn_gap_eul,
+)
 from .models import Choice, FormatProfile, HwpxDocument, Paragraph, Question
 from .package import HwpxPackage, pack_directory
 from .page_layout import (
@@ -56,8 +63,12 @@ __all__ = [
     "load_gemini_api_key",
     "mapping_from_questions",
     "pack_directory",
+    "render_blank_bogi",
+    "render_dialogue_gap_eul",
     "render_figure",
     "render_flowchart_gap_eul",
+    "render_table_gap_eul",
     "render_venn_gap_eul",
     "write_question_hwpx",
+    "write_questions_hwpx",
 ]

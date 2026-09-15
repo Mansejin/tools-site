@@ -241,7 +241,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="용지/단 프로필 (기본: 내신판 B4 2단)",
     )
     y.set_defaults(func=cmd_make_yunsa_sample)
+
+    ys = sub.add_parser("make-yunsa-set", help="윤사 다유형 샘플 5문항 HWPX (벤·순서도·대화·표·ㄱㄴㄷ)")
+    ys.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "samples",
+    )
+    ys.add_argument(
+        "--page-profile",
+        choices=["b4_2col", "a3_2col", "a4_2col"],
+        default="b4_2col",
+    )
+    ys.set_defaults(func=cmd_make_yunsa_set)
     return p
+
+
+def cmd_make_yunsa_set(args: argparse.Namespace) -> int:
+    from .sample_set import build_yunsa_sample_set
+
+    path = build_yunsa_sample_set(args.output, page_profile=args.page_profile)
+    print(f"wrote {path}")
+    print("  Q1 벤다이어그램 / Q2 순서도 / Q3 가상대화 / Q4 비교표 / Q5 ㄱㄴㄷ보기")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

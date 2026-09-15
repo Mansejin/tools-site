@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, TypedDict
 
 from hwpx import HwpxDocument
 
@@ -25,7 +25,17 @@ __all__ = [
     "apply_page_profile",
     "get_profile",
     "write_question_hwpx",
+    "write_questions_hwpx",
 ]
+
+
+class QuestionSpec(TypedDict, total=False):
+    number: int
+    stem: str
+    choices: Sequence[str]
+    image_path: Optional[str]
+    image_width_mm: float
+    preface_lines: Sequence[str]
 
 CIRCLED = "①②③④⑤"
 # B4 2단 한 칸 ≈ 106mm — 그림은 거의 단 폭
@@ -122,6 +132,50 @@ def write_question_hwpx(
                 if fmt == "jpeg":
                     fmt = "jpg"
                 doc.add_picture(data, fmt, width_mm=float(image_width_mm))
+
+        _apply_choice_paragraph_format(doc)
+        doc.save_to_path(str(out))
+    finally:
+        doc.close()
+    return out
+
+
+def write_questions_hwpx(
+    output: Path,
+    questions: Sequence[QuestionSpec],
+    *,
+    page_profile: str = DEFAULT_PAGE_PROFILE,
+) -> Path:
+    """객관식 다문항 HWPX. 각 문항은 stem + (optional image) + choices."""
+    get_profile(page_profile)
+    out = Path(output)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    doc = HwpxDocument.new()
+    try:
+        apply_page_profile(doc, page_profile)
+        choice_char = doc.styles.ensure_run(ratio=CHOICE_RATIO)
+
+        for qi, q in enumerate(questions):
+            num = int(q.get("number") or (qi + 1))
+            stem = str(q["stem"])
+            choices = list(q["choices"])
+            preface = list(q.get("preface_lines") or [])
+            for line in preface:
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+            doc.add_paragraph(_numbered_stem(stem, num))
+            img_path = q.get("image_path")
+            if img_path:
+                img = Path(str(img_path))
+                data = img.read_bytes()
+                fmt = img.suffix.lower().lstrip(".") or "png"
+                if fmt == "jpeg":
+                    fmt = "jpg"
+                width = float(q.get("image_width_mm") or DEFAULT_IMAGE_WIDTH_MM)
+                doc.add_picture(data, fmt, width_mm=width)
+            for i, c in enumerate(choices, start=1):
+                doc.add_paragraph(_choice_line(i, c), char_pr_id_ref=choice_char)
 
         _apply_choice_paragraph_format(doc)
         doc.save_to_path(str(out))
