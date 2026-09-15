@@ -130,7 +130,7 @@ def cmd_make_fixture(args: argparse.Namespace) -> int:
 
 
 def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
-    from .build_exam import write_question_hwpx
+    from .build_exam import PAGE_PROFILES, write_question_hwpx
     from .figures import render_venn_gap_eul
 
     out_dir = args.output
@@ -159,9 +159,11 @@ def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
         choices=choices,
         image_path=fig,
         preface_lines=preface,
+        page_profile=args.page_profile,
     )
     print(f"HWPX: {hwpx.resolve()}")
     print(f"PNG:  {fig.resolve()}")
+    print(f"page: {args.page_profile} — {PAGE_PROFILES[args.page_profile]['label']}")
     print("정답: ① (갑=칸트, 을=공리주의)")
     return 0
 
@@ -212,6 +214,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         default=Path(__file__).resolve().parents[1] / "output",
+    )
+    y.add_argument(
+        "--page-profile",
+        choices=["a3_2col", "a4_2col"],
+        default="a3_2col",
+        help="용지/단 프로필 (기본: A3 가로 2단)",
     )
     y.set_defaults(func=cmd_make_yunsa_sample)
     return p

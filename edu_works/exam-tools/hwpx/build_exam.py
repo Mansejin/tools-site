@@ -20,6 +20,51 @@ from .xmlutil import xml_escape
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SKELETON = TOOLS_ROOT / "examdata" / "마이일타_윤리와사상_고3_2026년9월.hwpx"
 
+# HWPUNIT: 7200 = 1 inch. 여백 mm → HWPUNIT = mm * 7200 / 25.4
+def _mm(v: float) -> int:
+    return int(round(v * 7200 / 25.4))
+
+
+# 마이일타 해설 코퍼스(27종): A4 + 신문형 2단.
+# 학교 시험지 관례: A3 가로 + 2단 → 기본 생성 프로필은 a3_2col.
+PAGE_PROFILES = {
+    "a4_2col": {
+        "label": "A4 세로 · 2단 (마이일타 해설 코퍼스와 동일)",
+        "landscape": "WIDELY",
+        "width": _mm(210),
+        "height": _mm(297),
+        "margin": {
+            "header": _mm(15),
+            "footer": _mm(15),
+            "gutter": 0,
+            "left": _mm(15),
+            "right": _mm(15),
+            "top": _mm(10),
+            "bottom": _mm(10),
+        },
+        "col_count": 2,
+        "col_gap": 1700,  # 코퍼스 sameGap
+    },
+    "a3_2col": {
+        "label": "A3 가로 · 2단 (시험지 기본)",
+        "landscape": "WIDELY",
+        "width": _mm(420),
+        "height": _mm(297),
+        "margin": {
+            "header": _mm(15),
+            "footer": _mm(15),
+            "gutter": 0,
+            "left": _mm(15),
+            "right": _mm(15),
+            "top": _mm(10),
+            "bottom": _mm(10),
+        },
+        "col_count": 2,
+        "col_gap": 1700,
+    },
+}
+DEFAULT_PAGE_PROFILE = "a3_2col"
+
 
 def _find_skeleton() -> Optional[Path]:
     if DEFAULT_SKELETON.is_file():
@@ -106,17 +151,51 @@ def _extract_secpr(section_xml: str) -> str:
     return m.group(0)
 
 
+def _apply_page_profile(secpr: str, profile_name: str) -> str:
+    """secPr 안의 pagePr width/height/landscape/margin 을 프로필로 교체."""
+    if profile_name not in PAGE_PROFILES:
+        raise KeyError(f"unknown page profile: {profile_name}")
+    prof = PAGE_PROFILES[profile_name]
+    m = prof["margin"]
+
+    def repl_pagepr(_match: re.Match[str]) -> str:
+        return (
+            f'<hp:pagePr landscape="{prof["landscape"]}" '
+            f'width="{prof["width"]}" height="{prof["height"]}" gutterType="LEFT_ONLY">'
+            f'<hp:margin header="{m["header"]}" footer="{m["footer"]}" gutter="{m["gutter"]}" '
+            f'left="{m["left"]}" right="{m["right"]}" top="{m["top"]}" bottom="{m["bottom"]}"/>'
+            f"</hp:pagePr>"
+        )
+
+    if re.search(r"<hp:pagePr\b.*?</hp:pagePr>", secpr, flags=re.DOTALL):
+        return re.sub(r"<hp:pagePr\b.*?</hp:pagePr>", repl_pagepr, secpr, count=1, flags=re.DOTALL)
+    return secpr
+
+
+def _colpr_ctrl(profile_name: str) -> str:
+    prof = PAGE_PROFILES[profile_name]
+    return (
+        '<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" '
+        f'colCount="{prof["col_count"]}" sameSz="1" sameGap="{prof["col_gap"]}">'
+        '<hp:colLine type="SOLID" width="0.12 mm" color="#000000"/>'
+        "</hp:colPr></hp:ctrl>"
+    )
+
+
 def _build_section(
     paragraphs: Sequence[str],
     *,
     image_id: Optional[str],
     image_after_para_index: int,
     secpr: str,
+    page_profile: str = DEFAULT_PAGE_PROFILE,
     image_size: tuple[int, int] = (1100, 620),
 ) -> str:
     ns_hp = "http://www.hancom.co.kr/hwpml/2011/paragraph"
     ns_hc = "http://www.hancom.co.kr/hwpml/2011/core"
     ns_hs = "http://www.hancom.co.kr/hwpml/2011/section"
+    secpr = _apply_page_profile(secpr, page_profile) if secpr else secpr
+    col = _colpr_ctrl(page_profile)
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<hs:sec xmlns:hp="{ns_hp}" xmlns:hc="{ns_hc}" xmlns:hs="{ns_hs}">',
@@ -125,11 +204,12 @@ def _build_section(
     vert = 0
     for i, text in enumerate(paragraphs):
         if i == 0 and secpr:
-            # 섹션 속성은 첫 run에 넣음
+            # 코퍼스와 동일: 첫 run = secPr + colPr, 둘째 run = 본문
             parts.append(
                 f'<hp:p id="{pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" '
-                f'columnBreak="0" merged="0"><hp:run charPrIDRef="0">'
-                f"{secpr}<hp:t>{xml_escape(text)}</hp:t></hp:run>"
+                f'columnBreak="0" merged="0">'
+                f'<hp:run charPrIDRef="0">{secpr}{col}</hp:run>'
+                f'<hp:run charPrIDRef="0"><hp:t>{xml_escape(text)}</hp:t></hp:run>'
                 f"{_lineseg(text, vert)}</hp:p>"
             )
         else:
@@ -170,8 +250,17 @@ def write_question_hwpx(
     image_path: Optional[Path] = None,
     preface_lines: Optional[Sequence[str]] = None,
     skeleton: Optional[Path] = None,
+    page_profile: str = DEFAULT_PAGE_PROFILE,
 ) -> Path:
-    """객관식 1문항 HWPX. 가능하면 코퍼스 HWPX를 골격으로 사용."""
+    """객관식 1문항 HWPX. 가능하면 코퍼스 HWPX를 골격으로 사용.
+
+    page_profile:
+      - a3_2col: A3 가로 + 2단 (시험지 기본)
+      - a4_2col: A4 + 2단 (마이일타 해설 코퍼스와 동일)
+    """
+    if page_profile not in PAGE_PROFILES:
+        raise KeyError(f"unknown page profile: {page_profile}")
+
     paras: List[str] = []
     if preface_lines:
         paras.extend(preface_lines)
@@ -207,7 +296,6 @@ def write_question_hwpx(
         bindata.mkdir(parents=True)
 
         image_id = None
-        image_name = None
         if image_path is not None:
             image_path = Path(image_path)
             ext = image_path.suffix.lower()
@@ -230,6 +318,7 @@ def write_question_hwpx(
                 image_id=image_id,
                 image_after_para_index=stem_index,
                 secpr=secpr,
+                page_profile=page_profile,
                 image_size=image_size,
             ),
             encoding="utf-8",
