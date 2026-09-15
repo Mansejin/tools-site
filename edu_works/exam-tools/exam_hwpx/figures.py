@@ -15,10 +15,10 @@ from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 FigureKind = Literal["venn_gap_eul", "flowchart_gap_eul"]
 
-LINE_GAP = 4
-PARA_GAP = 8
-BOX_PAD_X = 20
-BOX_PAD_Y = 14
+LINE_GAP = 6
+PARA_GAP = 14
+BOX_PAD_X = 28
+BOX_PAD_Y = 26
 TITLE_GAP = 6  # 제목을 테두리 위에 올릴 때는 거의 쓰이지 않음
 
 
@@ -215,10 +215,10 @@ def _render_venn_body(size: Tuple[int, int]) -> Image.Image:
     font_name = _font(34)
     font_lab = _font(40)
 
-    # 원 위치를 낮춰 갑/을을 원 밖 위에 둠
+    # 원 상단에 갑/을이 겹치도록 여유만 조금 둠
     r = 195
-    c1 = (340, 340)
-    c2 = (580, 340)
+    c1 = (340, 300)
+    c2 = (580, 300)
     bbox1 = (c1[0] - r, c1[1] - r, c1[0] + r, c1[1] + r)
     bbox2 = (c2[0] - r, c2[1] - r, c2[0] + r, c2[1] + r)
 
@@ -244,13 +244,18 @@ def _render_venn_body(size: Tuple[int, int]) -> Image.Image:
     label_b = ((c1[0] + c2[0]) // 2, c1[1])
     label_c = (c2[0] + 115, c2[1])
 
-    # 갑/을: 원 꼭대기와 충분히 떨어뜨리고 흰 사각으로 해칭/원선과 분리
+    # 갑/을: 원 상단에 걸치되, 흰 사각을 원 안쪽까지 넉넉히 깔아 원선·해칭을 끊음
     for center, label in ((c1, "갑"), (c2, "을")):
-        tw, th = _text_size(draw, label, font_name)
-        lx = center[0] - tw // 2
-        ly = center[1] - r - th - 42
-        draw.rectangle((lx - 10, ly - 8, lx + tw + 10, ly + th + 8), fill="white")
         bbox = draw.textbbox((0, 0), label, font=font_name)
+        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        cx, top = center[0], center[1] - r
+        # 글자 하단이 원 안으로 들어가게 배치
+        ly = top - th + 8
+        lx = cx - tw // 2
+        draw.rectangle(
+            (lx - 14, ly - 8, lx + tw + 14, top + 28),
+            fill="white",
+        )
         draw.text((lx - bbox[0], ly - bbox[1]), label, fill="black", font=font_name)
 
     # A/B/C: 해칭을 뚫는 큰 흰 원 + 중앙 정렬
