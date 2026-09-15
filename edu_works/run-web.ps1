@@ -1,5 +1,5 @@
 #Requires -Version 7
-# UTF-8: 윤리와사상 시험 도구 웹 UI 기동 (Windows PowerShell 7)
+# UTF-8: 시험 작성 도구 웹 UI 기동 (Windows PowerShell 7)
 $ErrorActionPreference = "Stop"
 
 $Root = $PSScriptRoot

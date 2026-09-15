@@ -16,12 +16,15 @@ import json
 import re
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 
-from extract_and_classify import classify_text, split_questions
+from extract_and_classify import split_questions
 from hwpx_text import extract_text_from_hwpx, find_section_xmls
+
+EXAMDATA_DIR = Path(__file__).resolve().parent / "examdata"
+EXAMDATA_SUFFIXES = {".hwpx", ".zip", ".txt", ".xlsx", ".xlsm", ".csv", ".md"}
 
 CIRCLED_CHOICE_RE = re.compile(r"[①②③④⑤]")
 NUMERIC_CHOICE_RE = re.compile(
@@ -85,21 +88,11 @@ def _choice_style(text: str) -> str:
     return "선지 표기 약함"
 
 
-def _unit_distribution(questions: List[Tuple[int, str]]) -> List[Dict[str, Any]]:
-    counts: Dict[str, int] = {}
-    for _, body in questions:
-        unit, _, _ = classify_text(body)
-        counts[unit] = counts.get(unit, 0) + 1
-    ranked = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
-    return [{"단원": u, "문항수": n} for u, n in ranked]
-
-
 def analyze_text(raw: str, *, filename: str = "(text)") -> Dict[str, Any]:
     questions = split_questions(raw)
     nums = [n for n, _ in questions]
     style = _choice_style(raw)
     has_answer_block = bool(ANSWER_KEY_RE.search(raw))
-    units = _unit_distribution(questions) if questions else []
 
     findings = [
         {"label": "파일 종류", "value": "텍스트"},
@@ -125,14 +118,7 @@ def analyze_text(raw: str, *, filename: str = "(text)") -> Dict[str, Any]:
             {
                 "tab": "extract",
                 "label": "1. 문항 추출·분류",
-                "reason": "텍스트를 그대로 넣으면 단원 분류 Excel을 만들 수 있습니다.",
-            }
-        )
-        next_steps.append(
-            {
-                "tab": "thinker",
-                "label": "5. 사상가 분석",
-                "reason": "문항 지문만 골라 사상가 추정이 가능합니다.",
+                "reason": "텍스트를 그대로 넣으면 문항 Excel을 만들 수 있습니다. 과목 팩 JSON을 붙이면 단원도 분류합니다.",
             }
         )
     else:
@@ -157,7 +143,7 @@ def analyze_text(raw: str, *, filename: str = "(text)") -> Dict[str, Any]:
             else "문항 번호를 찾지 못했습니다."
         ),
         "findings": findings,
-        "units": units,
+        "units": [],
         "preview": preview,
         "fit": {
             "extract": {"ok": bool(questions), "note": "텍스트 문항 분리"},
@@ -350,7 +336,7 @@ def analyze_hwpx_like(path: Path) -> Dict[str, Any]:
             {
                 "tab": "extract",
                 "label": "1. 문항 추출·분류",
-                "reason": "같은 .hwpx를 추출 탭에 올리면 단원 분류 Excel을 바로 받습니다.",
+                "reason": "같은 .hwpx를 추출 탭에 올리면 문항 Excel을 받습니다. 과목 팩을 붙이면 단원도 분류합니다.",
             }
         )
     if placeholders:
@@ -386,7 +372,7 @@ def analyze_hwpx_like(path: Path) -> Dict[str, Any]:
             f"자리표시 {len(placeholders)} · {len(joined)}자"
         ),
         "findings": findings,
-        "units": _unit_distribution(questions) if questions else [],
+        "units": [],
         "preview": preview,
         "fit": {
             "hwpx": {
@@ -504,11 +490,33 @@ def analyze_path(path: Path) -> Dict[str, Any]:
     }
 
 
+def list_examdata_files(root: Optional[Path] = None) -> List[Path]:
+    folder = root or EXAMDATA_DIR
+    if not folder.is_dir():
+        return []
+    files = [
+        p
+        for p in folder.iterdir()
+        if p.is_file() and p.suffix.lower() in EXAMDATA_SUFFIXES
+    ]
+    return sorted(files, key=lambda p: p.name.lower())
+
+
+def analyze_paths(paths: Sequence[Path]) -> List[Dict[str, Any]]:
+    return [analyze_path(p) for p in paths]
+
+
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="과거 시험 파일 구조를 분석해 다음에 쓸 도구를 추천합니다.",
     )
-    p.add_argument("path", type=Path, help="분석할 파일 경로")
+    p.add_argument(
+        "path",
+        nargs="?",
+        type=Path,
+        default=EXAMDATA_DIR,
+        help="파일 또는 폴더 (기본: examdata/)",
+    )
     p.add_argument(
         "--json-out",
         type=Path,
@@ -517,11 +525,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
-    args = parse_args(argv)
-    if not args.path.is_file():
-        raise SystemExit(f"파일이 없습니다: {args.path}")
-    result = analyze_path(args.path)
+def _print_one(result: Dict[str, Any]) -> None:
     print(result["summary"])
     for item in result.get("findings", []):
         print(f"  - {item['label']}: {item['value']}")
@@ -529,10 +533,32 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("다음 추천:")
         for step in result["next_steps"]:
             print(f"  → [{step['label']}] {step['reason']}")
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = parse_args(argv)
+    target = args.path
+    if target.is_dir():
+        files = list_examdata_files(target)
+        if not files:
+            raise SystemExit(f"분석할 파일이 없습니다: {target}")
+        results = analyze_paths(files)
+        for result in results:
+            print(f"## {result.get('filename', '')}")
+            _print_one(result)
+            print()
+        payload: Any = results
+    elif target.is_file():
+        result = analyze_path(target)
+        _print_one(result)
+        payload = result
+    else:
+        raise SystemExit(f"파일이 없습니다: {target}")
+
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(
-            json.dumps(result, ensure_ascii=False, indent=2),
+            json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         print(f"JSON 저장: {args.json_out.resolve()}")

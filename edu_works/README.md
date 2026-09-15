@@ -1,38 +1,36 @@
-# EDU_WORKS — 윤리와사상 시험 도구
+# EDU_WORKS — 시험 작성 도구
 
-고등학교 「윤리와사상」 시험 업무용 CLI와 로컬 웹 UI입니다.
+고등학교 중간고사·기말고사 업무용 CLI와 로컬 웹 UI입니다. **과목을 가리지 않습니다.**
 기본 입력은 **한글 `.hwpx`** (구조 분석·문항 추출). 구형 `.hwp`는 HWPX로 저장해 주세요.
 이 폴더는 **GitHub 저장소 `tools-site`의 `edu_works/`** 에 있습니다.
-Cursor Project store의 `/cursor/stores/.../docs/exam-tools*` 경로는 클라우드 에이전트 VM 전용이며, Windows PC에는 존재하지 않습니다.
+
+## 지금 / 다음
+
+| 지금 | 다음 |
+|------|------|
+| HWPX·텍스트에서 문항 분리, 선택 과목 팩으로 단원 분류 | 시험지 수집 → 문항 DB |
+| A/B 셔플, OMR, HWPX 템플릿 채우기 | 교육과정·교과서 진도 범위 |
+| 주제 사전 JSON 키워드 매칭 | AI가 범위 안 raw 문항 생성 → 웹 검토 → HWPX |
 
 ## 구성
 
 | 폴더 | 설명 |
 |------|------|
-| `exam-tools/` | Python CLI 5종 |
+| `exam-tools/` | Python CLI |
 | `exam-tools-web/` | FastAPI 로컬 웹 UI (형제 `exam-tools`를 import) |
+| `exam-tools/examdata/` | 로컬 시험지 코퍼스 (`.hwpx` 등, git 제외) |
 
 ## Windows PowerShell 7 (웹 UI)
 
 UTF-8 기준으로 실행하세요. PowerShell에서는 `&&` 대신 `;` 를 씁니다.
 
 ```powershell
-cd path\to\edu_works\exam-tools-web
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app:app --host 127.0.0.1 --port 8765
+cd path\to\edu_works
+.\run-web.ps1
 ```
 
 브라우저: [http://127.0.0.1:8765/](http://127.0.0.1:8765/)  
 헬스: [http://127.0.0.1:8765/health](http://127.0.0.1:8765/health)
-
-또는 상위 폴더에서 헬퍼:
-
-```powershell
-cd path\to\edu_works
-.\run-web.ps1
-```
 
 `run-web.ps1`은 `exam-tools-web\.venv`가 없으면 만들고, 의존성을 설치한 뒤 uvicorn을 띄웁니다.
 
@@ -57,6 +55,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python extract_and_classify.py --demo -o classified.xlsx
+python extract_and_classify.py --demo --pack subject_packs\ethics_and_thought.json -o classified.xlsx
 ```
 
 자세한 옵션은 각 폴더의 `README.md`를 보세요.

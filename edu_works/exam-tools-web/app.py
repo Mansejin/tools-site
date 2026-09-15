@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""윤리와사상 시험 도구 — 로컬 웹 UI (FastAPI).
+"""시험 작성 도구 — 로컬 웹 UI (FastAPI).
 
-형제 폴더 exam-tools CLI 모듈을 import하여 5개 도구를 웹으로 제공합니다.
+형제 폴더 exam-tools CLI 모듈을 import하여 도구를 웹으로 제공합니다.
 업로드는 tempfile만 사용하며 비밀값을 다루지 않습니다.
 """
 
@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
-from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -28,26 +28,26 @@ if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
 import analyze_exam_structure as structure_mod  # noqa: E402
-import analyze_thinker_keywords as thinker_mod  # noqa: E402
+import analyze_topic_keywords as topic_mod  # noqa: E402
 import extract_and_classify as extract_mod  # noqa: E402
 import generate_omr_sheet as omr_mod  # noqa: E402
 import hwpx_fill_template as hwpx_mod  # noqa: E402
 import shuffle_ab_forms as shuffle_mod  # noqa: E402
-from curriculum_keywords import THINKER_KEYWORDS  # noqa: E402
 from hwpx_text import extract_text_from_hwpx  # noqa: E402
+from subject_packs.loader import load_pack_path  # noqa: E402
 
-app = FastAPI(title="윤리와사상 시험 도구", docs_url=None, redoc_url=None)
+app = FastAPI(title="시험 작성 도구", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 
 TAB_META = {
     "structure": (
         "구조 분석",
-        "과거 중간고사 .hwpx를 올리면 문항·선지·플레이스홀더 구조를 파악하고 다음 탭을 추천합니다. (.txt/.xlsx도 가능)",
+        "과거 중간·기말고사 .hwpx를 올리거나 examdata 폴더 파일을 고르면 문항·선지 구조를 파악합니다.",
     ),
     "extract": (
         "문항 추출·단원 분류",
-        ".hwpx 시험지를 올리면 본문에서 문항을 뽑아 단원 분류 Excel을 만듭니다. 텍스트 붙여넣기/.txt도 가능합니다.",
+        ".hwpx 시험지를 올리면 본문에서 문항을 뽑습니다. 과목 팩 JSON을 붙이면 단원도 분류합니다.",
     ),
     "shuffle": (
         "A/B형 선지 셔플",
@@ -61,17 +61,39 @@ TAB_META = {
         "HWPX 템플릿 채우기",
         "언팩된 HWPX 폴더 ZIP과 치환 데이터(JSON/Excel)로 채워진 .hwpx를 만듭니다.",
     ),
-    "thinker": (
-        "사상가 키워드 분석",
-        "지문을 붙여넣으면 사상가별 키워드 점수와 추정 사상가를 보여 줍니다.",
+    "keywords": (
+        "키워드 매칭",
+        "지문과 주제 사전 JSON을 넣으면 주제별 점수와 추정 주제를 보여 줍니다. 내장 과목 사전은 쓰지 않습니다.",
     ),
 }
 
-PASSAGE_DEMO = (
-    "칸트는 도덕의 근거를 경향성이 아니라 선의지에 두었다. "
-    "정언명령은 행위의 보편화 가능성과 인간을 목적 그 자체로 대우할 것을 요구하며, "
-    "의무에 따른 자율적 행위만이 도덕적 가치를 지닌다고 보았다."
-)
+
+def _examdata_dir() -> Path:
+    return TOOLS_DIR / "examdata"
+
+
+def _examdata_listing() -> list[dict[str, Any]]:
+    files = structure_mod.list_examdata_files(_examdata_dir())
+    rows: list[dict[str, Any]] = []
+    for path in files:
+        rows.append(
+            {
+                "name": path.name,
+                "suffix": path.suffix.lower(),
+                "size": path.stat().st_size,
+            }
+        )
+    return rows
+
+
+def _safe_examdata_file(name: str) -> Path:
+    folder = _examdata_dir().resolve()
+    path = (folder / Path(name).name).resolve()
+    if path.parent != folder:
+        raise HTTPException(status_code=400, detail="잘못된 파일 이름입니다.")
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"examdata에 없습니다: {path.name}")
+    return path
 
 
 def _render(
@@ -79,11 +101,14 @@ def _render(
     tab: str,
     *,
     error: Optional[str] = None,
-    thinker_result: Optional[dict[str, Any]] = None,
+    keyword_result: Optional[dict[str, Any]] = None,
     structure_result: Optional[dict[str, Any]] = None,
+    structure_batch: Optional[list[dict[str, Any]]] = None,
     demo_text: str = "",
     passage_demo: str = "",
 ) -> HTMLResponse:
+    if tab == "thinker":
+        tab = "keywords"
     if tab not in TAB_META:
         tab = "structure"
     title, hint = TAB_META[tab]
@@ -95,10 +120,12 @@ def _render(
             "tool_title": title,
             "tool_hint": hint,
             "error": error,
-            "thinker_result": thinker_result,
+            "keyword_result": keyword_result,
             "structure_result": structure_result,
+            "structure_batch": structure_batch or [],
+            "examdata_files": _examdata_listing(),
             "demo_text": demo_text,
-            "passage_demo": passage_demo or (PASSAGE_DEMO if tab == "thinker" else ""),
+            "passage_demo": passage_demo,
         },
     )
 
@@ -143,18 +170,70 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/packs/{name}.json")
+async def download_pack(name: str) -> FileResponse:
+    safe = Path(name).name
+    path = TOOLS_DIR / "subject_packs" / f"{safe}.json"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail=f"팩이 없습니다: {safe}")
+    return FileResponse(
+        path,
+        media_type="application/json",
+        filename=f"{safe}.json",
+    )
+
+
 @app.post("/api/structure", response_class=HTMLResponse)
 async def api_structure(
     request: Request,
-    exam_file: UploadFile = File(...),
+    exam_file: Optional[UploadFile] = File(None),
 ):
     try:
+        if exam_file is None or not exam_file.filename:
+            return _render(
+                request,
+                "structure",
+                error="파일을 고르거나 examdata 목록에서 분석하세요.",
+            )
         name = exam_file.filename or "exam.bin"
         with tempfile.TemporaryDirectory(prefix="exam_structure_") as tmp:
-            src = Path(tmp) / name
+            src = Path(tmp) / Path(name).name
             await _save_upload(exam_file, src)
             result = structure_mod.analyze_path(src)
         return _render(request, "structure", structure_result=result)
+    except Exception as exc:  # noqa: BLE001
+        return _render(request, "structure", error=f"분석 실패: {exc}")
+
+
+@app.post("/api/structure-examdata", response_class=HTMLResponse)
+async def api_structure_examdata(
+    request: Request,
+    filename: str = Form(""),
+    all_files: Optional[str] = Form(None),
+):
+    try:
+        folder = _examdata_dir()
+        if all_files:
+            files = structure_mod.list_examdata_files(folder)
+            if not files:
+                return _render(
+                    request,
+                    "structure",
+                    error="examdata 폴더가 비어 있습니다. .hwpx를 넣어 주세요.",
+                )
+            batch = structure_mod.analyze_paths(files)
+            return _render(request, "structure", structure_batch=batch)
+        if not filename.strip():
+            return _render(
+                request,
+                "structure",
+                error="examdata 파일을 선택하세요.",
+            )
+        src = _safe_examdata_file(filename)
+        result = structure_mod.analyze_path(src)
+        return _render(request, "structure", structure_result=result)
+    except HTTPException as exc:
+        return _render(request, "structure", error=str(exc.detail))
     except Exception as exc:  # noqa: BLE001
         return _render(request, "structure", error=f"분석 실패: {exc}")
 
@@ -163,10 +242,11 @@ async def api_structure(
 async def api_extract(
     request: Request,
     text: str = Form(""),
-    exam_label: str = Form("윤리와사상 2022 교육과정 2학년 2학기 중간고사"),
+    exam_label: str = Form("2학년 2학기 중간고사"),
     threshold: int = Form(1),
     exam_file: Optional[UploadFile] = File(None),
     text_file: Optional[UploadFile] = File(None),
+    pack_file: Optional[UploadFile] = File(None),
 ):
     try:
         raw = (text or "").strip()
@@ -195,6 +275,13 @@ async def api_extract(
                 demo_text=extract_mod.DEMO_TEXT.strip(),
             )
 
+        pack_units = None
+        if pack_file is not None and pack_file.filename:
+            with tempfile.TemporaryDirectory(prefix="exam_pack_") as tmp:
+                pack_path = Path(tmp) / (pack_file.filename or "pack.json")
+                await _save_upload(pack_file, pack_path)
+                pack_units = load_pack_path(pack_path).units
+
         questions = extract_mod.split_questions(raw)
         if not questions:
             return _render(
@@ -204,7 +291,12 @@ async def api_extract(
                 demo_text=raw[:2000],
             )
 
-        df = extract_mod.build_dataframe(questions, threshold, exam_label)
+        df = extract_mod.build_dataframe(
+            questions,
+            threshold,
+            exam_label,
+            unit_keywords=pack_units,
+        )
         with tempfile.TemporaryDirectory(prefix="exam_extract_out_") as tmp:
             out = Path(tmp) / "classified_questions.xlsx"
             df.to_excel(out, index=False, engine="openpyxl")
@@ -338,8 +430,8 @@ async def api_hwpx(
         return _render(request, "hwpx", error=f"처리 실패: {exc}")
 
 
-@app.post("/api/thinker", response_class=HTMLResponse)
-async def api_thinker(
+@app.post("/api/keywords", response_class=HTMLResponse)
+async def api_keywords(
     request: Request,
     passage: str = Form(""),
     dict_json: Optional[UploadFile] = File(None),
@@ -349,36 +441,48 @@ async def api_thinker(
         if not text:
             return _render(
                 request,
-                "thinker",
+                "keywords",
                 error="분석할 지문을 입력하세요.",
-                passage_demo=PASSAGE_DEMO,
+            )
+        if dict_json is None or not dict_json.filename:
+            return _render(
+                request,
+                "keywords",
+                error="주제 사전 JSON을 업로드하세요. 내장 과목 사전은 쓰지 않습니다.",
+                passage_demo=text,
             )
 
-        dictionary = dict(THINKER_KEYWORDS)
-        if dict_json is not None and dict_json.filename:
-            with tempfile.TemporaryDirectory(prefix="exam_thinker_") as tmp:
-                path = Path(tmp) / (dict_json.filename or "dict.json")
-                await _save_upload(dict_json, path)
-                dictionary = thinker_mod.load_custom_dict(path)
+        with tempfile.TemporaryDirectory(prefix="exam_keywords_") as tmp:
+            path = Path(tmp) / (dict_json.filename or "dict.json")
+            await _save_upload(dict_json, path)
+            dictionary = topic_mod.load_custom_dict(path)
 
-        scored = thinker_mod.score_passage(text, dictionary)
-        best, tied = thinker_mod.infer_thinker(scored)
-        df = thinker_mod.to_dataframe(scored)
-        # 상위 10명만 표시
+        scored = topic_mod.score_passage(text, dictionary)
+        best, tied = topic_mod.infer_topic(scored)
+        df = topic_mod.to_dataframe(scored)
         rows = df.head(10).to_dict(orient="records")
         return _render(
             request,
-            "thinker",
-            thinker_result={"inferred": best, "tied": tied, "rows": rows},
+            "keywords",
+            keyword_result={"inferred": best, "tied": tied, "rows": rows},
             passage_demo=text,
         )
     except Exception as exc:  # noqa: BLE001
         return _render(
             request,
-            "thinker",
+            "keywords",
             error=f"처리 실패: {exc}",
-            passage_demo=passage or PASSAGE_DEMO,
+            passage_demo=passage,
         )
+
+
+@app.post("/api/thinker", response_class=HTMLResponse)
+async def api_thinker_alias(
+    request: Request,
+    passage: str = Form(""),
+    dict_json: Optional[UploadFile] = File(None),
+):
+    return await api_keywords(request, passage=passage, dict_json=dict_json)
 
 
 @app.get("/favicon.ico")

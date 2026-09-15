@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}윤리와사상 시험 도구{% endblock %}</title>
+  <title>{% block title %}시험 작성 도구{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>윤리와사상 시험 도구</h1>
-      <p>기존 CLI 스크립트를 감싼 로컬 웹 UI입니다. 업로드는 임시 폴더만 사용하며 서버에 영구 저장하지 않습니다.</p>
+      <h1>시험 작성 도구</h1>
+      <p>중간고사·기말고사용 로컬 웹 UI입니다. 과목을 가리지 않으며, 업로드는 임시 폴더만 쓰고 서버에 남기지 않습니다.</p>
     </header>
 
     <nav class="tabs" aria-label="도구 선택">
@@ -20,7 +20,7 @@
         ('shuffle', '2. A/B형 셔플'),
         ('omr', '3. OMR 정답지'),
         ('hwpx', '4. HWPX 채우기'),
-        ('thinker', '5. 사상가 분석')
+        ('keywords', '5. 키워드 매칭')
       ] %}
       {% for key, label in tabs %}
         <a href="/?tab={{ key }}" class="{% if tab == key %}active{% endif %}">{{ label }}</a>
@@ -32,7 +32,7 @@
     </main>
 
     <footer>
-      CLI 원본: <a href="../exam-tools/README.md">docs/exam-tools</a>
+      CLI 원본: <a href="../exam-tools/README.md">exam-tools</a>
     </footer>
   </div>
 </body>

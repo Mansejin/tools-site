@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ tool_title }} — 윤리와사상 시험 도구{% endblock %}
+{% block title %}{{ tool_title }} — 시험 작성 도구{% endblock %}
 {% block content %}
   <h2>{{ tool_title }}</h2>
   <p class="hint">{{ tool_hint }}</p>
@@ -9,14 +9,50 @@
   {% endif %}
 
   {% if tab == 'structure' %}
-  <form method="post" action="/api/structure" enctype="multipart/form-data">
-    <label for="exam_file">과거 시험지 (.hwpx 권장)</label>
-    <input id="exam_file" type="file" name="exam_file" accept=".hwpx,.zip,.txt,.xlsx,.xlsm,.csv,.md" required />
-    <p class="hint" style="margin-top:0.5rem;">구형 .hwp는 한글에서 HWPX로 저장한 뒤 올리세요. (.txt/.xlsx도 가능)</p>
+  <h3 class="subhead">examdata 폴더</h3>
+  <p class="hint">파일을 <code>exam-tools/examdata/</code> 에 넣으면 여기서 바로 분석합니다. git에 올리지 않습니다.</p>
+  {% if examdata_files %}
+  <form method="post" action="/api/structure-examdata">
+    <label for="filename">폴더 안 파일</label>
+    <select id="filename" name="filename">
+      {% for f in examdata_files %}
+      <option value="{{ f.name }}">{{ f.name }}</option>
+      {% endfor %}
+    </select>
     <div class="actions">
-      <button type="submit">구조 분석하기</button>
+      <button type="submit">선택한 파일 분석</button>
+      <button type="submit" name="all_files" value="1" class="secondary">폴더 전체 분석</button>
     </div>
   </form>
+  {% else %}
+  <p class="hint">아직 비어 있습니다. .hwpx 를 그 폴더에 넣으세요.</p>
+  {% endif %}
+
+  <form method="post" action="/api/structure" enctype="multipart/form-data">
+    <label for="exam_file">또는 이 창에서 업로드</label>
+    <input id="exam_file" type="file" name="exam_file" accept=".hwpx,.zip,.txt,.xlsx,.xlsm,.csv,.md" />
+    <p class="hint" style="margin-top:0.5rem;">구형 .hwp는 한글에서 HWPX로 저장한 뒤 올리세요.</p>
+    <div class="actions">
+      <button type="submit">업로드 분석</button>
+    </div>
+  </form>
+
+  {% if structure_batch %}
+    <h3 class="subhead">폴더 분석 요약</h3>
+    <table class="result-table">
+      <thead>
+        <tr><th>파일</th><th>요약</th></tr>
+      </thead>
+      <tbody>
+        {% for item in structure_batch %}
+        <tr>
+          <td>{{ item.filename }}</td>
+          <td>{{ item.summary }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 
   {% if structure_result %}
     <div class="success infer">
@@ -96,10 +132,13 @@
     <input id="exam_file" type="file" name="exam_file" accept=".hwpx,.zip,.txt,text/plain" />
     <label for="text">또는 문항 텍스트 붙여넣기</label>
     <textarea id="text" name="text" placeholder="1. …&#10;2. …">{{ demo_text }}</textarea>
+    <label for="pack_file">과목 키워드 팩 JSON (선택 — 없으면 문항 분리만)</label>
+    <input id="pack_file" type="file" name="pack_file" accept=".json,application/json" />
+    <p class="hint" style="margin-top:0.5rem;">예시 팩: <a href="/packs/ethics_and_thought.json">ethics_and_thought.json</a> (윤리와사상, 선택)</p>
     <div class="row">
       <div>
         <label for="exam_label">시험 라벨</label>
-        <input id="exam_label" type="text" name="exam_label" value="윤리와사상 2022 교육과정 2학년 2학기 중간고사" />
+        <input id="exam_label" type="text" name="exam_label" value="2학년 2학기 중간고사" />
       </div>
       <div>
         <label for="threshold">분류 최소 점수</label>
@@ -107,7 +146,7 @@
       </div>
     </div>
     <div class="actions">
-      <button type="submit">분류 후 Excel 다운로드</button>
+      <button type="submit">추출 후 Excel 다운로드</button>
     </div>
   </form>
 
@@ -157,23 +196,24 @@
     </div>
   </form>
 
-  {% elif tab == 'thinker' %}
-  <form method="post" action="/api/thinker" enctype="multipart/form-data">
+  {% elif tab == 'keywords' %}
+  <form method="post" action="/api/keywords" enctype="multipart/form-data">
     <label for="passage">지문 붙여넣기</label>
     <textarea id="passage" name="passage" placeholder="분석할 지문을 입력하세요.">{{ passage_demo }}</textarea>
-    <label for="dict_json">사용자 정의 사상가 사전 JSON (선택)</label>
-    <input id="dict_json" type="file" name="dict_json" accept=".json" />
+    <label for="dict_json">주제 사전 JSON (필수)</label>
+    <input id="dict_json" type="file" name="dict_json" accept=".json,application/json" required />
+    <p class="hint" style="margin-top:0.5rem;">형식: <code>{"주제": ["키워드", …]}</code> 또는 units/topics 팩. 예시: <a href="/packs/ethics_and_thought.json">ethics_and_thought.json</a></p>
     <div class="actions">
       <button type="submit">분석하기</button>
     </div>
   </form>
 
-  {% if thinker_result %}
+  {% if keyword_result %}
     <div class="success infer">
-      {% if thinker_result.inferred %}
-        추정 사상가: <strong>{{ thinker_result.inferred }}</strong>
-        {% if thinker_result.tied|length > 1 %}
-          <br />동점/근접: {{ thinker_result.tied | join(', ') }}
+      {% if keyword_result.inferred %}
+        추정 주제: <strong>{{ keyword_result.inferred }}</strong>
+        {% if keyword_result.tied|length > 1 %}
+          <br />동점/근접: {{ keyword_result.tied | join(', ') }}
         {% endif %}
       {% else %}
         매칭된 키워드가 없습니다.
@@ -183,17 +223,17 @@
       <thead>
         <tr>
           <th>순위</th>
-          <th>사상가</th>
+          <th>주제</th>
           <th>총빈도</th>
           <th>정규화점수</th>
           <th>매칭키워드</th>
         </tr>
       </thead>
       <tbody>
-        {% for row in thinker_result.rows %}
+        {% for row in keyword_result.rows %}
         <tr>
           <td>{{ row['순위'] }}</td>
-          <td>{{ row['사상가'] }}</td>
+          <td>{{ row['주제'] }}</td>
           <td>{{ row['총빈도'] }}</td>
           <td>{{ row['정규화점수'] }}</td>
           <td>{{ row['매칭키워드'] }}</td>
