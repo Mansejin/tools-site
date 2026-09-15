@@ -130,8 +130,10 @@ def cmd_make_fixture(args: argparse.Namespace) -> int:
 
 
 def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
-    from .build_exam import PAGE_PROFILES, write_question_hwpx
+    from .build_exam import write_question_hwpx
     from .figures import render_venn_gap_eul
+    from .page_layout import PAGE_PROFILES, apply_page_profile
+    from hwpx import HwpxDocument
 
     out_dir = args.output
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -161,9 +163,20 @@ def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
         preface_lines=preface,
         page_profile=args.page_profile,
     )
+    # verify layout
+    doc = HwpxDocument.open(hwpx)
+    try:
+        applied = {
+            "page": doc.sections[0].properties.page_size,
+            "margins": doc.sections[0].properties.page_margins,
+        }
+    finally:
+        doc.close()
     print(f"HWPX: {hwpx.resolve()}")
     print(f"PNG:  {fig.resolve()}")
     print(f"page: {args.page_profile} — {PAGE_PROFILES[args.page_profile]['label']}")
+    print(f"  size={applied['page']}")
+    print(f"  margins={applied['margins']}")
     print("정답: ① (갑=칸트, 을=공리주의)")
     return 0
 

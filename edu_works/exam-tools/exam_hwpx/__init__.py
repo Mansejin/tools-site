@@ -19,6 +19,12 @@ from .encode import (
 from .figures import render_figure, render_flowchart_gap_eul, render_venn_gap_eul
 from .models import Choice, FormatProfile, HwpxDocument, Paragraph, Question
 from .package import HwpxPackage, pack_directory
+from .page_layout import (
+    DEFAULT_PAGE_PROFILE,
+    PAGE_PROFILES,
+    apply_page_profile,
+    get_profile,
+)
 from .vision_analyze import (
     analyze_image_gemini,
     analyze_image_openai,
@@ -28,13 +34,16 @@ from .vision_analyze import (
 
 __all__ = [
     "Choice",
+    "DEFAULT_PAGE_PROFILE",
     "FormatProfile",
     "HwpxDocument",
     "HwpxPackage",
+    "PAGE_PROFILES",
     "Paragraph",
     "Question",
     "analyze_image_gemini",
     "analyze_image_openai",
+    "apply_page_profile",
     "decode_hwpx",
     "encode_document",
     "encode_plain_paragraphs",
@@ -43,6 +52,7 @@ __all__ = [
     "extract_plain_text",
     "fill_template_hwpx",
     "fill_unpacked_dir",
+    "get_profile",
     "load_gemini_api_key",
     "mapping_from_questions",
     "pack_directory",
