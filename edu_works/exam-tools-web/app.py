@@ -43,7 +43,7 @@ templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 TAB_META = {
     "structure": (
         "구조 분석",
-        "과거 중간·기말고사 .hwpx를 올리거나 examdata 폴더 파일을 고르면 문항·선지 구조를 파악합니다.",
+        "과거 중간·기말고사 .hwpx를 올리면 서버에 저장하고 문항·선지 구조를 파악합니다.",
     ),
     "extract": (
         "문항 추출·단원 분류",
@@ -76,6 +76,8 @@ def _examdata_listing() -> list[dict[str, Any]]:
     files = structure_mod.list_examdata_files(_examdata_dir())
     rows: list[dict[str, Any]] = []
     for path in files:
+        if path.name.lower() == "readme.md":
+            continue
         rows.append(
             {
                 "name": path.name,
@@ -84,6 +86,26 @@ def _examdata_listing() -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def _unique_examdata_path(filename: str) -> Path:
+    """examdata에 저장할 경로. 같은 이름이 있으면 stem_2.ext …"""
+    folder = _examdata_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    safe = Path(filename).name
+    if not safe or safe in {".", ".."}:
+        safe = "exam.bin"
+    dest = folder / safe
+    if not dest.exists():
+        return dest
+    stem = dest.stem
+    suffix = dest.suffix
+    n = 2
+    while True:
+        candidate = folder / f"{stem}_{n}{suffix}"
+        if not candidate.exists():
+            return candidate
+        n += 1
 
 
 def _safe_examdata_file(name: str) -> Path:
@@ -193,13 +215,15 @@ async def api_structure(
             return _render(
                 request,
                 "structure",
-                error="파일을 고르거나 examdata 목록에서 분석하세요.",
+                error="시험 파일을 선택해 업로드하세요.",
             )
-        name = exam_file.filename or "exam.bin"
-        with tempfile.TemporaryDirectory(prefix="exam_structure_") as tmp:
-            src = Path(tmp) / Path(name).name
-            await _save_upload(exam_file, src)
-            result = structure_mod.analyze_path(src)
+        dest = _unique_examdata_path(exam_file.filename)
+        await _save_upload(exam_file, dest)
+        result = structure_mod.analyze_path(dest)
+        result["findings"] = [
+            {"label": "저장 위치", "value": f"examdata/{dest.name}"},
+            *list(result.get("findings") or []),
+        ]
         return _render(request, "structure", structure_result=result)
     except Exception as exc:  # noqa: BLE001
         return _render(request, "structure", error=f"분석 실패: {exc}")
