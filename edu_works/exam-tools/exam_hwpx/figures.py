@@ -2,14 +2,14 @@
 """윤사 시험 그림 유형 렌더러 (프로그램 생성 — API 없이도 재현).
 
 표준 템플릿:
-  - venn_gap_eul: 갑/을 벤다이어그램 (A·B·C) — 영역 마스크 빗금
+  - venn_gap_eul: 갑/을 대화 박스 + 벤다이어그램 (A·B·C)
   - flowchart_gap_eul: 갑/을 탐구 순서도 (간단판)
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Tuple
+from typing import List, Literal, Optional, Sequence, Tuple
 
 from PIL import Image, ImageChops, ImageDraw, ImageFont
 
@@ -42,27 +42,59 @@ def _hatch_mask(
     style: Literal["diag_a", "diag_c", "cross"],
     step: int = 10,
 ) -> Image.Image:
-    """영역(region) 안에서만 보이는 빗금 마스크."""
     w, h = size
     lines = Image.new("L", size, 0)
     d = ImageDraw.Draw(lines)
     if style in {"diag_a", "cross"}:
-        # \ 방향
         for i in range(-h, w + h, step):
             d.line([(i, 0), (i + h, h)], fill=255, width=1)
     if style in {"diag_c", "cross"}:
-        # / 방향
         for i in range(-h, w + h, step):
             d.line([(i, h), (i + h, 0)], fill=255, width=1)
     return ImageChops.multiply(lines, region)
 
 
-def render_venn_gap_eul(
-    output: Path,
+def _wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_w: int) -> List[str]:
+    lines: List[str] = []
+    cur = ""
+    for ch in text:
+        trial = cur + ch
+        bbox = draw.textbbox((0, 0), trial, font=font)
+        if bbox[2] - bbox[0] <= max_w:
+            cur = trial
+        else:
+            if cur:
+                lines.append(cur)
+            cur = ch
+    if cur:
+        lines.append(cur)
+    return lines or [""]
+
+
+def _draw_dialogue_box(
+    draw: ImageDraw.ImageDraw,
     *,
-    size: Tuple[int, int] = (1100, 620),
-) -> Path:
-    """갑/을 벤다이어그램 PNG (마이일타 윤사 image4 유형)."""
+    xy: Tuple[int, int, int, int],
+    lines: Sequence[str],
+    font: ImageFont.ImageFont,
+) -> None:
+    x0, y0, x1, y1 = xy
+    draw.rectangle(xy, outline="black", width=2)
+    pad = 18
+    max_w = x1 - x0 - pad * 2
+    y = y0 + pad
+    line_gap = 8
+    for raw in lines:
+        wrapped = _wrap_text(draw, raw, font, max_w)
+        for wline in wrapped:
+            draw.text((x0 + pad, y), wline, fill="black", font=font)
+            bbox = draw.textbbox((0, 0), wline, font=font)
+            y += (bbox[3] - bbox[1]) + line_gap
+        y += 6
+
+
+def _render_venn_body(size: Tuple[int, int]) -> Image.Image:
+    """벤다이어그램+범례만 (대화 박스 제외)."""
     w, h = size
     img = Image.new("RGB", (w, h), "white")
     draw = ImageDraw.Draw(img)
@@ -71,8 +103,8 @@ def render_venn_gap_eul(
     font_lg = _font(36)
 
     r = 210
-    c1 = (340, 310)
-    c2 = (560, 310)
+    c1 = (360, 280)
+    c2 = (600, 280)
     bbox1 = (c1[0] - r, c1[1] - r, c1[0] + r, c1[1] + r)
     bbox2 = (c2[0] - r, c2[1] - r, c2[0] + r, c2[1] + r)
 
@@ -91,26 +123,49 @@ def render_venn_gap_eul(
         hatch = _hatch_mask(size, region, style=style, step=11)
         img.paste(black, mask=hatch)
 
-    # 테두리 (빗금 위)
     draw.ellipse(bbox1, outline="black", width=3)
     draw.ellipse(bbox2, outline="black", width=3)
+    draw.text((c1[0] - 20, 40), "갑", fill="black", font=font_lg)
+    draw.text((c2[0] - 20, 40), "을", fill="black", font=font_lg)
+    draw.text((250, 260), "A", fill="black", font=font_lg)
+    draw.text((460, 260), "B", fill="black", font=font_lg)
+    draw.text((680, 260), "C", fill="black", font=font_lg)
 
-    draw.text((c1[0] - 20, 70), "갑", fill="black", font=font_lg)
-    draw.text((c2[0] - 20, 70), "을", fill="black", font=font_lg)
-    draw.text((250, 290), "A", fill="black", font=font_lg)
-    draw.text((435, 290), "B", fill="black", font=font_lg)
-    draw.text((620, 290), "C", fill="black", font=font_lg)
-
-    box = (780, 120, 1060, 320)
+    box = (860, 80, 1160, 280)
     draw.rectangle(box, outline="black", width=2)
-    draw.text((860, 140), "<범례>", fill="black", font=font)
-    draw.text((800, 190), "A: 갑만의 입장", fill="black", font=font_sm)
-    draw.text((800, 230), "B: 갑·을 공통 입장", fill="black", font=font_sm)
-    draw.text((800, 270), "C: 을만의 입장", fill="black", font=font_sm)
+    draw.text((960, 100), "<범례>", fill="black", font=font)
+    draw.text((890, 150), "A: 갑만의 입장", fill="black", font=font_sm)
+    draw.text((890, 190), "B: 갑·을 공통 입장", fill="black", font=font_sm)
+    draw.text((890, 230), "C: 을만의 입장", fill="black", font=font_sm)
+    return img
+
+
+def render_venn_gap_eul(
+    output: Path,
+    *,
+    size: Tuple[int, int] = (1200, 560),
+    dialogue: Optional[Sequence[str]] = None,
+) -> Path:
+    """갑/을 벤다이어그램 PNG. dialogue가 있으면 위쪽 박스형 입장문 포함."""
+    venn = _render_venn_body(size)
+    if not dialogue:
+        canvas = venn
+    else:
+        dial_h = 200
+        canvas = Image.new("RGB", (size[0], size[1] + dial_h + 16), "white")
+        draw = ImageDraw.Draw(canvas)
+        font = _font(28)
+        _draw_dialogue_box(
+            draw,
+            xy=(30, 12, size[0] - 30, 12 + dial_h),
+            lines=list(dialogue),
+            font=font,
+        )
+        canvas.paste(venn, (0, dial_h + 16))
 
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    img.save(output, format="PNG")
+    canvas.save(output, format="PNG")
     return output
 
 

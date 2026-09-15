@@ -130,24 +130,27 @@ def cmd_make_fixture(args: argparse.Namespace) -> int:
 
 
 def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
+    from hwpx import HwpxDocument
+
     from .build_exam import write_question_hwpx
     from .figures import render_venn_gap_eul
-    from .page_layout import PAGE_PROFILES, apply_page_profile
-    from hwpx import HwpxDocument
+    from .page_layout import PAGE_PROFILES
 
     out_dir = args.output
     out_dir.mkdir(parents=True, exist_ok=True)
     fig = out_dir / "yunsa_venn.png"
     hwpx = out_dir / "yunsa_sample_q1.hwpx"
-    render_venn_gap_eul(fig)
+
+    dialogue = [
+        "갑: 행위의 도덕성은 결과의 유용성이 아니라 선의지와 의무에 따른 행위에서 성립한다.",
+        "을: 행위의 옳고 그름은 그 행위가 산출하는 쾌락과 고통의 양에 의해 결정된다.",
+    ]
+    render_venn_gap_eul(fig, dialogue=dialogue)
+
     stem = (
         "그림은 근대 서양 사상가 갑, 을의 입장을 그림으로 나타낸 것이다. "
         "이에 대한 설명으로 옳은 것은? [3점]"
     )
-    preface = [
-        "갑: 행위의 도덕성은 결과의 유용성이 아니라 선의지와 의무에 따른 행위에서 성립한다.",
-        "을: 행위의 옳고 그름은 그 행위가 산출하는 쾌락과 고통의 양에 의해 결정된다.",
-    ]
     choices = [
         "A에는 ‘정언명령’, C에는 ‘최대 다수의 최대 행복’이 들어간다.",
         "A에는 ‘쾌락의 양적 계산’, C에는 ‘선의지’가 들어간다.",
@@ -157,19 +160,20 @@ def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
     ]
     write_question_hwpx(
         hwpx,
+        number=1,
         stem=stem,
         choices=choices,
         image_path=fig,
-        preface_lines=preface,
         page_profile=args.page_profile,
+        image_width_mm=102.0,
     )
-    # verify layout
     doc = HwpxDocument.open(hwpx)
     try:
         applied = {
             "page": doc.sections[0].properties.page_size,
             "margins": doc.sections[0].properties.page_margins,
         }
+        preview = [p.text for p in doc.paragraphs if (getattr(p, "text", None) or "").strip()]
     finally:
         doc.close()
     print(f"HWPX: {hwpx.resolve()}")
@@ -177,6 +181,8 @@ def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
     print(f"page: {args.page_profile} — {PAGE_PROFILES[args.page_profile]['label']}")
     print(f"  size={applied['page']}")
     print(f"  margins={applied['margins']}")
+    for i, t in enumerate(preview):
+        print(f"  [{i}] {t[:70]}")
     print("정답: ① (갑=칸트, 을=공리주의)")
     return 0
 
