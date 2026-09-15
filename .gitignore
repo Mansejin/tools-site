@@ -1,6 +1,8 @@
 __pycache__/
 *.log
 .DS_Store
+.venv/
+**/venv/
 
 # local uploads / private score extracts
 uploads/
