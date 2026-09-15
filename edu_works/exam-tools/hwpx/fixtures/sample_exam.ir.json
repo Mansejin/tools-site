@@ -1,0 +1,128 @@
+{
+  "source": "C:\\Users\\Ohola\\tools-site\\edu_works\\exam-tools\\hwpx\\fixtures\\sample_exam.hwpx",
+  "kind_guess": "exam",
+  "member_count": 2,
+  "sections": [
+    "section0.xml"
+  ],
+  "placeholders": [],
+  "plain_text": "1. 표준 기압에서 물의 끓는점은?\n① 0도\n② 50도\n③ 100도\n④ 200도\n⑤ 알 수 없다\n2. 광합성에 필요한 것은?\n① 이산화탄소와 물\n② 질소만\n③ 산소만\n④ 헬륨\n⑤ 없음",
+  "paragraphs": [
+    {
+      "text": "1. 표준 기압에서 물의 끓는점은?",
+      "section": "section0.xml",
+      "index": 0
+    },
+    {
+      "text": "① 0도",
+      "section": "section0.xml",
+      "index": 1
+    },
+    {
+      "text": "② 50도",
+      "section": "section0.xml",
+      "index": 2
+    },
+    {
+      "text": "③ 100도",
+      "section": "section0.xml",
+      "index": 3
+    },
+    {
+      "text": "④ 200도",
+      "section": "section0.xml",
+      "index": 4
+    },
+    {
+      "text": "⑤ 알 수 없다",
+      "section": "section0.xml",
+      "index": 5
+    },
+    {
+      "text": "2. 광합성에 필요한 것은?",
+      "section": "section0.xml",
+      "index": 6
+    },
+    {
+      "text": "① 이산화탄소와 물",
+      "section": "section0.xml",
+      "index": 7
+    },
+    {
+      "text": "② 질소만",
+      "section": "section0.xml",
+      "index": 8
+    },
+    {
+      "text": "③ 산소만",
+      "section": "section0.xml",
+      "index": 9
+    },
+    {
+      "text": "④ 헬륨",
+      "section": "section0.xml",
+      "index": 10
+    },
+    {
+      "text": "⑤ 없음",
+      "section": "section0.xml",
+      "index": 11
+    }
+  ],
+  "questions": [
+    {
+      "number": 1,
+      "stem": "표준 기압에서 물의 끓는점은?",
+      "choices": [
+        {
+          "number": 1,
+          "text": "0도"
+        },
+        {
+          "number": 2,
+          "text": "50도"
+        },
+        {
+          "number": 3,
+          "text": "100도"
+        },
+        {
+          "number": 4,
+          "text": "200도"
+        },
+        {
+          "number": 5,
+          "text": "알 수 없다"
+        }
+      ],
+      "raw": "표준 기압에서 물의 끓는점은?\n① 0도\n② 50도\n③ 100도\n④ 200도\n⑤ 알 수 없다"
+    },
+    {
+      "number": 2,
+      "stem": "광합성에 필요한 것은?",
+      "choices": [
+        {
+          "number": 1,
+          "text": "이산화탄소와 물"
+        },
+        {
+          "number": 2,
+          "text": "질소만"
+        },
+        {
+          "number": 3,
+          "text": "산소만"
+        },
+        {
+          "number": 4,
+          "text": "헬륨"
+        },
+        {
+          "number": 5,
+          "text": "없음"
+        }
+      ],
+      "raw": "광합성에 필요한 것은?\n① 이산화탄소와 물\n② 질소만\n③ 산소만\n④ 헬륨\n⑤ 없음"
+    }
+  ]
+}

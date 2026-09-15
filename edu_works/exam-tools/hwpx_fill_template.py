@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""언팩된 HWPX의 Contents/section0.xml 플레이스홀더를 치환한 뒤 .hwpx로 재압축한다.
+"""언팩된 HWPX 플레이스홀더를 치환한 뒤 .hwpx로 재압축한다.
 
-플레이스홀더 예:
-  {{문제1}}, {{선지1}}, {{문제2}}, {{선지2_1}} …
-데이터는 JSON(dict) 또는 Excel(키/값 두 열)로 공급한다.
+구현은 hwpx.encode 백엔드에 위임한다.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import re
-import shutil
-import tempfile
-import zipfile
 from pathlib import Path
 from typing import Dict, Mapping, Optional
 
 import pandas as pd
 
-PLACEHOLDER_RE = re.compile(r"\{\{\s*([^\{\}]+?)\s*\}\}")
+from hwpx.encode import apply_replacements, fill_unpacked_dir
+from hwpx.package import find_section0, pack_directory
 
 
 def load_replacements_json(path: Path) -> Dict[str, str]:
@@ -38,7 +33,6 @@ def load_replacements_excel(path: Path) -> Dict[str, str]:
     result: Dict[str, str] = {}
     for _, row in df.iterrows():
         key = str(row[key_col]).strip()
-        # {{이름}} 형태로 저장된 경우 정규화
         key = key.removeprefix("{{").removesuffix("}}").strip()
         val = "" if pd.isna(row[val_col]) else str(row[val_col])
         result[key] = val
@@ -54,56 +48,12 @@ def load_replacements(path: Path) -> Dict[str, str]:
     raise ValueError(f"지원하지 않는 데이터 형식: {suffix}")
 
 
-def apply_replacements(xml_text: str, mapping: Mapping[str, str], strict: bool) -> str:
-    missing = []
-
-    def repl(match: re.Match[str]) -> str:
-        key = match.group(1).strip()
-        if key in mapping:
-            # XML 특수문자 최소 이스케이프
-            return _xml_escape(mapping[key])
-        missing.append(key)
-        return match.group(0)
-
-    out = PLACEHOLDER_RE.sub(repl, xml_text)
-    if strict and missing:
-        uniq = sorted(set(missing))
-        raise KeyError(f"치환되지 않은 플레이스홀더: {', '.join(uniq)}")
-    return out
-
-
-def _xml_escape(text: str) -> str:
-    return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-        .replace("'", "&apos;")
-    )
-
-
 def find_section_xml(unpacked_dir: Path) -> Path:
-    candidate = unpacked_dir / "Contents" / "section0.xml"
-    if candidate.is_file():
-        return candidate
-    # 일부 템플릿은 Contents 대소문자/경로가 다를 수 있음
-    matches = list(unpacked_dir.rglob("section0.xml"))
-    if not matches:
-        raise FileNotFoundError(
-            f"section0.xml을 찾지 못했습니다: {unpacked_dir}"
-        )
-    return matches[0]
+    return find_section0(unpacked_dir)
 
 
 def zip_hwpx(source_dir: Path, output_hwpx: Path) -> None:
-    output_hwpx.parent.mkdir(parents=True, exist_ok=True)
-    if output_hwpx.exists():
-        output_hwpx.unlink()
-    with zipfile.ZipFile(output_hwpx, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for path in sorted(source_dir.rglob("*")):
-            if path.is_file():
-                arcname = path.relative_to(source_dir).as_posix()
-                zf.write(path, arcname)
+    pack_directory(source_dir, output_hwpx)
 
 
 def process(
@@ -114,24 +64,16 @@ def process(
     inplace: bool,
 ) -> Path:
     mapping = load_replacements(data_path)
-    section = find_section_xml(unpacked_dir)
-    original = section.read_text(encoding="utf-8")
-    filled = apply_replacements(original, mapping, strict=strict)
-
     if inplace:
+        section = find_section0(unpacked_dir)
+        filled = apply_replacements(
+            section.read_text(encoding="utf-8"),
+            mapping,
+            strict=strict,
+        )
         section.write_text(filled, encoding="utf-8")
-        work_dir = unpacked_dir
-        zip_hwpx(work_dir, output_hwpx)
-        return output_hwpx
-
-    with tempfile.TemporaryDirectory(prefix="hwpx_fill_") as tmp:
-        tmp_path = Path(tmp)
-        shutil.copytree(unpacked_dir, tmp_path / "pkg", dirs_exist_ok=True)
-        work = tmp_path / "pkg"
-        target = find_section_xml(work)
-        target.write_text(filled, encoding="utf-8")
-        zip_hwpx(work, output_hwpx)
-    return output_hwpx
+        return pack_directory(unpacked_dir, output_hwpx)
+    return fill_unpacked_dir(unpacked_dir, mapping, output_hwpx, strict=strict)
 
 
 def parse_args(argv: Optional[list] = None) -> argparse.Namespace:
@@ -141,35 +83,11 @@ def parse_args(argv: Optional[list] = None) -> argparse.Namespace:
             "데이터로 치환한 뒤 .hwpx로 재압축합니다."
         ),
     )
-    p.add_argument(
-        "--unpacked",
-        type=Path,
-        required=True,
-        help="언팩된 HWPX 디렉터리 (Contents/section0.xml 포함)",
-    )
-    p.add_argument(
-        "--data",
-        type=Path,
-        required=True,
-        help="치환 데이터 JSON 또는 Excel (키→값)",
-    )
-    p.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=Path("filled_exam.hwpx"),
-        help="출력 .hwpx 경로 (기본: filled_exam.hwpx)",
-    )
-    p.add_argument(
-        "--strict",
-        action="store_true",
-        help="미치환 플레이스홀더가 있으면 오류로 중단",
-    )
-    p.add_argument(
-        "--inplace",
-        action="store_true",
-        help="언팩 디렉터리의 section0.xml을 직접 수정 후 압축",
-    )
+    p.add_argument("--unpacked", type=Path, required=True)
+    p.add_argument("--data", type=Path, required=True)
+    p.add_argument("-o", "--output", type=Path, default=Path("filled_exam.hwpx"))
+    p.add_argument("--strict", action="store_true")
+    p.add_argument("--inplace", action="store_true")
     return p.parse_args(argv)
 
 

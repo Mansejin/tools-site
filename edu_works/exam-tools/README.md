@@ -3,7 +3,7 @@
 고등학교 중간고사·기말고사 업무용 CLI입니다. 과목을 가리지 않습니다.
 단원·주제 키워드는 **선택 팩** `subject_packs/*.json` 입니다. 팩이 없으면 문항 분리만 합니다.
 로컬 웹 UI: [../exam-tools-web/](../exam-tools-web/) (`uvicorn app:app --host 127.0.0.1 --port 8765`).
-웹 UI 기본 탭은 **0. 구조 분석** — 옛 시험 `.hwpx`를 올리면 구조를 읽고 다음 탭을 안내합니다.
+웹 기본 탭은 **문항 추출**. 구조 분석은 관리자 CLI/`exam_formats` 전용입니다.
 
 Windows에서 전체 안내: [../README.md](../README.md)
 
@@ -20,14 +20,27 @@ Python 3.10+ / UTF-8 기준입니다.
 
 ## 스크립트
 
-### 0. `analyze_exam_structure.py` — 과거 시험 구조 분석
+### HWPX 백엔드 (`python -m hwpx`)
 
-예전에 낸 중간·기말 **`.hwpx`(권장)** / `.txt` / `.xlsx` / `.zip` 을 넣어 문항 수·선지 표기·Excel 열 매핑·플레이스홀더를 파악하고, 다음에 쓸 도구를 추천합니다.
+개발단 디코드/인코드. 사용자 UI의 구조 분석 탭은 없다.
+
+```bash
+python -m hwpx make-fixture
+python -m hwpx decode hwpx/fixtures/sample_exam.hwpx -o sample.ir.json
+python -m hwpx encode --questions sample.ir.json --template hwpx/fixtures/template.hwpx -o filled.hwpx
+python -m hwpx fill --template hwpx/fixtures/template.hwpx --data map.json -o filled.hwpx
+```
+
+형식 정의: [exam_formats/hwpx_v1.json](exam_formats/hwpx_v1.json)
+
+### 0. `analyze_exam_structure.py` — 시험 구조 분석 (관리자)
+
+`examdata/` 샘플로 형식을 파악하고 `exam_formats/` 프로필을 만듭니다. **사용자 웹 탭에는 없습니다.**
 
 ```bash
 python analyze_exam_structure.py
-python analyze_exam_structure.py past_midterm.hwpx
-python analyze_exam_structure.py exam_bank.xlsx --json-out structure.json
+python analyze_exam_structure.py --write-format
+python analyze_exam_structure.py examdata/sample.hwpx --write-format
 ```
 
 인자 없이 실행하면 `examdata/` 폴더 전체를 분석합니다.
@@ -92,6 +105,8 @@ python analyze_topic_keywords.py --text-file passage.txt --pack subject_packs/et
 
 | 파일 | 역할 |
 |------|------|
+| `hwpx/` | HWPX 디코드·인코드 백엔드 |
+| `exam_formats/` | 고정 형식 프로필 (`hwpx_v1.json` 등) |
 | `subject_packs/loader.py` | 과목 팩 JSON 로더 |
 | `subject_packs/ethics_and_thought.json` | 윤리와사상 예시 팩 (기본값 아님) |
 | `curriculum_keywords.py` | 옛 import 호환 심 |

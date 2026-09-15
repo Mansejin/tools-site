@@ -1,0 +1,17 @@
+{
+  "id": "hwpx_v1",
+  "label": "HWPX 객관식 시험지 v1 (개발 백엔드)",
+  "choice_markers": "circled",
+  "question_numbering": "1.",
+  "placeholder_scheme": "{{문제N}} / {{선지N_M}}",
+  "notes": "decode: section*.xml 문단→문항/선지. encode: 템플릿 플레이스홀더 채움 또는 최소 section 생성. 실제 학교 양식은 examdata 샘플로 보강.",
+  "sample_files": [
+    "hwpx/fixtures/template.hwpx",
+    "hwpx/fixtures/sample_exam.hwpx"
+  ],
+  "api": {
+    "decode": "python -m hwpx decode file.hwpx -o out.ir.json",
+    "encode": "python -m hwpx encode --questions out.ir.json --template template.hwpx -o filled.hwpx",
+    "fill": "python -m hwpx fill --template template.hwpx --data map.json -o filled.hwpx"
+  }
+}

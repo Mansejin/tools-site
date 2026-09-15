@@ -1,8 +1,8 @@
 # 시험 작성 도구 — 로컬 웹 UI
 
 기존 CLI(`../exam-tools/`)를 FastAPI로 감싼 교사용 로컬 웹 앱입니다.
-업로드 파일은 임시 폴더만 사용하며, 서버에 영구 저장하지 않습니다.
 기본 입력은 **한글 `.hwpx`** 입니다. 과목을 가리지 않습니다.
+시험지 **형식 파악(구조 분석)은 관리자 CLI** 가 담당하고, 사용자 탭에는 없습니다.
 
 Windows 전체 안내: [../README.md](../README.md) · 헬퍼: [../run-web.ps1](../run-web.ps1)
 
@@ -28,13 +28,13 @@ cd path\to\edu_works
 
 브라우저: `http://127.0.0.1:8765/` · 헬스: `/health`
 
-탭: `?tab=structure|extract|shuffle|omr|hwpx|keywords`
+탭: `?tab=extract|shuffle|omr|hwpx|keywords`  
+관리자 구조 분석(숨김): `?tab=structure`
 
 ## 도구
 
 | 탭 | 기능 | 결과 |
 |----|------|------|
-| 0. 구조 분석 | `examdata/` 또는 업로드 `.hwpx` | 구조 요약 + 다음 탭 추천 |
 | 1. 문항 추출·분류 | `.hwpx` / 텍스트 (±과목 팩 JSON) | `classified_questions.xlsx` |
 | 2. A/B형 셔플 | 시험 .xlsx | `exam_forms_AB.zip` |
 | 3. OMR 정답지 | 문항번호·정답 .xlsx | `omr_answers.xlsx` |

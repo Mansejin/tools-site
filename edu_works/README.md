@@ -1,7 +1,8 @@
 # EDU_WORKS — 시험 작성 도구
 
 고등학교 중간고사·기말고사 업무용 CLI와 로컬 웹 UI입니다. **과목을 가리지 않습니다.**
-기본 입력은 **한글 `.hwpx`** (구조 분석·문항 추출). 구형 `.hwp`는 HWPX로 저장해 주세요.
+기본 입력은 **한글 `.hwpx`** (문항 추출). 구형 `.hwp`는 HWPX로 저장해 주세요.
+시험지 **형식은 관리자가 `examdata` + `exam_formats` 로 미리 정리**합니다. 사용자는 구조 분석을 하지 않습니다.
 이 폴더는 **GitHub 저장소 `tools-site`의 `edu_works/`** 에 있습니다.
 
 ## 지금 / 다음
@@ -9,8 +10,9 @@
 | 지금 | 다음 |
 |------|------|
 | HWPX·텍스트에서 문항 분리, 선택 과목 팩으로 단원 분류 | 시험지 수집 → 문항 DB |
-| A/B 셔플, OMR, HWPX 템플릿 채우기 | 교육과정·교과서 진도 범위 |
-| 주제 사전 JSON 키워드 매칭 | AI가 범위 안 raw 문항 생성 → 웹 검토 → HWPX |
+| 관리자가 HWPX 디코드/인코드 백엔드 + exam_formats 고정 | 교육과정·교과서 진도 범위 |
+| A/B 셔플, OMR, HWPX 템플릿 채우기 | AI가 범위 안 raw 문항 생성 → 웹 검토 → HWPX |
+| 주제 사전 JSON 키워드 매칭 | |
 
 ## 구성
 
@@ -18,7 +20,8 @@
 |------|------|
 | `exam-tools/` | Python CLI |
 | `exam-tools-web/` | FastAPI 로컬 웹 UI (형제 `exam-tools`를 import) |
-| `exam-tools/examdata/` | 로컬 시험지 코퍼스 (`.hwpx` 등, git 제외) |
+| `exam-tools/examdata/` | 관리자용 시험지 샘플 (git 제외) |
+| `exam-tools/exam_formats/` | 파악해 둔 형식 프로필 |
 
 ## Windows PowerShell 7 (웹 UI)
 

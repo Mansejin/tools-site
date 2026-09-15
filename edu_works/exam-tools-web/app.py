@@ -41,10 +41,6 @@ app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="stati
 templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 
 TAB_META = {
-    "structure": (
-        "구조 분석",
-        "과거 중간·기말고사 .hwpx를 올리면 서버에 저장하고 문항·선지 구조를 파악합니다.",
-    ),
     "extract": (
         "문항 추출·단원 분류",
         ".hwpx 시험지를 올리면 본문에서 문항을 뽑습니다. 과목 팩 JSON을 붙이면 단원도 분류합니다.",
@@ -64,6 +60,11 @@ TAB_META = {
     "keywords": (
         "키워드 매칭",
         "지문과 주제 사전 JSON을 넣으면 주제별 점수와 추정 주제를 보여 줍니다. 내장 과목 사전은 쓰지 않습니다.",
+    ),
+    # 관리자 전용 (?tab=structure). 사용자 탭에는 안 보임.
+    "structure": (
+        "구조 분석 (관리자)",
+        "examdata 샘플로 형식을 파악할 때만 씁니다. 사용자 업무 흐름에는 넣지 않습니다.",
     ),
 }
 
@@ -132,7 +133,7 @@ def _render(
     if tab == "thinker":
         tab = "keywords"
     if tab not in TAB_META:
-        tab = "structure"
+        tab = "extract"
     title, hint = TAB_META[tab]
     return templates.TemplateResponse(
         request,
@@ -182,7 +183,7 @@ def _file_response(path: Path, download_name: str, media_type: str) -> Streaming
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, tab: str = "structure") -> HTMLResponse:
+async def home(request: Request, tab: str = "extract") -> HTMLResponse:
     demo = extract_mod.DEMO_TEXT.strip() if tab == "extract" else ""
     return _render(request, tab, demo_text=demo)
 

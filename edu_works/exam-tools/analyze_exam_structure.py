@@ -25,6 +25,7 @@ from hwpx_text import extract_text_from_hwpx, find_section_xmls
 
 EXAMDATA_DIR = Path(__file__).resolve().parent / "examdata"
 EXAMDATA_SUFFIXES = {".hwpx", ".zip", ".txt", ".xlsx", ".xlsm", ".csv", ".md"}
+EXAM_FORMATS_DIR = Path(__file__).resolve().parent / "exam_formats"
 
 CIRCLED_CHOICE_RE = re.compile(r"[①②③④⑤]")
 NUMERIC_CHOICE_RE = re.compile(
@@ -506,9 +507,41 @@ def analyze_paths(paths: Sequence[Path]) -> List[Dict[str, Any]]:
     return [analyze_path(p) for p in paths]
 
 
+def to_format_profile(result: Dict[str, Any]) -> Dict[str, Any]:
+    """관리자가 다듬을 형식 프로필 JSON."""
+    findings = {
+        item["label"]: item["value"]
+        for item in result.get("findings", [])
+        if isinstance(item, dict) and "label" in item
+    }
+    return {
+        "source_file": result.get("filename"),
+        "kind": result.get("kind"),
+        "summary": result.get("summary"),
+        "findings": findings,
+        "fit": result.get("fit") or {},
+        "notes": "",
+    }
+
+
+def write_format_profile(result: Dict[str, Any], out_dir: Optional[Path] = None) -> Path:
+    folder = out_dir or EXAM_FORMATS_DIR
+    folder.mkdir(parents=True, exist_ok=True)
+    stem = Path(str(result.get("filename") or "exam")).stem
+    path = folder / f"{stem}.json"
+    path.write_text(
+        json.dumps(to_format_profile(result), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="과거 시험 파일 구조를 분석해 다음에 쓸 도구를 추천합니다.",
+        description=(
+            "관리자용: examdata 시험지 구조를 분석하고 exam_formats 프로필을 만듭니다. "
+            "사용자 웹 UI에서는 쓰지 않습니다."
+        ),
     )
     p.add_argument(
         "path",
@@ -520,7 +553,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument(
         "--json-out",
         type=Path,
-        help="JSON 결과 저장 경로",
+        help="전체 분석 JSON 저장 경로",
+    )
+    p.add_argument(
+        "--write-format",
+        action="store_true",
+        help="exam_formats/<파일명>.json 프로필 저장",
     )
     return p.parse_args(argv)
 
@@ -546,11 +584,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         for result in results:
             print(f"## {result.get('filename', '')}")
             _print_one(result)
+            if args.write_format:
+                out = write_format_profile(result)
+                print(f"  형식 프로필: {out}")
             print()
         payload: Any = results
     elif target.is_file():
         result = analyze_path(target)
         _print_one(result)
+        if args.write_format:
+            out = write_format_profile(result)
+            print(f"형식 프로필: {out}")
         payload = result
     else:
         raise SystemExit(f"파일이 없습니다: {target}")
