@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Mapping
+from xml.etree import ElementTree as ET
 
 # HWPUNIT: 7200 = 1 inch
 def mm_to_hwpunit(v: float) -> int:
@@ -14,8 +15,11 @@ def hwpunit_to_mm(v: int) -> float:
     return round(v * 25.4 / 7200, 1)
 
 
+HP_NS = "http://www.hancom.co.kr/hwpml/2011/paragraph"
+COLPR = f"{{{HP_NS}}}colPr"
+COLLINE = f"{{{HP_NS}}}colLine"
+
 # 내신판(배방고·예당고 2026 기말) 실측 → 시험지 기본
-# 마이일타 해설은 A4·2단 (별도 프로필)
 PAGE_PROFILES: Dict[str, Dict[str, Any]] = {
     "b4_2col": {
         "label": "JIS B4 · 2단 (내신판 학교 시험지)",
@@ -94,12 +98,45 @@ def get_profile(name: str) -> Mapping[str, Any]:
     return PAGE_PROFILES[name]
 
 
-def apply_page_profile(doc: Any, profile_name: str = DEFAULT_PAGE_PROFILE) -> Dict[str, Any]:
-    """python-hwpx HwpxDocument 에 용지·여백·2단을 적용.
+def _apply_columns_xml(section_element: Any, prof: Mapping[str, Any]) -> None:
+    """기존 colPr를 갱신(중복 삽입 방지). lxml/ElementTree 모두 대응."""
+    nodes = [n for n in section_element.iter(COLPR)]
+    if not nodes:
+        return
 
-    Returns:
-        적용된 프로필 요약(mm 포함).
-    """
+    primary = nodes[0]
+    primary.set("type", str(prof["col_type"]))
+    primary.set("layout", str(prof["col_layout"]))
+    primary.set("colCount", str(prof["col_count"]))
+    primary.set("sameSz", "1")
+    primary.set("sameGap", str(prof["col_gap"]))
+
+    line = primary.find(COLLINE)
+    if line is None:
+        # python-hwpx는 lxml 사용
+        try:
+            from lxml import etree as LET
+
+            line = LET.SubElement(primary, COLLINE)
+        except Exception:
+            line = ET.SubElement(primary, COLLINE)
+    line.set("type", str(prof["col_separator"]))
+    line.set("width", str(prof["col_separator_width"]))
+    line.set("color", str(prof["col_separator_color"]))
+
+    for extra in nodes[1:]:
+        parent = extra.getparent() if hasattr(extra, "getparent") else None
+        if parent is None:
+            for cand in section_element.iter():
+                if extra in list(cand):
+                    parent = cand
+                    break
+        if parent is not None:
+            parent.remove(extra)
+
+
+def apply_page_profile(doc: Any, profile_name: str = DEFAULT_PAGE_PROFILE) -> Dict[str, Any]:
+    """python-hwpx HwpxDocument 에 용지·여백·2단을 적용."""
     prof = get_profile(profile_name)
     m = prof["margin"]
 
@@ -118,16 +155,23 @@ def apply_page_profile(doc: Any, profile_name: str = DEFAULT_PAGE_PROFILE) -> Di
         footer=int(m["footer"]),
         gutter=int(m["gutter"]),
     )
-    doc.set_columns(
-        int(prof["col_count"]),
-        col_type=str(prof["col_type"]),
-        layout=str(prof["col_layout"]),
-        same_size=True,
-        same_gap=int(prof["col_gap"]),
-        separator_type=str(prof["col_separator"]),
-        separator_width=str(prof["col_separator_width"]),
-        separator_color=str(prof["col_separator_color"]),
-    )
+
+    section = doc.sections[0]
+    _apply_columns_xml(section.element, prof)
+    # colPr가 전혀 없으면 API로 삽입 후 다시 정규화
+    if not list(section.element.iter(COLPR)):
+        doc.page.set_columns(
+            int(prof["col_count"]),
+            col_type=str(prof["col_type"]),
+            layout=str(prof["col_layout"]),
+            same_size=True,
+            same_gap=int(prof["col_gap"]),
+            separator_type=str(prof["col_separator"]),
+            separator_width=str(prof["col_separator_width"]),
+            separator_color=str(prof["col_separator_color"]),
+        )
+        _apply_columns_xml(section.element, prof)
+    section.mark_dirty()
 
     return {
         "profile": profile_name,
