@@ -2,7 +2,7 @@
 """윤사 시험 그림 유형 렌더러 (프로그램 생성 — API 없이도 재현).
 
 표준 템플릿:
-  - venn_gap_eul: 갑/을 벤다이어그램 (A·B·C)
+  - venn_gap_eul: 갑/을 벤다이어그램 (A·B·C) — 영역 마스크 빗금
   - flowchart_gap_eul: 갑/을 탐구 순서도 (간단판)
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Tuple
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 FigureKind = Literal["venn_gap_eul", "flowchart_gap_eul"]
 
@@ -29,12 +29,40 @@ def _font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
+def _ellipse_mask(size: Tuple[int, int], bbox: Tuple[int, int, int, int]) -> Image.Image:
+    m = Image.new("L", size, 0)
+    ImageDraw.Draw(m).ellipse(bbox, fill=255)
+    return m
+
+
+def _hatch_mask(
+    size: Tuple[int, int],
+    region: Image.Image,
+    *,
+    style: Literal["diag_a", "diag_c", "cross"],
+    step: int = 10,
+) -> Image.Image:
+    """영역(region) 안에서만 보이는 빗금 마스크."""
+    w, h = size
+    lines = Image.new("L", size, 0)
+    d = ImageDraw.Draw(lines)
+    if style in {"diag_a", "cross"}:
+        # \ 방향
+        for i in range(-h, w + h, step):
+            d.line([(i, 0), (i + h, h)], fill=255, width=1)
+    if style in {"diag_c", "cross"}:
+        # / 방향
+        for i in range(-h, w + h, step):
+            d.line([(i, h), (i + h, 0)], fill=255, width=1)
+    return ImageChops.multiply(lines, region)
+
+
 def render_venn_gap_eul(
     output: Path,
     *,
     size: Tuple[int, int] = (1100, 620),
 ) -> Path:
-    """갑/을 벤다이어그램 PNG."""
+    """갑/을 벤다이어그램 PNG (마이일타 윤사 image4 유형)."""
     w, h = size
     img = Image.new("RGB", (w, h), "white")
     draw = ImageDraw.Draw(img)
@@ -42,41 +70,37 @@ def render_venn_gap_eul(
     font_sm = _font(22)
     font_lg = _font(36)
 
-    # circles
     r = 210
     c1 = (340, 310)
     c2 = (560, 310)
     bbox1 = (c1[0] - r, c1[1] - r, c1[0] + r, c1[1] + r)
     bbox2 = (c2[0] - r, c2[1] - r, c2[0] + r, c2[1] + r)
+
+    m1 = _ellipse_mask(size, bbox1)
+    m2 = _ellipse_mask(size, bbox2)
+    region_a = ImageChops.subtract(m1, m2)
+    region_c = ImageChops.subtract(m2, m1)
+    region_b = ImageChops.multiply(m1, m2)
+
+    black = Image.new("RGB", size, "black")
+    for region, style in (
+        (region_a, "diag_a"),
+        (region_c, "diag_c"),
+        (region_b, "cross"),
+    ):
+        hatch = _hatch_mask(size, region, style=style, step=11)
+        img.paste(black, mask=hatch)
+
+    # 테두리 (빗금 위)
     draw.ellipse(bbox1, outline="black", width=3)
     draw.ellipse(bbox2, outline="black", width=3)
 
-    # hatch A (left only) — diagonal lines clipped roughly by drawing short segments
-    for i in range(-r, r, 14):
-        x0 = c1[0] - r + 20
-        y0 = c1[1] + i
-        x1 = c1[0] - 40
-        y1 = y0 + (x1 - x0)
-        draw.line([(x0, y0), (x1, y1)], fill="#444444", width=1)
-    # hatch C
-    for i in range(-r, r, 14):
-        x0 = c2[0] + 40
-        y0 = c2[1] + i
-        x1 = c2[0] + r - 20
-        y1 = y0 + (x1 - x0)
-        draw.line([(x0, y0), (x1, y1)], fill="#444444", width=1)
-    # cross hatch B (center)
-    for i in range(-90, 90, 12):
-        draw.line([(450 + i, 240), (450 + i + 80, 320)], fill="#666666", width=1)
-        draw.line([(450 + i, 320), (450 + i + 80, 240)], fill="#666666", width=1)
-
     draw.text((c1[0] - 20, 70), "갑", fill="black", font=font_lg)
     draw.text((c2[0] - 20, 70), "을", fill="black", font=font_lg)
-    draw.text((250, 300), "A", fill="black", font=font_lg)
-    draw.text((435, 300), "B", fill="black", font=font_lg)
-    draw.text((620, 300), "C", fill="black", font=font_lg)
+    draw.text((250, 290), "A", fill="black", font=font_lg)
+    draw.text((435, 290), "B", fill="black", font=font_lg)
+    draw.text((620, 290), "C", fill="black", font=font_lg)
 
-    # legend box
     box = (780, 120, 1060, 320)
     draw.rectangle(box, outline="black", width=2)
     draw.text((860, 140), "<범례>", fill="black", font=font)

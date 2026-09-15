@@ -48,9 +48,9 @@ python -m hwpx make-yunsa-sample
 ## 3) HWPX에 넣는 법
 
 `hwpx.build_exam.write_question_hwpx`:
-1. PNG 생성 (`figures.render_venn_gap_eul`)
-2. `BinData/image1.png` + `content.hpf` manifest
-3. `section0.xml`에 줄기 다음 `<hp:pic binaryItemIDRef="image1">`
-4. ①~⑤ 선지 문단
+1. PNG 생성 (`figures.render_venn_gap_eul`) — **영역 마스크**로 A/B/C 빗금
+2. **코퍼스 HWPX** (`examdata/마이일타_윤리와사상_*.hwpx`)의 header/masterpage를 골격으로 복사
+3. `BinData/image1.png` + `content.hpf` 갱신
+4. `section0.xml`에 줄기·`<hp:pic>`·①~⑤ (secPr + linesegarray 포함)
 
-코퍼스에서 확인된 참조 방식과 동일하다.
+> 최소 header만 쓰면 한글에서 그림만 보이고 본문이 안 나온다. charPr에 `fontRef` 등이 필요해서 코퍼스 골격을 쓴다.
