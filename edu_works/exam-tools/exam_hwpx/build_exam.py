@@ -30,8 +30,10 @@ __all__ = [
 CIRCLED = "①②③④⑤"
 # B4 2단 한 칸 ≈ 106mm — 그림은 거의 단 폭
 DEFAULT_IMAGE_WIDTH_MM = 100.0
-# 마이일타 윤리 선지: LEFT + 내어쓰기(~1349 HWPUNIT ≈ 4.8mm)
-CHOICE_HANG_MM = 4.8
+# 선지 내어쓰기. ① 한 줄 폭(~101mm/10pt)을 넘기지 않게 4.8→3.5
+CHOICE_HANG_MM = 3.5
+# 장평 약간 축소 — 긴 ①이 단 폭 안에서 한 줄 유지, ⑤만 줄바꿈
+CHOICE_RATIO = 95
 
 
 def _numbered_stem(stem: str, number: int) -> str:
@@ -85,6 +87,7 @@ def write_question_hwpx(
     """객관식 1문항 HWPX. 용지/단은 page_profile 적용.
 
     preface_lines: 본문 위 평문(대화 박스는 그림에 넣는 것을 권장).
+    선지는 LEFT+내어쓰기. ①~④는 한 줄, 긴 ⑤만 줄바꿈되는 폭을 목표로 함.
     """
     _ = skeleton
     get_profile(page_profile)
@@ -94,6 +97,7 @@ def write_question_hwpx(
         paras.extend(line.strip() for line in preface_lines if line.strip())
     paras.append(_numbered_stem(stem, number))
     stem_index = len(paras) - 1
+    choice_start = len(paras)
     for i, c in enumerate(choices, start=1):
         paras.append(_choice_line(i, c))
 
@@ -103,9 +107,14 @@ def write_question_hwpx(
     doc = HwpxDocument.new()
     try:
         apply_page_profile(doc, page_profile)
+        choice_char = doc.styles.ensure_run(ratio=CHOICE_RATIO)
 
         for i, text in enumerate(paras):
-            doc.add_paragraph(text)
+            is_choice = i >= choice_start
+            if is_choice:
+                doc.add_paragraph(text, char_pr_id_ref=choice_char)
+            else:
+                doc.add_paragraph(text)
             if image_path is not None and i == stem_index:
                 img = Path(image_path)
                 data = img.read_bytes()
