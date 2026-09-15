@@ -1,6 +1,7 @@
 # EDU_WORKS — 윤리와사상 시험 도구
 
 고등학교 「윤리와사상」 시험 업무용 CLI와 로컬 웹 UI입니다.
+기본 입력은 **한글 `.hwpx`** (구조 분석·문항 추출). 구형 `.hwp`는 HWPX로 저장해 주세요.
 이 폴더는 **GitHub 저장소 `tools-site`의 `edu_works/`** 에 있습니다.
 Cursor Project store의 `/cursor/stores/.../docs/exam-tools*` 경로는 클라우드 에이전트 VM 전용이며, Windows PC에는 존재하지 않습니다.
 

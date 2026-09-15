@@ -27,21 +27,27 @@ TOOLS_DIR = WEB_DIR.parent / "exam-tools"
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+import analyze_exam_structure as structure_mod  # noqa: E402
 import analyze_thinker_keywords as thinker_mod  # noqa: E402
 import extract_and_classify as extract_mod  # noqa: E402
 import generate_omr_sheet as omr_mod  # noqa: E402
 import hwpx_fill_template as hwpx_mod  # noqa: E402
 import shuffle_ab_forms as shuffle_mod  # noqa: E402
 from curriculum_keywords import THINKER_KEYWORDS  # noqa: E402
+from hwpx_text import extract_text_from_hwpx  # noqa: E402
 
 app = FastAPI(title="윤리와사상 시험 도구", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(WEB_DIR / "templates"))
 
 TAB_META = {
+    "structure": (
+        "구조 분석",
+        "과거 중간고사 .hwpx를 올리면 문항·선지·플레이스홀더 구조를 파악하고 다음 탭을 추천합니다. (.txt/.xlsx도 가능)",
+    ),
     "extract": (
         "문항 추출·단원 분류",
-        "텍스트를 붙여넣거나 .txt를 올리면 문항을 분리·단원 분류한 Excel을 내려받습니다.",
+        ".hwpx 시험지를 올리면 본문에서 문항을 뽑아 단원 분류 Excel을 만듭니다. 텍스트 붙여넣기/.txt도 가능합니다.",
     ),
     "shuffle": (
         "A/B형 선지 셔플",
@@ -74,11 +80,12 @@ def _render(
     *,
     error: Optional[str] = None,
     thinker_result: Optional[dict[str, Any]] = None,
+    structure_result: Optional[dict[str, Any]] = None,
     demo_text: str = "",
     passage_demo: str = "",
 ) -> HTMLResponse:
     if tab not in TAB_META:
-        tab = "extract"
+        tab = "structure"
     title, hint = TAB_META[tab]
     return templates.TemplateResponse(
         request,
@@ -89,6 +96,7 @@ def _render(
             "tool_hint": hint,
             "error": error,
             "thinker_result": thinker_result,
+            "structure_result": structure_result,
             "demo_text": demo_text,
             "passage_demo": passage_demo or (PASSAGE_DEMO if tab == "thinker" else ""),
         },
@@ -125,7 +133,7 @@ def _file_response(path: Path, download_name: str, media_type: str) -> Streaming
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, tab: str = "extract") -> HTMLResponse:
+async def home(request: Request, tab: str = "structure") -> HTMLResponse:
     demo = extract_mod.DEMO_TEXT.strip() if tab == "extract" else ""
     return _render(request, tab, demo_text=demo)
 
@@ -135,23 +143,55 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.post("/api/structure", response_class=HTMLResponse)
+async def api_structure(
+    request: Request,
+    exam_file: UploadFile = File(...),
+):
+    try:
+        name = exam_file.filename or "exam.bin"
+        with tempfile.TemporaryDirectory(prefix="exam_structure_") as tmp:
+            src = Path(tmp) / name
+            await _save_upload(exam_file, src)
+            result = structure_mod.analyze_path(src)
+        return _render(request, "structure", structure_result=result)
+    except Exception as exc:  # noqa: BLE001
+        return _render(request, "structure", error=f"분석 실패: {exc}")
+
+
 @app.post("/api/extract")
 async def api_extract(
     request: Request,
     text: str = Form(""),
     exam_label: str = Form("윤리와사상 2022 교육과정 2학년 2학기 중간고사"),
     threshold: int = Form(1),
+    exam_file: Optional[UploadFile] = File(None),
     text_file: Optional[UploadFile] = File(None),
 ):
     try:
         raw = (text or "").strip()
-        if text_file is not None and text_file.filename:
-            raw = (await text_file.read()).decode("utf-8", errors="replace").strip()
+        upload = None
+        if exam_file is not None and exam_file.filename:
+            upload = exam_file
+        elif text_file is not None and text_file.filename:
+            upload = text_file
+
+        if upload is not None:
+            name = upload.filename or "exam.bin"
+            suffix = Path(name).suffix.lower()
+            with tempfile.TemporaryDirectory(prefix="exam_extract_") as tmp:
+                src = Path(tmp) / name
+                await _save_upload(upload, src)
+                if suffix in {".hwpx", ".zip"}:
+                    raw = extract_text_from_hwpx(src).strip()
+                else:
+                    raw = src.read_text(encoding="utf-8", errors="replace").strip()
+
         if not raw:
             return _render(
                 request,
                 "extract",
-                error="문항 텍스트를 붙여넣거나 파일을 업로드하세요.",
+                error="문항 텍스트를 붙여넣거나 .hwpx/.txt 파일을 업로드하세요.",
                 demo_text=extract_mod.DEMO_TEXT.strip(),
             )
 
@@ -161,11 +201,11 @@ async def api_extract(
                 request,
                 "extract",
                 error="문항을 찾지 못했습니다. 번호 형식(예: 1. / 1))을 확인하세요.",
-                demo_text=raw,
+                demo_text=raw[:2000],
             )
 
         df = extract_mod.build_dataframe(questions, threshold, exam_label)
-        with tempfile.TemporaryDirectory(prefix="exam_extract_") as tmp:
+        with tempfile.TemporaryDirectory(prefix="exam_extract_out_") as tmp:
             out = Path(tmp) / "classified_questions.xlsx"
             df.to_excel(out, index=False, engine="openpyxl")
             return _xlsx_response(out, "classified_questions.xlsx")

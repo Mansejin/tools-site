@@ -1,8 +1,9 @@
 # 윤리와사상 시험 도구 모음 (Python)
 
-2022 교육과정 「윤리와사상」 고등학교 시험 업무용 CLI 스크립트 5종입니다.
+2022 교육과정 「윤리와사상」 고등학교 시험 업무용 CLI 스크립트입니다.
 단원·사상가 키워드는 `curriculum_keywords.py`에서 일괄 편집합니다.
 로컬 웹 UI: [../exam-tools-web/](../exam-tools-web/) (`uvicorn app:app --host 127.0.0.1 --port 8765`).
+웹 UI 기본 탭은 **0. 구조 분석** — 옛 시험 `.hwpx`를 올리면 구조를 읽고 다음 탭을 안내합니다.
 
 Windows에서 전체 안내: [../README.md](../README.md)
 
@@ -26,14 +27,31 @@ Python 3.10+ / UTF-8 기준입니다.
 
 ## 스크립트
 
-### 1. `extract_and_classify.py` — 문항 추출·단원 분류
+### 0. `analyze_exam_structure.py` — 과거 시험 구조 분석
 
-로컬 텍스트·URL·데모 문항을 읽어 문항을 분리하고, 키워드로 단원을 분류해 `.xlsx`로 저장합니다.
+예전에 낸 중간고사 **`.hwpx`(권장)** / `.txt` / `.xlsx` / `.zip` 을 넣어 문항 수·선지 표기·Excel 열 매핑·플레이스홀더를 파악하고, 다음에 쓸 도구를 추천합니다.
 
 ```bash
+python analyze_exam_structure.py past_midterm.hwpx
+python analyze_exam_structure.py exam_bank.xlsx --json-out structure.json
+```
+
+### 0-1. `hwpx_text.py` — HWPX 본문 추출
+
+`.hwpx`에서 평문만 뽑습니다. 추출·분류 파이프라인의 기반입니다.
+
+```bash
+python hwpx_text.py past_midterm.hwpx -o past_midterm.txt
+```
+
+### 1. `extract_and_classify.py` — 문항 추출·단원 분류
+
+HWPX·텍스트·URL·데모 문항을 읽어 문항을 분리하고, 키워드로 단원을 분류해 `.xlsx`로 저장합니다.
+
+```bash
+python extract_and_classify.py --hwpx past_midterm.hwpx -o classified.xlsx
 python extract_and_classify.py --demo -o classified.xlsx
 python extract_and_classify.py --text-file past_exam.txt -o classified.xlsx
-python extract_and_classify.py --url https://example.com/exam.txt -o classified.xlsx
 ```
 
 ### 2. `shuffle_ab_forms.py` — A/B형 선지 셔플

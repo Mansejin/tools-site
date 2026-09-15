@@ -3,6 +3,7 @@
 """기출/문항 텍스트를 추출하고 2022 교육과정 단원 키워드로 분류해 Excel로 저장한다.
 
 입력:
+  - --hwpx: 한글 HWPX(.hwpx) 시험지(권장)
   - --text-file: 로컬 텍스트(기출·문항 묶음)
   - --url: HTTP(S)로 문항 텍스트를 가져올 주소(선택)
   - 둘 다 없으면 stdin 또는 --demo 샘플 사용
@@ -26,6 +27,7 @@ from curriculum_keywords import (
     DEFAULT_UNIT_MATCH_THRESHOLD,
     UNIT_KEYWORDS,
 )
+from hwpx_text import extract_text_from_hwpx, load_exam_text
 
 QUESTION_SPLIT_RE = re.compile(
     r"(?:^|\n)\s*(?:문항\s*)?(\d{1,3})\s*[.)．、]\s*",
@@ -167,6 +169,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     )
     src = p.add_mutually_exclusive_group()
     src.add_argument(
+        "--hwpx",
+        type=Path,
+        help="한글 HWPX(.hwpx) 시험지 경로(권장)",
+    )
+    src.add_argument(
         "--text-file",
         type=Path,
         help="로컬 UTF-8 텍스트 파일 경로",
@@ -205,8 +212,10 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 def load_source(args: argparse.Namespace) -> str:
     if args.demo:
         return DEMO_TEXT
+    if getattr(args, "hwpx", None) is not None:
+        return extract_text_from_hwpx(args.hwpx)
     if args.text_file is not None:
-        return read_text_file(args.text_file)
+        return load_exam_text(args.text_file)
     if args.url:
         try:
             return fetch_url(args.url)
@@ -215,7 +224,7 @@ def load_source(args: argparse.Namespace) -> str:
     if not sys.stdin.isatty():
         return sys.stdin.read()
     raise SystemExit(
-        "입력이 없습니다. --text-file, --url, --demo 중 하나를 지정하거나 stdin으로 전달하세요."
+        "입력이 없습니다. --hwpx, --text-file, --url, --demo 중 하나를 지정하거나 stdin으로 전달하세요."
     )
 
 

@@ -1,7 +1,8 @@
 # 윤리와사상 시험 도구 — 로컬 웹 UI
 
-기존 CLI(`../exam-tools/`) 5종을 FastAPI로 감싼 교사용 로컬 웹 앱입니다.
+기존 CLI(`../exam-tools/`)를 FastAPI로 감싼 교사용 로컬 웹 앱입니다.
 업로드 파일은 임시 폴더만 사용하며, 서버에 영구 저장하지 않습니다.
+기본 입력은 **한글 `.hwpx`** 입니다.
 
 Windows 전체 안내: [../README.md](../README.md) · 헬퍼: [../run-web.ps1](../run-web.ps1)
 
@@ -16,42 +17,29 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-```bash
-cd edu_works/exam-tools-web
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
 형제 폴더 `exam-tools/` 가 같은 `edu_works/` 아래에 있어야 합니다(스크립트를 import).
 
 ## 실행
 
 ```powershell
-cd path\to\edu_works\exam-tools-web
-.\.venv\Scripts\Activate.ps1
-uvicorn app:app --host 127.0.0.1 --port 8765
+cd path\to\edu_works
+.\run-web.ps1
 ```
 
-브라우저에서 엽니다:
+브라우저: `http://127.0.0.1:8765/` · 헬스: `/health`
 
-```
-http://127.0.0.1:8765/
-```
+탭: `?tab=structure|extract|shuffle|omr|hwpx|thinker`
 
-탭으로 도구를 고르거나 `?tab=extract|shuffle|omr|hwpx|thinker` 로 직접 열 수 있습니다.
-
-헬스 체크: `http://127.0.0.1:8765/health`
-
-## 도구 (5)
+## 도구
 
 | 탭 | 기능 | 결과 |
 |----|------|------|
-| 문항 추출·분류 | 텍스트 붙여넣기 / .txt 업로드 | `classified_questions.xlsx` |
-| A/B형 셔플 | 시험 .xlsx 업로드 | `exam_forms_AB.zip` (A·B) |
-| OMR 정답지 | 문항번호·정답 .xlsx | `omr_answers.xlsx` |
-| HWPX 채우기 | 언팩 폴더 .zip + 데이터 json/xlsx | `filled_exam.hwpx` |
-| 사상가 분석 | 지문 붙여넣기 (±사전 JSON) | 결과 표 + 추정 사상가 |
+| 0. 구조 분석 | 과거 `.hwpx`(권장) 업로드 | 구조 요약 + 다음 탭 추천 |
+| 1. 문항 추출·분류 | `.hwpx` / 텍스트 → 단원 분류 | `classified_questions.xlsx` |
+| 2. A/B형 셔플 | 시험 .xlsx | `exam_forms_AB.zip` |
+| 3. OMR 정답지 | 문항번호·정답 .xlsx | `omr_answers.xlsx` |
+| 4. HWPX 채우기 | 언팩 .zip + json/xlsx | `filled_exam.hwpx` |
+| 5. 사상가 분석 | 지문 (±사전 JSON) | 결과 표 + 추정 사상가 |
 
 ## CLI 원본
 

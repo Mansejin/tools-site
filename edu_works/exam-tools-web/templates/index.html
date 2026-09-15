@@ -8,12 +8,94 @@
     <div class="error">{{ error }}</div>
   {% endif %}
 
-  {% if tab == 'extract' %}
+  {% if tab == 'structure' %}
+  <form method="post" action="/api/structure" enctype="multipart/form-data">
+    <label for="exam_file">과거 시험지 (.hwpx 권장)</label>
+    <input id="exam_file" type="file" name="exam_file" accept=".hwpx,.zip,.txt,.xlsx,.xlsm,.csv,.md" required />
+    <p class="hint" style="margin-top:0.5rem;">구형 .hwp는 한글에서 HWPX로 저장한 뒤 올리세요. (.txt/.xlsx도 가능)</p>
+    <div class="actions">
+      <button type="submit">구조 분석하기</button>
+    </div>
+  </form>
+
+  {% if structure_result %}
+    <div class="success infer">
+      <strong>{{ structure_result.filename }}</strong><br />
+      {{ structure_result.summary }}
+    </div>
+
+    <table class="result-table">
+      <thead>
+        <tr><th>항목</th><th>결과</th></tr>
+      </thead>
+      <tbody>
+        {% for item in structure_result.findings %}
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.value }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if structure_result.next_steps %}
+    <h3 class="subhead">다음에 할 일</h3>
+    <ul class="next-steps">
+      {% for step in structure_result.next_steps %}
+      <li>
+        <a href="/?tab={{ step.tab }}">{{ step.label }}</a>
+        <span>{{ step.reason }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if structure_result.units %}
+    <h3 class="subhead">단원 분포(추정)</h3>
+    <table class="result-table">
+      <thead>
+        <tr><th>단원</th><th>문항수</th></tr>
+      </thead>
+      <tbody>
+        {% for row in structure_result.units %}
+        <tr>
+          <td>{{ row['단원'] }}</td>
+          <td>{{ row['문항수'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if structure_result.preview %}
+    <h3 class="subhead">미리보기</h3>
+    <table class="result-table">
+      <thead>
+        <tr>
+          {% for key in structure_result.preview[0].keys() %}
+          <th>{{ key }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in structure_result.preview %}
+        <tr>
+          {% for value in row.values() %}
+          <td>{{ value }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  {% endif %}
+
+  {% elif tab == 'extract' %}
   <form method="post" action="/api/extract" enctype="multipart/form-data">
-    <label for="text">문항 텍스트 붙여넣기</label>
+    <label for="exam_file">시험지 업로드 (.hwpx 권장, .txt도 가능)</label>
+    <input id="exam_file" type="file" name="exam_file" accept=".hwpx,.zip,.txt,text/plain" />
+    <label for="text">또는 문항 텍스트 붙여넣기</label>
     <textarea id="text" name="text" placeholder="1. …&#10;2. …">{{ demo_text }}</textarea>
-    <label for="text_file">또는 텍스트 파일 업로드 (.txt)</label>
-    <input id="text_file" type="file" name="text_file" accept=".txt,text/plain" />
     <div class="row">
       <div>
         <label for="exam_label">시험 라벨</label>
