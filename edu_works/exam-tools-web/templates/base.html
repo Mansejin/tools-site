@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}윤리와사상 시험 도구{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>윤리와사상 시험 도구</h1>
+      <p>기존 CLI 스크립트를 감싼 로컬 웹 UI입니다. 업로드는 임시 폴더만 사용하며 서버에 영구 저장하지 않습니다.</p>
+    </header>
+
+    <nav class="tabs" aria-label="도구 선택">
+      {% set tabs = [
+        ('extract', '1. 문항 추출·분류'),
+        ('shuffle', '2. A/B형 셔플'),
+        ('omr', '3. OMR 정답지'),
+        ('hwpx', '4. HWPX 채우기'),
+        ('thinker', '5. 사상가 분석')
+      ] %}
+      {% for key, label in tabs %}
+        <a href="/?tab={{ key }}" class="{% if tab == key %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+
+    <main class="panel">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      CLI 원본: <a href="../exam-tools/README.md">docs/exam-tools</a>
+    </footer>
+  </div>
+</body>
+</html>

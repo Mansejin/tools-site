@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}{{ tool_title }} — 윤리와사상 시험 도구{% endblock %}
+{% block content %}
+  <h2>{{ tool_title }}</h2>
+  <p class="hint">{{ tool_hint }}</p>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
+
+  {% if tab == 'extract' %}
+  <form method="post" action="/api/extract" enctype="multipart/form-data">
+    <label for="text">문항 텍스트 붙여넣기</label>
+    <textarea id="text" name="text" placeholder="1. …&#10;2. …">{{ demo_text }}</textarea>
+    <label for="text_file">또는 텍스트 파일 업로드 (.txt)</label>
+    <input id="text_file" type="file" name="text_file" accept=".txt,text/plain" />
+    <div class="row">
+      <div>
+        <label for="exam_label">시험 라벨</label>
+        <input id="exam_label" type="text" name="exam_label" value="윤리와사상 2022 교육과정 2학년 2학기 중간고사" />
+      </div>
+      <div>
+        <label for="threshold">분류 최소 점수</label>
+        <input id="threshold" type="number" name="threshold" value="1" min="0" />
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit">분류 후 Excel 다운로드</button>
+    </div>
+  </form>
+
+  {% elif tab == 'shuffle' %}
+  <form method="post" action="/api/shuffle" enctype="multipart/form-data">
+    <label for="exam_xlsx">시험 Excel (.xlsx) — 문항, 선지1~5, 정답</label>
+    <input id="exam_xlsx" type="file" name="exam_xlsx" accept=".xlsx" required />
+    <label for="seed">난수 시드 (선택, 재현용)</label>
+    <input id="seed" type="number" name="seed" placeholder="예: 42" />
+    <div class="actions">
+      <button type="submit">A/B형 ZIP 다운로드</button>
+    </div>
+  </form>
+
+  {% elif tab == 'omr' %}
+  <form method="post" action="/api/omr" enctype="multipart/form-data">
+    <label for="dataset">데이터셋 Excel (.xlsx) — 문항번호, 정답</label>
+    <input id="dataset" type="file" name="dataset" accept=".xlsx" required />
+    <div class="row">
+      <div>
+        <label for="layout">레이아웃</label>
+        <select id="layout" name="layout">
+          <option value="long">long (문항별 행)</option>
+          <option value="wide">wide (한 행)</option>
+        </select>
+      </div>
+      <div class="checks" style="align-items:end; padding-bottom:0.35rem;">
+        <label><input type="checkbox" name="one_hot" value="1" /> 선택1~5 원-핫 열 추가</label>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit">OMR Excel 다운로드</button>
+    </div>
+  </form>
+
+  {% elif tab == 'hwpx' %}
+  <form method="post" action="/api/hwpx" enctype="multipart/form-data">
+    <label for="unpacked_zip">언팩된 HWPX 폴더 ZIP (Contents/section0.xml 포함)</label>
+    <input id="unpacked_zip" type="file" name="unpacked_zip" accept=".zip" required />
+    <label for="data_file">치환 데이터 (.json 또는 .xlsx)</label>
+    <input id="data_file" type="file" name="data_file" accept=".json,.xlsx" required />
+    <div class="checks">
+      <label><input type="checkbox" name="strict" value="1" /> 미치환 플레이스홀더 있으면 오류</label>
+    </div>
+    <div class="actions">
+      <button type="submit">채운 HWPX 다운로드</button>
+    </div>
+  </form>
+
+  {% elif tab == 'thinker' %}
+  <form method="post" action="/api/thinker" enctype="multipart/form-data">
+    <label for="passage">지문 붙여넣기</label>
+    <textarea id="passage" name="passage" placeholder="분석할 지문을 입력하세요.">{{ passage_demo }}</textarea>
+    <label for="dict_json">사용자 정의 사상가 사전 JSON (선택)</label>
+    <input id="dict_json" type="file" name="dict_json" accept=".json" />
+    <div class="actions">
+      <button type="submit">분석하기</button>
+    </div>
+  </form>
+
+  {% if thinker_result %}
+    <div class="success infer">
+      {% if thinker_result.inferred %}
+        추정 사상가: <strong>{{ thinker_result.inferred }}</strong>
+        {% if thinker_result.tied|length > 1 %}
+          <br />동점/근접: {{ thinker_result.tied | join(', ') }}
+        {% endif %}
+      {% else %}
+        매칭된 키워드가 없습니다.
+      {% endif %}
+    </div>
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>순위</th>
+          <th>사상가</th>
+          <th>총빈도</th>
+          <th>정규화점수</th>
+          <th>매칭키워드</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in thinker_result.rows %}
+        <tr>
+          <td>{{ row['순위'] }}</td>
+          <td>{{ row['사상가'] }}</td>
+          <td>{{ row['총빈도'] }}</td>
+          <td>{{ row['정규화점수'] }}</td>
+          <td>{{ row['매칭키워드'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  {% endif %}
+{% endblock %}
