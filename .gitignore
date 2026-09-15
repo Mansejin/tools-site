@@ -12,3 +12,10 @@ uploads/
 # exam papers for local structure analysis (keep README only)
 edu_works/exam-tools/examdata/*
 !edu_works/exam-tools/examdata/README.md
+
+# local Gemini / API keys — never commit
+edu_works/exam-tools/.env
+**/.env
+
+# local sample regenerate dir (committed samples live under samples/)
+edu_works/exam-tools/output/

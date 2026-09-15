@@ -129,6 +129,43 @@ def cmd_make_fixture(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_make_yunsa_sample(args: argparse.Namespace) -> int:
+    from .build_exam import write_question_hwpx
+    from .figures import render_venn_gap_eul
+
+    out_dir = args.output
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fig = out_dir / "yunsa_venn.png"
+    hwpx = out_dir / "yunsa_sample_q1.hwpx"
+    render_venn_gap_eul(fig)
+    stem = (
+        "그림은 근대 서양 사상가 갑, 을의 입장을 그림으로 나타낸 것이다. "
+        "이에 대한 설명으로 옳은 것은? [3점]"
+    )
+    preface = [
+        "갑: 행위의 도덕성은 결과의 유용성이 아니라 선의지와 의무에 따른 행위에서 성립한다.",
+        "을: 행위의 옳고 그름은 그 행위가 산출하는 쾌락과 고통의 양에 의해 결정된다.",
+    ]
+    choices = [
+        "A에는 ‘정언명령’, C에는 ‘최대 다수의 최대 행복’이 들어간다.",
+        "A에는 ‘쾌락의 양적 계산’, C에는 ‘선의지’가 들어간다.",
+        "B에는 ‘결과를 도덕의 유일한 기준으로 삼는다’가 들어간다.",
+        "C에는 ‘인간을 목적 그 자체로 대우하라’가 들어간다.",
+        "A와 C에는 모두 ‘의무에 따르는 행위만이 도덕적 가치를 지닌다’가 들어간다.",
+    ]
+    write_question_hwpx(
+        hwpx,
+        stem=stem,
+        choices=choices,
+        image_path=fig,
+        preface_lines=preface,
+    )
+    print(f"HWPX: {hwpx.resolve()}")
+    print(f"PNG:  {fig.resolve()}")
+    print("정답: ① (갑=칸트, 을=공리주의)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m hwpx", description="HWPX 디코드/인코드 백엔드")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -168,6 +205,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path(__file__).resolve().parent / "fixtures",
     )
     m.set_defaults(func=cmd_make_fixture)
+
+    y = sub.add_parser("make-yunsa-sample", help="윤사 벤다이어그램 샘플 1문항 HWPX")
+    y.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "output",
+    )
+    y.set_defaults(func=cmd_make_yunsa_sample)
     return p
 
 
