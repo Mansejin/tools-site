@@ -1,0 +1,39 @@
+{
+  "id": "myilita_해설_v1",
+  "label": "마이일타 해설 HWPX (2026-09 코퍼스)",
+  "source_corpus": "examdata/마이일타_*_2026년9월.hwpx",
+  "package": {
+    "container": "hwpx zip",
+    "required_tops": [
+      "BinData",
+      "Contents",
+      "META-INF",
+      "Preview",
+      "mimetype",
+      "settings.xml",
+      "version.xml"
+    ],
+    "body": "Contents/section0.xml",
+    "section_count": 1
+  },
+  "document_role": "answer_key_with_questions",
+  "block_separator": "[답] N",
+  "block_schema": [
+    "[답] ①~⑤",
+    "[풀이]",
+    "title_or_intent",
+    "정답 해설 / 정답풀이",
+    "[오답피하기] (optional)",
+    "question_stem",
+    "choices ①~⑤"
+  ],
+  "choice_markers": "circled",
+  "question_numbering": "often_absent_in_stem_use_block_index",
+  "notes": [
+    "완성 문제 단일이 아니라 해설+문항이 한 파일에 있음",
+    "수학·과학은 수식/그림이 BinData라 평문 디코드만으로는 줄기 불완전",
+    "일반 번호(1.) 분리는 경제 등 일부만 유효 → 코퍼스 디코더는 [답] 기준"
+  ],
+  "decode_api": "hwpx.myilita.split_myilita_blocks / questions_from_myilita",
+  "sample_summary": "exam_formats/corpus/myilita_2026_09_summary.md"
+}

@@ -1,0 +1,276 @@
+{
+  "corpus": "마이일타 2026년 9월",
+  "type": "해설지(정답+풀이+문항+선지)",
+  "file_count": 27,
+  "answer_blocks": {
+    "min": 19,
+    "median": 20,
+    "max": 33,
+    "total": 573
+  },
+  "package": {
+    "zip_tops": [
+      "BinData",
+      "Contents",
+      "META-INF",
+      "Preview",
+      "mimetype",
+      "settings.xml",
+      "version.xml"
+    ],
+    "section_xml": "Contents/section0.xml (전 파일 1개)",
+    "choice_marker": "①②③④⑤",
+    "block_separator": "[답] N",
+    "notes": [
+      "완성 시험 문제지가 아니라 해설 포함본",
+      "블록: [답] → [풀이]/제목/해설/[오답피하기] → 문항 줄기 → ①~⑤",
+      "사회·윤리 계열은 문항 번호(1.)가 본문에 없을 수 있음(제목만)",
+      "수학·과학은 수식/그림이 BinData·OLE라 평문에 빈칸으로 남음"
+    ]
+  },
+  "files": [
+    {
+      "file": "마이일타_경제_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 26,
+      "circled": 360,
+      "paragraphs": 641,
+      "chars": 27522,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_과학_고1_2026년9월.hwpx",
+      "answer_blocks": 25,
+      "stem_hints": 9,
+      "circled": 300,
+      "paragraphs": 532,
+      "chars": 20374,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_과학_고2_2026년9월.hwpx",
+      "answer_blocks": 25,
+      "stem_hints": 12,
+      "circled": 295,
+      "paragraphs": 571,
+      "chars": 21485,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_동아시아사_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 24,
+      "circled": 325,
+      "paragraphs": 365,
+      "chars": 27793,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_물리1_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 10,
+      "circled": 248,
+      "paragraphs": 436,
+      "chars": 20190,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_물리2_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 10,
+      "circled": 256,
+      "paragraphs": 440,
+      "chars": 19039,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_사회_고1_2026년9월.hwpx",
+      "answer_blocks": 25,
+      "stem_hints": 22,
+      "circled": 269,
+      "paragraphs": 422,
+      "chars": 20608,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_사회_고2_2026년9월.hwpx",
+      "answer_blocks": 25,
+      "stem_hints": 28,
+      "circled": 225,
+      "paragraphs": 424,
+      "chars": 18421,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_사회문화_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 24,
+      "circled": 363,
+      "paragraphs": 541,
+      "chars": 34634,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_생명1_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 10,
+      "circled": 240,
+      "paragraphs": 571,
+      "chars": 31727,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_생명2_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 10,
+      "circled": 240,
+      "paragraphs": 522,
+      "chars": 28201,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_생활과윤리_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 28,
+      "circled": 370,
+      "paragraphs": 367,
+      "chars": 28099,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_세계사_고3_2026년9월.hwpx",
+      "answer_blocks": 19,
+      "stem_hints": 30,
+      "circled": 338,
+      "paragraphs": 342,
+      "chars": 24809,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_세계지리_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 18,
+      "circled": 293,
+      "paragraphs": 560,
+      "chars": 28338,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_수학_고1_2026년9월.hwpx",
+      "answer_blocks": 21,
+      "stem_hints": 30,
+      "circled": 300,
+      "paragraphs": 502,
+      "chars": 11535,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_수학_고2_2026년9월.hwpx",
+      "answer_blocks": 21,
+      "stem_hints": 13,
+      "circled": 260,
+      "paragraphs": 584,
+      "chars": 11088,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_수학_고3_2026년9월.hwpx",
+      "answer_blocks": 33,
+      "stem_hints": 48,
+      "circled": 408,
+      "paragraphs": 1128,
+      "chars": 28007,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_윤리와사상_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 27,
+      "circled": 291,
+      "paragraphs": 367,
+      "chars": 34575,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_정치와법_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 25,
+      "circled": 313,
+      "paragraphs": 466,
+      "chars": 29931,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_지구1_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 9,
+      "circled": 240,
+      "paragraphs": 469,
+      "chars": 23312,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_지구2_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 11,
+      "circled": 240,
+      "paragraphs": 482,
+      "chars": 22600,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_한국사_고1_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 29,
+      "circled": 297,
+      "paragraphs": 288,
+      "chars": 14229,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_한국사_고2_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 29,
+      "circled": 297,
+      "paragraphs": 248,
+      "chars": 12411,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_한국사_고3_2026년9월.hwpx",
+      "answer_blocks": 19,
+      "stem_hints": 29,
+      "circled": 297,
+      "paragraphs": 368,
+      "chars": 23625,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_한국지리_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 15,
+      "circled": 270,
+      "paragraphs": 452,
+      "chars": 27983,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_화학1_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 10,
+      "circled": 240,
+      "paragraphs": 462,
+      "chars": 19247,
+      "sections": 1
+    },
+    {
+      "file": "마이일타_화학2_고3_2026년9월.hwpx",
+      "answer_blocks": 20,
+      "stem_hints": 13,
+      "circled": 244,
+      "paragraphs": 486,
+      "chars": 19548,
+      "sections": 1
+    }
+  ]
+}

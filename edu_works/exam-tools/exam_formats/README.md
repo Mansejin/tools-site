@@ -5,7 +5,9 @@
 
 | 파일 | 의미 |
 |------|------|
-| `hwpx_v1.json` | HWPX 디코드/인코드 백엔드가 지원하는 기본 형식 |
+| `hwpx_v1.json` | 일반 HWPX 디코드/인코드 기본 형식 |
+| `myilita_해설_v1.json` | 마이일타 2026-09 해설지 코퍼스 형식 |
+| `corpus/` | 코퍼스 분석 요약 (MD/JSON) |
 
 ```powershell
 cd path\to\edu_works\exam-tools
