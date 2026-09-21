@@ -1,0 +1,13 @@
+# 봇 이미지/서비스는 Phase B에서 채움
+services:
+  bot:
+    build: ./bot
+    container_name: upbit-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./strategies:/app/strategies:ro
+      - ./reports:/app/reports
+    # 개발 초기에는 페이퍼 모드 기본
+    command: ["python", "-m", "bot.main"]
