@@ -4,7 +4,39 @@
   var PS = window.PS;
   var esc = PS.escapeHtml;
   var app = document.getElementById("app");
-  var state = { info: null, links: [], dirty: false, saving: false };
+  var state = { info: null, links: [], dirty: false, saving: false, makers: [], makersDirty: false, makersSaving: false, openMaker: -1 };
+
+  var MAKER_STATUSES = ["후보", "문의함", "견적받음", "샘플", "계약", "보류", "제외"];
+  var MAKER_TYPES = ["OEM", "ODM", "OEM·ODM"];
+  var MAKER_INPUTS = [
+    ["name", "업체명", "(주)예시식품"],
+    ["type", "유형", ""],
+    ["status", "상태", ""],
+    ["field", "분야", "건강기능식품 / 일반식품 / 반려동물"],
+    ["form", "제형", "액상 스틱, 정제, 분말…"],
+    ["region", "지역", "경기 포천"],
+    ["cert", "인증", "HACCP, 건기식 GMP"],
+    ["moq", "최소주문", "예: 3,000포"],
+    ["price", "단가", "예: 포당 350원"],
+    ["products", "관련제품", "젖산마그네슘"],
+    ["contact", "담당자", "이름·직함"],
+    ["phone", "연락처", "전화·이메일"],
+    ["url", "웹사이트", "https://"],
+    ["lastContact", "최근연락", "2026-09-29"],
+  ];
+  var MAKER_KEYS = MAKER_INPUTS.map(function (f) { return f[0]; }).concat(["memo"]);
+
+  function blankMaker() {
+    var m = {};
+    MAKER_KEYS.forEach(function (k) { m[k] = ""; });
+    m.type = "OEM";
+    m.status = "후보";
+    return m;
+  }
+
+  function isDirty() {
+    return state.dirty || state.makersDirty;
+  }
 
   function getPassword() {
     try {
@@ -71,7 +103,18 @@
         state.info = info;
         state.links = (info.links || []).map(function (l) { return { label: l.label, url: l.url, note: l.note || "" }; });
         state.dirty = false;
+        state.makers = (info.makers || []).map(function (m) {
+          var copy = blankMaker();
+          MAKER_KEYS.forEach(function (k) { copy[k] = m[k] || ""; });
+          return copy;
+        });
+        state.makersDirty = false;
+        state.openMaker = -1;
         renderManager();
+        if (location.hash === "#makers") {
+          var section = document.getElementById("makers");
+          if (section) section.scrollIntoView();
+        }
       })
       .catch(function (err) {
         clearPassword();
@@ -105,11 +148,33 @@
       '<span class="ps-spacer"></span>' +
       '<span class="ps-muted ps-small" id="dirtyNote"></span>' +
       '<button type="button" class="btn btn-primary" id="save">저장</button>' +
+      "</div></section>" +
+      '<section class="ps-panel" id="makers">' +
+      '<div class="ps-panel-head"><h2>제조사 (OEM·ODM)</h2>' +
+      '<span class="ps-muted ps-small">시트의 <b>제조사</b> 탭과 같아요. 시트에서 직접 고쳐도 돼요.</span></div>' +
+      '<div id="makerList" class="ps-link-list"></div>' +
+      '<div class="ps-actions">' +
+      '<button type="button" class="btn btn-secondary" id="addMaker">+ 제조사 추가</button>' +
+      '<span class="ps-spacer"></span>' +
+      '<span class="ps-muted ps-small" id="makersDirtyNote"></span>' +
+      '<button type="button" class="btn btn-primary" id="saveMakers">저장</button>' +
       "</div></section>";
 
     renderLinks();
+    renderMakers();
+    if (state.dirty) markDirty();
+    if (state.makersDirty) markMakersDirty();
+    document.getElementById("addMaker").addEventListener("click", function () {
+      state.makers.push(blankMaker());
+      state.openMaker = state.makers.length - 1;
+      markMakersDirty();
+      renderMakers();
+      var input = document.querySelector('#makerList .ps-maker-row[open] [data-field="name"]');
+      if (input) input.focus();
+    });
+    document.getElementById("saveMakers").addEventListener("click", saveMakers);
     document.getElementById("logout").addEventListener("click", function () {
-      if (state.dirty && !confirm("저장하지 않은 변경이 있어요. 로그아웃할까요?")) return;
+      if (isDirty() && !confirm("저장하지 않은 변경이 있어요. 로그아웃할까요?")) return;
       clearPassword();
       renderLogin();
     });
@@ -183,6 +248,165 @@
     });
   }
 
+  // —— 제조사 관리 ——
+
+  function makerInput(m, f) {
+    var key = f[0];
+    var input;
+    if (key === "status" || key === "type") {
+      var options = key === "status" ? MAKER_STATUSES : MAKER_TYPES;
+      if (m[key] && options.indexOf(m[key]) === -1) options = options.concat([m[key]]);
+      input =
+        '<select data-field="' + key + '" class="ps-select">' +
+        options.map(function (o) {
+          return '<option value="' + esc(o) + '"' + (o === m[key] ? " selected" : "") + ">" + esc(o) + "</option>";
+        }).join("") +
+        "</select>";
+    } else {
+      input =
+        '<input type="' + (key === "url" ? "url" : "text") + '" data-field="' + key + '" maxlength="300"' +
+        ' placeholder="' + esc(f[2]) + '" value="' + esc(m[key]) + '">';
+    }
+    return '<label class="ps-field"><span>' + esc(f[1]) + "</span>" + input + "</label>";
+  }
+
+  function renderMakers() {
+    var list = document.getElementById("makerList");
+    if (!state.makers.length) {
+      list.innerHTML = '<p class="empty">등록된 제조사가 없어요. 제조사를 추가하고 저장하세요.</p>';
+      return;
+    }
+    list.innerHTML = state.makers
+      .map(function (m, i) {
+        return (
+          '<details class="ps-maker-row" data-index="' + i + '"' + (state.openMaker === i ? " open" : "") + ">" +
+          '<summary><span class="ps-maker-name">' + esc(m.name || "(이름 없음)") + "</span>" +
+          '<span class="ps-muted ps-small">' + esc([m.status, m.form, m.region].filter(Boolean).join(" · ")) + "</span></summary>" +
+          '<div class="ps-maker-fields">' +
+          MAKER_INPUTS.map(function (f) { return makerInput(m, f); }).join("") +
+          '<label class="ps-field ps-field-wide"><span>메모</span>' +
+          '<textarea data-field="memo" rows="3" maxlength="1000" placeholder="견적 조건, 통화 내용, 확인할 점">' + esc(m.memo) + "</textarea></label>" +
+          "</div>" +
+          '<div class="ps-actions">' +
+          '<button type="button" class="ps-icon-btn" data-move="-1" aria-label="위로"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+          '<button type="button" class="ps-icon-btn" data-move="1" aria-label="아래로"' + (i === state.makers.length - 1 ? " disabled" : "") + ">↓</button>" +
+          '<span class="ps-spacer"></span>' +
+          '<button type="button" class="btn btn-secondary ps-danger" data-remove>삭제</button>' +
+          "</div></details>"
+        );
+      })
+      .join("");
+
+    list.querySelectorAll(".ps-maker-row").forEach(function (row) {
+      row.addEventListener("toggle", function () {
+        var i = Number(row.getAttribute("data-index"));
+        if (row.open) state.openMaker = i;
+        else if (state.openMaker === i) state.openMaker = -1;
+      });
+    });
+    list.querySelectorAll("[data-field]").forEach(function (input) {
+      var handler = function () {
+        var row = input.closest(".ps-maker-row");
+        var i = Number(row.getAttribute("data-index"));
+        var key = input.getAttribute("data-field");
+        state.makers[i][key] = input.value;
+        markMakersDirty();
+        if (key === "name" || key === "status" || key === "form" || key === "region") {
+          var m = state.makers[i];
+          row.querySelector(".ps-maker-name").textContent = m.name || "(이름 없음)";
+          row.querySelector("summary .ps-muted").textContent = [m.status, m.form, m.region].filter(Boolean).join(" · ");
+        }
+      };
+      input.addEventListener("input", handler);
+      input.addEventListener("change", handler);
+    });
+    list.querySelectorAll("[data-move]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = Number(btn.closest(".ps-maker-row").getAttribute("data-index"));
+        var j = i + Number(btn.getAttribute("data-move"));
+        var moved = state.makers.splice(i, 1)[0];
+        state.makers.splice(j, 0, moved);
+        state.openMaker = j;
+        markMakersDirty();
+        renderMakers();
+      });
+    });
+    list.querySelectorAll("[data-remove]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = Number(btn.closest(".ps-maker-row").getAttribute("data-index"));
+        var name = state.makers[i].name || "이 제조사";
+        if (!confirm(name + "를 목록에서 뺄까요? 저장해야 반영돼요.")) return;
+        state.makers.splice(i, 1);
+        state.openMaker = -1;
+        markMakersDirty();
+        renderMakers();
+      });
+    });
+  }
+
+  function markMakersDirty() {
+    state.makersDirty = true;
+    var note = document.getElementById("makersDirtyNote");
+    if (note) note.textContent = "저장 안 됨";
+  }
+
+  function saveMakers() {
+    if (state.makersSaving) return;
+    var makers = state.makers
+      .map(function (m) {
+        var clean = {};
+        MAKER_KEYS.forEach(function (k) { clean[k] = String(m[k] || "").trim(); });
+        return clean;
+      })
+      .filter(function (m) {
+        return MAKER_KEYS.some(function (k) { return k !== "type" && k !== "status" && m[k]; });
+      });
+    var noName = makers.find(function (m) { return !m.name; });
+    if (noName) {
+      PS.toast("업체명을 모두 넣어 주세요");
+      return;
+    }
+    var badUrl = makers.find(function (m) { return m.url && !/^https?:\/\/\S+$/.test(m.url); });
+    if (badUrl) {
+      PS.toast("웹사이트는 https:// 로 시작해야 해요: " + badUrl.name);
+      return;
+    }
+    state.makersSaving = true;
+    var btn = document.getElementById("saveMakers");
+    btn.disabled = true;
+    btn.textContent = "저장 중…";
+    PS.postJson({ action: "saveMakers", password: getPassword(), makers: makers })
+      .then(function (res) {
+        state.makers = (res.makers || makers).map(function (m) {
+          var copy = blankMaker();
+          MAKER_KEYS.forEach(function (k) { copy[k] = m[k] || ""; });
+          return copy;
+        });
+        state.makersDirty = false;
+        state.openMaker = -1;
+        PS.write(PS.KEYS.cache, "");
+        document.getElementById("makersDirtyNote").textContent = "";
+        renderMakers();
+        PS.toast("제조사를 저장했어요");
+      })
+      .catch(function (err) {
+        if (err.unauthorized) {
+          clearPassword();
+          renderLogin("비밀번호가 바뀌었거나 맞지 않아요. 다시 로그인하세요.");
+          return;
+        }
+        PS.toast(err.message || "저장하지 못했어요");
+      })
+      .then(function () {
+        state.makersSaving = false;
+        var b = document.getElementById("saveMakers");
+        if (b) {
+          b.disabled = false;
+          b.textContent = "저장";
+        }
+      });
+  }
+
   function markDirty() {
     state.dirty = true;
     var note = document.getElementById("dirtyNote");
@@ -226,7 +450,7 @@
   }
 
   window.addEventListener("beforeunload", function (e) {
-    if (state.dirty) {
+    if (isDirty()) {
       e.preventDefault();
       e.returnValue = "";
     }

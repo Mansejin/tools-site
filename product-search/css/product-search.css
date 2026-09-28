@@ -615,6 +615,157 @@
   color: var(--orange);
 }
 
+/* —— 탭 —— */
+.ps-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ps-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.ps-tab:hover {
+  color: var(--text-secondary);
+}
+
+.ps-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--blue);
+}
+
+/* —— 제조사 카드 —— */
+.ps-maker .ps-card-head {
+  margin-bottom: 0.85rem;
+}
+
+.ps-status-pill {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ps-status-pill.is-asked {
+  color: var(--blue);
+  border-color: color-mix(in srgb, var(--blue) 40%, var(--border));
+}
+
+.ps-status-pill.is-progress {
+  color: var(--orange);
+  border-color: color-mix(in srgb, var(--orange) 40%, var(--border));
+}
+
+.ps-status-pill.is-done {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 40%, var(--border));
+}
+
+.ps-status-pill.is-off {
+  opacity: 0.55;
+}
+
+.ps-maker-metrics dd {
+  font-size: 0.9rem;
+  word-break: keep-all;
+}
+
+.ps-buyer a,
+.ps-maker-link a {
+  color: var(--blue);
+}
+
+.ps-maker-link {
+  margin-top: 0.6rem;
+  font-size: 0.8125rem;
+}
+
+/* —— 제조사 편집 —— */
+.ps-maker-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
+  padding: 0.7rem 0.8rem;
+}
+
+.ps-maker-row summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ps-maker-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.ps-maker-row summary::before {
+  content: "+";
+  width: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.ps-maker-row[open] summary::before {
+  content: "−";
+}
+
+.ps-maker-name {
+  font-weight: 700;
+}
+
+.ps-maker-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.6rem 0.75rem;
+  margin: 0.85rem 0 0.6rem;
+}
+
+.ps-field-wide {
+  grid-column: 1 / -1;
+}
+
+.ps-maker-fields input,
+.ps-maker-fields textarea,
+.ps-maker-fields .ps-select {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.65rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.ps-maker-fields textarea {
+  resize: vertical;
+}
+
+.ps-maker-fields input:focus,
+.ps-maker-fields textarea:focus,
+.ps-maker-fields .ps-select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
 @media (max-width: 520px) {
   .ps-controls {
     flex-direction: column;

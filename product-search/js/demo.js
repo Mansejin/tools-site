@@ -6,6 +6,11 @@ window.PRODUCT_SEARCH_DEMO = {
   links: [
     { label: "제품 찾기 시트 (예시)", url: "https://docs.google.com/spreadsheets/", note: "" },
   ],
+  makers: [
+    { name: "(예시) 가나식품", type: "OEM", field: "건강기능식품", form: "액상 스틱", region: "강원", cert: "건기식 GMP, HACCP", moq: "5,000포", price: "포당 420원", status: "견적받음", contact: "김 과장", phone: "010-0000-0000", url: "", products: "예시 마그네슘", lastContact: "2026-09-20", memo: "기존 레시피 있음 · 품목신고 대행 가능 (예시)" },
+    { name: "(예시) 다라바이오", type: "OEM·ODM", field: "일반식품", form: "분말 스틱", region: "경기", cert: "HACCP", moq: "3,000포", price: "", status: "문의함", contact: "", phone: "", url: "", products: "예시 저당간식", lastContact: "2026-09-25", memo: "회신 대기 (예시)" },
+    { name: "(예시) 마바펫푸드", type: "ODM", field: "반려동물", form: "동결건조", region: "충북", cert: "", moq: "", price: "", status: "후보", contact: "", phone: "", url: "", products: "예시 동결건조간식", lastContact: "", memo: "" },
+  ],
   headers: ["순위", "키워드", "분야", "총점", "월검색량", "광고경쟁", "검색 전년대비(배)", "쇼핑클릭 전년대비(배)", "검색 최고점/최근(배)", "주 구매층", "블로그 글", "월 신규 블로그글", "쿠팡 리뷰", "예상 판매가", "예상 원가", "개당 순이익", "순이익률", "수요점수", "광고경쟁점수", "검색추세점수", "쇼핑추세점수", "쿠팡경쟁점수", "가격점수", "수익점수", "재구매성", "규제", "보관·물류", "차별화", "메모"],
   rows: [
     [1, "예시 저당간식", "일반식품", 74.5, 32000, "중간", 1.42, 1.2, 1.1, "여 78% · 30대 34%, 40대 29%", 41000, 620, 180, 24900, 8000, 5120, 0.206, 4, 3, 5, 4, 4, 5, 5, 4, 4, "", "", "예시 데이터"],

@@ -6,7 +6,18 @@
   var app = document.getElementById("app");
   var demo = new URLSearchParams(location.search).has("demo");
 
-  var state = { data: null, items: [], category: "all", query: "", sort: "score" };
+  var state = {
+    data: null,
+    items: [],
+    category: "all",
+    query: "",
+    sort: "score",
+    tab: location.hash === "#makers" ? "makers" : "products",
+    makerStatus: "all",
+    makerQuery: "",
+  };
+
+  var MAKER_STATUSES = ["후보", "문의함", "견적받음", "샘플", "계약", "보류", "제외"];
 
   var SORTS = [
     { id: "score", label: "총점 높은순" },
@@ -171,9 +182,37 @@
       categories[c] = (categories[c] || 0) + 1;
     });
 
+    var makers = data.makers || [];
     app.innerHTML =
       (demo ? '<p class="preview-banner">예시 화면이에요. 숫자는 모두 지어낸 값이에요. <a href="./">실제 결과 보기</a></p>' : "") +
       linkButtons(data) +
+      '<div class="ps-tabs" role="tablist">' +
+      tabButton("products", "후보 제품", state.items.length) +
+      tabButton("makers", "제조사", makers.length) +
+      "</div>" +
+      '<div id="tabBody"></div>';
+
+    document.querySelectorAll(".ps-tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.tab = btn.getAttribute("data-tab");
+        history.replaceState(null, "", location.pathname + location.search + (state.tab === "makers" ? "#makers" : ""));
+        renderDashboard();
+      });
+    });
+
+    if (state.tab === "makers") renderMakers();
+    else renderProducts(updated, categories);
+  }
+
+  function tabButton(id, label, count) {
+    return (
+      '<button type="button" role="tab" class="ps-tab' + (state.tab === id ? " active" : "") + '" data-tab="' + id + '"' +
+      ' aria-selected="' + (state.tab === id) + '">' + esc(label) + ' <span class="ps-count">' + count + "</span></button>"
+    );
+  }
+
+  function renderProducts(updated, categories) {
+    document.getElementById("tabBody").innerHTML =
       '<div class="ps-summary">' +
       '<span><strong>' + state.items.length + "</strong>개 후보</span>" +
       "<span>" + esc(updated) + "</span>" +
@@ -217,6 +256,121 @@
     });
     bindRefresh();
     renderList();
+  }
+
+  // —— 제조사 ——
+
+  function makerStatus(m) {
+    return String(m.status || "").trim() || "후보";
+  }
+
+  function renderMakers() {
+    var makers = state.data.makers || [];
+    var counts = {};
+    makers.forEach(function (m) {
+      var s = makerStatus(m);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    var statuses = MAKER_STATUSES.filter(function (s) { return counts[s]; })
+      .concat(Object.keys(counts).filter(function (s) { return MAKER_STATUSES.indexOf(s) === -1; }));
+
+    document.getElementById("tabBody").innerHTML =
+      '<div class="ps-summary">' +
+      '<span><strong>' + makers.length + "</strong>곳</span>" +
+      "<span>" + (demo ? "" : '<a class="ps-link" href="admin/#makers">관리 페이지에서 편집</a>') + "</span>" +
+      (demo ? "" : '<button type="button" class="ps-link" id="refresh">새로고침</button>') +
+      "</div>" +
+      (makers.length
+        ? '<div class="ps-controls">' +
+          '<input type="search" id="makerQuery" class="ps-search" placeholder="업체명·지역·제형·메모 검색" value="' + esc(state.makerQuery) + '">' +
+          "</div>" +
+          '<div class="filters" id="makerFilters">' +
+          makerFilter("all", "전체", makers.length) +
+          statuses.map(function (s) { return makerFilter(s, s, counts[s]); }).join("") +
+          "</div>" +
+          '<div class="ps-list" id="makerList"></div>'
+        : '<p class="empty">등록된 제조사가 없어요. 관리 페이지에서 추가하거나 시트의 <b>제조사</b> 탭에 적으세요.</p>');
+
+    bindRefresh();
+    if (!makers.length) return;
+    document.getElementById("makerQuery").addEventListener("input", function (e) {
+      state.makerQuery = e.target.value;
+      renderMakerList();
+    });
+    document.getElementById("makerFilters").addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-status]");
+      if (!btn) return;
+      state.makerStatus = btn.getAttribute("data-status");
+      document.querySelectorAll("#makerFilters .filter-btn").forEach(function (b) {
+        b.classList.toggle("active", b === btn);
+      });
+      renderMakerList();
+    });
+    renderMakerList();
+  }
+
+  function makerFilter(id, label, count) {
+    return (
+      '<button type="button" class="filter-btn' + (state.makerStatus === id ? " active" : "") + '" data-status="' + esc(id) + '">' +
+      esc(label) + ' <span class="ps-count">' + count + "</span></button>"
+    );
+  }
+
+  function renderMakerList() {
+    var q = state.makerQuery.trim().toLowerCase();
+    var makers = (state.data.makers || []).filter(function (m) {
+      if (state.makerStatus !== "all" && makerStatus(m) !== state.makerStatus) return false;
+      if (!q) return true;
+      return [m.name, m.type, m.field, m.form, m.region, m.cert, m.products, m.memo, m.contact].join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+    document.getElementById("makerList").innerHTML = makers.length
+      ? makers.map(makerCard).join("")
+      : '<p class="empty">조건에 맞는 제조사가 없어요.</p>';
+  }
+
+  function statusTone(status) {
+    if (status === "계약") return " is-done";
+    if (status === "견적받음" || status === "샘플") return " is-progress";
+    if (status === "문의함") return " is-asked";
+    if (status === "보류" || status === "제외") return " is-off";
+    return "";
+  }
+
+  function makerCard(m) {
+    var status = makerStatus(m);
+    var phone = String(m.phone || "").trim();
+    var tel = phone.replace(/[^\d+]/g, "");
+    var parts = [];
+    if (m.contact) parts.push(esc(m.contact));
+    if (phone) parts.push(tel ? '<a href="tel:' + esc(tel) + '">' + esc(phone) + "</a>" : esc(phone));
+    var contact = parts.join(" · ");
+    var url = /^https?:\/\//.test(m.url || "") ? m.url : "";
+
+    return (
+      '<article class="tool-card ps-card ps-maker">' +
+      '<div class="ps-card-head">' +
+      '<div class="ps-card-title">' +
+      "<h2>" + esc(m.name) + "</h2>" +
+      '<div class="ps-card-sub">' +
+      (m.type ? '<span class="tag">' + esc(m.type) + "</span>" : "") +
+      (m.field ? '<span class="tag">' + esc(m.field) + "</span>" : "") +
+      (m.region ? '<span class="ps-muted">' + esc(m.region) + "</span>" : "") +
+      "</div></div>" +
+      '<span class="ps-status-pill' + statusTone(status) + '">' + esc(status) + "</span>" +
+      "</div>" +
+      '<dl class="ps-metrics ps-maker-metrics">' +
+      metric("제형", esc(m.form)) +
+      metric("인증", esc(m.cert)) +
+      metric("최소주문", esc(m.moq)) +
+      metric("단가", esc(m.price)) +
+      metric("관련 제품", esc(m.products)) +
+      metric("최근 연락", esc(m.lastContact)) +
+      "</dl>" +
+      (contact ? '<p class="ps-buyer"><span>담당</span>' + contact + "</p>" : "") +
+      (m.memo ? '<p class="ps-memo">' + esc(m.memo) + "</p>" : "") +
+      (url ? '<p class="ps-maker-link"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">웹사이트 ↗</a></p>' : "") +
+      "</article>"
+    );
   }
 
   function bindRefresh() {
