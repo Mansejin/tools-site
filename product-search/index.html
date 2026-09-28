@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      var s = localStorage.getItem("mansejin-theme");
+      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>제품 찾기 · 만세진</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="css/product-search.css?v=20260929">
+</head>
+<body class="ps-body">
+  <div class="page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="back-link" href="../">← 도구함</a>
+        <div class="header-actions">
+          <a class="toys-link" href="admin/">관리</a>
+          <label class="theme-switch">
+            <input type="checkbox" class="theme-switch-input" role="switch">
+            <span class="theme-switch-track">
+              <span class="theme-switch-thumb"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <section class="identity compact" aria-labelledby="brand">
+        <p id="brand" class="brand">제품 찾기</p>
+        <h1 class="hero-lead">OEM 후보 제품 점수표</h1>
+        <p class="purpose">네이버 검색량·추세·구매층과 직접 조사한 쿠팡 경쟁·수익을 합친 점수예요. 1차 거르기용이라 최종 판단은 쿠팡 검색과 제조사 견적으로 확인하세요.</p>
+        <div class="identity-rule" aria-hidden="true"></div>
+      </section>
+    </header>
+
+    <main id="app" aria-live="polite">
+      <p class="loading">불러오는 중…</p>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../">도구함</a> · <a href="admin/">관리</a></p>
+      <p>product-finder 결과 · 비공개 연구용</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="js/config.js?v=20260929"></script>
+  <script src="js/common.js?v=20260929"></script>
+  <script src="js/demo.js?v=20260929"></script>
+  <script src="js/dashboard.js?v=20260929"></script>
+  <script src="../js/theme.js"></script>
+</body>
+</html>
