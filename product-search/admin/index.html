@@ -2,59 +2,11 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="color-scheme" content="light dark">
-  <script>
-    (function () {
-      var s = localStorage.getItem("mansejin-theme");
-      var d = s === "dark" || (s !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
-    })();
-  </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>제품 찾기 · 관리</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../css/style.css">
-  <link rel="stylesheet" href="../css/product-search.css?v=20260929b">
+  <meta http-equiv="refresh" content="0; url=../#makers">
+  <title>제품 찾기</title>
 </head>
-<body class="ps-body">
-  <div class="page">
-    <header class="site-header">
-      <div class="header-top">
-        <a class="back-link" href="../">← 제품 찾기</a>
-        <div class="header-actions">
-          <label class="theme-switch">
-            <input type="checkbox" class="theme-switch-input" role="switch">
-            <span class="theme-switch-track">
-              <span class="theme-switch-thumb"></span>
-            </span>
-          </label>
-        </div>
-      </div>
-      <section class="identity compact" aria-labelledby="brand">
-        <p id="brand" class="brand">관리</p>
-        <h1 class="hero-lead">시트 바로가기 · 제조사 관리</h1>
-        <div class="identity-rule" aria-hidden="true"></div>
-      </section>
-    </header>
-
-    <main id="app" aria-live="polite">
-      <p class="loading">불러오는 중…</p>
-    </main>
-
-    <footer class="site-footer">
-      <p><a href="../">제품 찾기</a> · <a href="../../">도구함</a></p>
-      <p>비밀번호는 Apps Script 스크립트 속성에만 있어요</p>
-    </footer>
-  </div>
-
-  <div class="toast" id="toast" role="status"></div>
-  <script src="../js/config.js?v=20260929b"></script>
-  <script src="../js/common.js?v=20260929b"></script>
-  <script src="../js/admin.js?v=20260929b"></script>
-  <script src="../../js/theme.js"></script>
+<body>
+  <p><a href="../#makers">제품 찾기로 이동</a></p>
 </body>
 </html>

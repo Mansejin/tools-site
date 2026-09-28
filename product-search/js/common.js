@@ -1,12 +1,10 @@
 (function () {
   "use strict";
 
-  var CONFIG = window.PRODUCT_SEARCH_CONFIG || {};
+  var API = "/product-search/api";
   var KEYS = {
-    endpoint: "ps-endpoint",
-    viewKey: "ps-view-key",
-    cache: "ps-results-cache",
-    password: "ps-admin-password",
+    password: "ps-password",
+    cache: "ps-data-cache",
   };
 
   function read(key) {
@@ -24,12 +22,27 @@
     } catch (_) {}
   }
 
-  function endpoint() {
-    return read(KEYS.endpoint) || CONFIG.endpoint || "";
+  function getPassword() {
+    try {
+      return sessionStorage.getItem(KEYS.password) || read(KEYS.password);
+    } catch (_) {
+      return read(KEYS.password);
+    }
   }
 
-  function isEndpoint(url) {
-    return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(String(url || "").trim());
+  function setPassword(value, remember) {
+    try {
+      sessionStorage.setItem(KEYS.password, value);
+    } catch (_) {}
+    write(KEYS.password, remember ? value : "");
+  }
+
+  function clearPassword() {
+    try {
+      sessionStorage.removeItem(KEYS.password);
+    } catch (_) {}
+    write(KEYS.password, "");
+    write(KEYS.cache, "");
   }
 
   function escapeHtml(value) {
@@ -42,38 +55,32 @@
   }
 
   function safeUrl(url) {
-    return /^https:\/\//.test(String(url || "")) ? String(url) : "#";
+    return /^https?:\/\//.test(String(url || "")) ? String(url) : "#";
   }
 
-  function getJson(params) {
-    var url = endpoint();
-    var query = Object.keys(params)
-      .filter(function (k) { return params[k]; })
-      .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); })
-      .join("&");
-    return fetch(url + (query ? "?" + query : "")).then(parse);
-  }
-
-  function postJson(body) {
-    return fetch(endpoint(), {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(body),
-    }).then(parse);
-  }
-
-  function parse(response) {
-    if (!response.ok) throw new Error("HTTP " + response.status);
-    return response.json().then(function (data) {
-      if (!data || !data.ok) {
-        var err = new Error((data && data.error) || "알 수 없는 오류");
-        err.unauthorized = err.message === "Unauthorized";
-        throw err;
-      }
-      return data;
-    }, function () {
-      throw new Error("응답을 읽지 못했어요. 웹 앱 배포 액세스가 '모든 사용자'인지 확인하세요.");
+  function api(method, path, body) {
+    var options = {
+      method: method,
+      headers: { Authorization: "Bearer " + getPassword() },
+    };
+    if (body !== undefined) {
+      options.headers["Content-Type"] = "application/json";
+      options.body = JSON.stringify(body);
+    }
+    return fetch(API + path, options).then(function (response) {
+      return response.json().then(
+        function (data) {
+          if (!data || !data.ok) {
+            var err = new Error((data && data.error) || "HTTP " + response.status);
+            err.unauthorized = response.status === 401;
+            throw err;
+          }
+          return data;
+        },
+        function () {
+          throw new Error("서버 응답을 읽지 못했어요 (HTTP " + response.status + ")");
+        }
+      );
     });
   }
 
@@ -111,13 +118,12 @@
     KEYS: KEYS,
     read: read,
     write: write,
-    endpoint: endpoint,
-    configEndpoint: CONFIG.endpoint || "",
-    isEndpoint: isEndpoint,
+    getPassword: getPassword,
+    setPassword: setPassword,
+    clearPassword: clearPassword,
     escapeHtml: escapeHtml,
     safeUrl: safeUrl,
-    getJson: getJson,
-    postJson: postJson,
+    api: api,
     formatDate: formatDate,
     timeAgo: timeAgo,
     toast: toast,

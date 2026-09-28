@@ -6,18 +6,29 @@
   var app = document.getElementById("app");
   var demo = new URLSearchParams(location.search).has("demo");
 
+  var TABS = [
+    { id: "products", label: "순위" },
+    { id: "candidates", label: "후보 입력" },
+    { id: "makers", label: "제조사" },
+  ];
+
   var state = {
     data: null,
     items: [],
+    tab: tabFromHash(),
     category: "all",
     query: "",
     sort: "score",
-    tab: location.hash === "#makers" ? "makers" : "products",
+    cands: [],
+    candsDirty: false,
+    makers: [],
+    makersDirty: false,
+    makerEdit: false,
     makerStatus: "all",
     makerQuery: "",
+    openMaker: -1,
+    saving: false,
   };
-
-  var MAKER_STATUSES = ["후보", "문의함", "견적받음", "샘플", "계약", "보류", "제외"];
 
   var SORTS = [
     { id: "score", label: "총점 높은순" },
@@ -41,9 +52,49 @@
     ["차별화", "차별화"],
   ];
 
+  var CANDIDATE_FIELDS = ["키워드", "분야", "메모", "쿠팡리뷰수", "예상판매가", "예상원가", "재구매성", "규제", "물류", "차별화", "쇼핑카테고리"];
+  var CATEGORIES = ["일반식품", "건강기능식품", "반려동물"];
+  var CANDIDATE_COLUMNS = [
+    { key: "키워드", label: "키워드", kind: "text", cls: "col-keyword" },
+    { key: "분야", label: "분야", kind: "category" },
+    { key: "쿠팡리뷰수", label: "쿠팡 리뷰", kind: "number", hint: "1페이지 평균" },
+    { key: "예상판매가", label: "판매가", kind: "number", hint: "원" },
+    { key: "예상원가", label: "원가", kind: "number", hint: "원" },
+    { key: "재구매성", label: "재구매", kind: "score" },
+    { key: "규제", label: "규제", kind: "score" },
+    { key: "물류", label: "물류", kind: "score" },
+    { key: "차별화", label: "차별화", kind: "score" },
+    { key: "메모", label: "메모", kind: "text", cls: "col-memo" },
+  ];
+
+  var MAKER_STATUSES = ["후보", "문의함", "견적받음", "샘플", "계약", "보류", "제외"];
+  var MAKER_TYPES = ["OEM", "ODM", "OEM·ODM"];
+  var MAKER_INPUTS = [
+    ["name", "업체명", "(주)예시식품"],
+    ["type", "유형", ""],
+    ["status", "상태", ""],
+    ["field", "분야", "건강기능식품 / 일반식품 / 반려동물"],
+    ["form", "제형", "액상 스틱, 정제, 분말…"],
+    ["region", "지역", "경기 포천"],
+    ["cert", "인증", "HACCP, 건기식 GMP"],
+    ["moq", "최소주문", "예: 3,000포"],
+    ["price", "단가", "예: 포당 350원"],
+    ["products", "관련제품", "젖산마그네슘"],
+    ["contact", "담당자", "이름·직함"],
+    ["phone", "연락처", "전화·이메일"],
+    ["url", "웹사이트", "https://"],
+    ["lastContact", "최근연락", "2026-09-29"],
+  ];
+  var MAKER_KEYS = MAKER_INPUTS.map(function (f) { return f[0]; }).concat(["memo"]);
+
+  function tabFromHash() {
+    var id = location.hash.slice(1);
+    return TABS.some(function (t) { return t.id === id; }) ? id : "products";
+  }
+
   function num(value) {
     if (value === "" || value == null) return null;
-    var n = Number(value);
+    var n = Number(String(value).replace(/,/g, ""));
     return isFinite(n) ? n : null;
   }
 
@@ -73,151 +124,180 @@
       .filter(function (item) { return String(item["키워드"] || "").trim(); });
   }
 
-  // —— 연결 설정 ——
-
-  function renderSetup(message) {
-    var current = PS.read(PS.KEYS.endpoint) || PS.configEndpoint;
-    app.innerHTML =
-      '<section class="ps-panel">' +
-      "<h2>연결 설정</h2>" +
-      (message ? '<p class="ps-alert">' + esc(message) + "</p>" : "") +
-      '<p class="ps-muted">구글 시트에 붙인 Apps Script 웹 앱 주소를 넣으면 결과를 불러와요. 이 브라우저에만 저장돼요.</p>' +
-      '<form class="ps-form" id="setupForm">' +
-      '<label class="ps-field"><span>웹 앱 URL</span>' +
-      '<input type="url" name="endpoint" required placeholder="https://script.google.com/macros/s/…/exec" value="' + esc(current) + '"></label>' +
-      '<label class="ps-field"><span>열람 키 <em>(스크립트 속성 VIEW_KEY를 설정했다면)</em></span>' +
-      '<input type="password" name="viewKey" autocomplete="off" value="' + esc(PS.read(PS.KEYS.viewKey)) + '"></label>' +
-      '<div class="ps-actions">' +
-      '<button type="submit" class="btn btn-primary">저장하고 불러오기</button>' +
-      '<a class="btn btn-secondary" href="?demo">예시 화면 보기</a>' +
-      "</div>" +
-      "</form>" +
-      '<details class="ps-help"><summary>처음이라면</summary>' +
-      "<ol>" +
-      "<li>구글 시트에 <b>후보</b> 탭을 만들고 keywords.csv를 가져와요 (파일 → 가져오기).</li>" +
-      "<li>확장 프로그램 → Apps Script에 product-finder 저장소의 <code>apps-script/Code.gs</code>를 붙여넣어요.</li>" +
-      "<li>프로젝트 설정 → 스크립트 속성에 WRITE_TOKEN, ADMIN_PASSWORD(선택: VIEW_KEY)를 넣어요.</li>" +
-      "<li>배포 → 새 배포 → 웹 앱 (실행: 나, 액세스: 모든 사용자) 후 나온 URL을 여기에 넣어요.</li>" +
-      "</ol></details>" +
-      "</section>";
-
-    document.getElementById("setupForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      var form = e.target;
-      var url = form.endpoint.value.trim();
-      if (!PS.isEndpoint(url)) {
-        renderSetup("주소는 https://script.google.com/macros/s/…/exec 형태여야 해요.");
-        return;
-      }
-      PS.write(PS.KEYS.endpoint, url === PS.configEndpoint ? "" : url);
-      PS.write(PS.KEYS.viewKey, form.viewKey.value.trim());
-      PS.write(PS.KEYS.cache, "");
-      load();
+  function copyCandidates(list) {
+    return (list || []).map(function (c) {
+      var row = {};
+      CANDIDATE_FIELDS.forEach(function (f) { row[f] = c[f] == null ? "" : String(c[f]); });
+      return row;
     });
   }
 
-  function renderKeyPrompt(message) {
-    app.innerHTML =
-      '<section class="ps-panel">' +
-      "<h2>열람 키가 필요해요</h2>" +
-      (message ? '<p class="ps-alert">' + esc(message) + "</p>" : "") +
-      '<p class="ps-muted">Apps Script 스크립트 속성의 VIEW_KEY 값을 넣어 주세요. 이 브라우저에만 저장돼요.</p>' +
-      '<form class="ps-form ps-form-inline" id="keyForm">' +
-      '<input type="password" name="viewKey" required autocomplete="off" placeholder="열람 키">' +
-      '<button type="submit" class="btn btn-primary">확인</button>' +
-      "</form>" +
-      '<p class="ps-muted ps-small"><button type="button" class="ps-link" id="changeEndpoint">연결 주소 바꾸기</button></p>' +
-      "</section>";
-    document.getElementById("keyForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      PS.write(PS.KEYS.viewKey, e.target.viewKey.value.trim());
-      load();
+  function blankMaker() {
+    var m = {};
+    MAKER_KEYS.forEach(function (k) { m[k] = ""; });
+    m.type = "OEM";
+    m.status = "후보";
+    return m;
+  }
+
+  function copyMakers(list) {
+    return (list || []).map(function (m) {
+      var copy = blankMaker();
+      MAKER_KEYS.forEach(function (k) { copy[k] = m[k] == null ? "" : String(m[k]); });
+      return copy;
     });
-    document.getElementById("changeEndpoint").addEventListener("click", function () { renderSetup(); });
+  }
+
+  function isDirty() {
+    return state.candsDirty || state.makersDirty;
+  }
+
+  // —— 로그인 ——
+
+  function renderLogin(message) {
+    app.innerHTML =
+      '<section class="ps-panel ps-login">' +
+      "<h2>로그인</h2>" +
+      (message ? '<p class="ps-alert">' + esc(message) + "</p>" : "") +
+      '<p class="ps-muted">product-finder <code>.env</code>의 <code>PS_ADMIN_PASSWORD</code> 값이에요.</p>' +
+      '<form class="ps-form" id="loginForm">' +
+      '<label class="ps-field"><span>비밀번호</span>' +
+      '<input type="password" name="password" required autocomplete="current-password"></label>' +
+      '<label class="ps-check"><input type="checkbox" name="remember" checked> 이 브라우저에서 기억하기</label>' +
+      '<div class="ps-actions">' +
+      '<button type="submit" class="btn btn-primary">들어가기</button>' +
+      '<a class="btn btn-secondary" href="?demo">예시 화면 보기</a>' +
+      "</div></form></section>";
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      PS.setPassword(e.target.password.value.trim(), e.target.remember.checked);
+      load(true);
+    });
   }
 
   function renderError(message) {
     app.innerHTML =
       '<section class="ps-panel">' +
-      "<h2>결과를 불러오지 못했어요</h2>" +
+      "<h2>불러오지 못했어요</h2>" +
       '<p class="ps-alert">' + esc(message) + "</p>" +
-      '<div class="ps-actions">' +
-      '<button type="button" class="btn btn-primary" id="retry">다시 시도</button>' +
-      '<button type="button" class="btn btn-secondary" id="changeEndpoint">연결 설정</button>' +
-      "</div></section>";
-    document.getElementById("retry").addEventListener("click", load);
-    document.getElementById("changeEndpoint").addEventListener("click", function () { renderSetup(); });
+      '<div class="ps-actions"><button type="button" class="btn btn-primary" id="retry">다시 시도</button></div>' +
+      "</section>";
+    document.getElementById("retry").addEventListener("click", function () { load(true); });
   }
 
-  // —— 결과 화면 ——
-
-  function linkButtons(data) {
-    var links = (data.links || []).slice();
-    if (!links.length && data.sheetUrl) links.push({ label: "구글 시트 열기", url: data.sheetUrl });
-    if (!links.length) return "";
-    return (
-      '<nav class="ps-links" aria-label="구글 시트 바로가기">' +
-      links
-        .map(function (l, i) {
-          return (
-            '<a class="btn ' + (i === 0 ? "btn-primary" : "btn-secondary") + ' ps-link-btn" href="' + esc(PS.safeUrl(l.url)) +
-            '" target="_blank" rel="noopener noreferrer"' + (l.note ? ' title="' + esc(l.note) + '"' : "") + ">" +
-            '<span class="ps-sheet-icon" aria-hidden="true"></span>' + esc(l.label) + "</a>"
-          );
-        })
-        .join("") +
-      "</nav>"
-    );
-  }
+  // —— 공통 틀 ——
 
   function renderDashboard() {
-    var data = state.data;
-    var updated = data.updatedAt
-      ? "마지막 업데이트 " + PS.formatDate(data.updatedAt) + (PS.timeAgo(data.updatedAt) ? " · " + PS.timeAgo(data.updatedAt) : "")
-      : "아직 업데이트 기록이 없어요";
-
-    var categories = {};
-    state.items.forEach(function (item) {
-      var c = String(item["분야"] || "").trim() || "미분류";
-      categories[c] = (categories[c] || 0) + 1;
-    });
-
-    var makers = data.makers || [];
+    var counts = { products: state.items.length, candidates: state.cands.length, makers: state.makers.length };
+    document.body.classList.toggle("ps-wide", state.tab === "candidates");
     app.innerHTML =
-      (demo ? '<p class="preview-banner">예시 화면이에요. 숫자는 모두 지어낸 값이에요. <a href="./">실제 결과 보기</a></p>' : "") +
-      linkButtons(data) +
+      (demo ? '<p class="preview-banner">예시 화면이에요. 숫자는 모두 지어낸 값이고 저장되지 않아요. <a href="./">실제 화면</a></p>' : "") +
       '<div class="ps-tabs" role="tablist">' +
-      tabButton("products", "후보 제품", state.items.length) +
-      tabButton("makers", "제조사", makers.length) +
+      TABS.map(function (t) {
+        return (
+          '<button type="button" role="tab" class="ps-tab' + (state.tab === t.id ? " active" : "") + '" data-tab="' + t.id + '"' +
+          ' aria-selected="' + (state.tab === t.id) + '">' + esc(t.label) + ' <span class="ps-count">' + counts[t.id] + "</span></button>"
+        );
+      }).join("") +
+      '<span class="ps-spacer"></span>' +
+      (demo ? "" : '<button type="button" class="ps-link ps-tab-tool" id="refresh">새로고침</button>') +
+      (demo ? "" : '<button type="button" class="ps-link ps-tab-tool" id="logout">로그아웃</button>') +
       "</div>" +
       '<div id="tabBody"></div>';
 
     document.querySelectorAll(".ps-tab").forEach(function (btn) {
       btn.addEventListener("click", function () {
         state.tab = btn.getAttribute("data-tab");
-        history.replaceState(null, "", location.pathname + location.search + (state.tab === "makers" ? "#makers" : ""));
+        history.replaceState(null, "", location.pathname + location.search + (state.tab === "products" ? "" : "#" + state.tab));
         renderDashboard();
       });
     });
+    var refresh = document.getElementById("refresh");
+    if (refresh) {
+      refresh.addEventListener("click", function () {
+        if (isDirty() && !confirm("저장하지 않은 변경이 사라져요. 새로고침할까요?")) return;
+        load(true);
+      });
+    }
+    var logout = document.getElementById("logout");
+    if (logout) {
+      logout.addEventListener("click", function () {
+        if (isDirty() && !confirm("저장하지 않은 변경이 있어요. 로그아웃할까요?")) return;
+        state.candsDirty = state.makersDirty = false;
+        PS.clearPassword();
+        renderLogin();
+      });
+    }
 
-    if (state.tab === "makers") renderMakers();
-    else renderProducts(updated, categories);
+    if (state.tab === "candidates") renderCandidates();
+    else if (state.tab === "makers") renderMakers();
+    else renderProducts();
   }
 
-  function tabButton(id, label, count) {
+  function metric(label, valueHtml, hint) {
+    if (!valueHtml) valueHtml = '<span class="ps-na">-</span>';
     return (
-      '<button type="button" role="tab" class="ps-tab' + (state.tab === id ? " active" : "") + '" data-tab="' + id + '"' +
-      ' aria-selected="' + (state.tab === id) + '">' + esc(label) + ' <span class="ps-count">' + count + "</span></button>"
+      '<div class="ps-metric"><dt>' + esc(label) + "</dt><dd>" + valueHtml +
+      (hint ? "<small>" + esc(hint) + "</small>" : "") + "</dd></div>"
     );
   }
 
-  function renderProducts(updated, categories) {
+  function filterButton(attr, id, label, count, active) {
+    return (
+      '<button type="button" class="filter-btn' + (active === id ? " active" : "") + '" data-' + attr + '="' + esc(id) + '">' +
+      esc(label) + ' <span class="ps-count">' + count + "</span></button>"
+    );
+  }
+
+  function save(path, payload, onSaved) {
+    if (demo) {
+      PS.toast("예시 화면에서는 저장되지 않아요");
+      return;
+    }
+    if (state.saving) return;
+    state.saving = true;
+    var buttons = document.querySelectorAll("[data-save]");
+    buttons.forEach(function (b) { b.disabled = true; b.textContent = "저장 중…"; });
+    PS.api("PUT", path, payload)
+      .then(function (res) {
+        onSaved(res);
+        PS.write(PS.KEYS.cache, JSON.stringify(state.data));
+        PS.toast("저장했어요");
+      })
+      .catch(function (err) {
+        if (err.unauthorized) {
+          PS.clearPassword();
+          renderLogin("비밀번호가 바뀌었어요. 다시 로그인하세요.");
+          return;
+        }
+        PS.toast(err.message || "저장하지 못했어요");
+      })
+      .then(function () {
+        state.saving = false;
+        document.querySelectorAll("[data-save]").forEach(function (b) { b.disabled = false; b.textContent = "저장"; });
+      });
+  }
+
+  // —— 순위 ——
+
+  function renderProducts() {
+    var data = state.data;
+    var updated = data.updatedAt
+      ? "마지막 계산 " + PS.formatDate(data.updatedAt) + (PS.timeAgo(data.updatedAt) ? " · " + PS.timeAgo(data.updatedAt) : "")
+      : "아직 계산 기록이 없어요";
+    var categories = {};
+    state.items.forEach(function (item) {
+      var c = String(item["분야"] || "").trim() || "미분류";
+      categories[c] = (categories[c] || 0) + 1;
+    });
+    var stale = data.candidatesUpdatedAt && data.updatedAt && new Date(data.candidatesUpdatedAt) > new Date(data.updatedAt);
+
     document.getElementById("tabBody").innerHTML =
       '<div class="ps-summary">' +
-      '<span><strong>' + state.items.length + "</strong>개 후보</span>" +
+      "<span><strong>" + state.items.length + "</strong>개 후보</span>" +
       "<span>" + esc(updated) + "</span>" +
-      (demo ? "" : '<button type="button" class="ps-link" id="refresh">새로고침</button>') +
       "</div>" +
+      (stale ? '<p class="ps-alert">후보 입력이 마지막 계산 이후에 바뀌었어요. PC에서 <code>run.py</code>를 실행하면 순위에 반영돼요.</p>' : "") +
       (state.items.length
         ? '<div class="ps-controls">' +
           '<input type="search" id="query" class="ps-search" placeholder="키워드·메모 검색" value="' + esc(state.query) + '">' +
@@ -227,16 +307,13 @@
           }).join("") +
           "</select></div>" +
           '<div class="filters" id="filters">' +
-          filterButton("all", "전체", state.items.length) +
-          Object.keys(categories).map(function (c) { return filterButton(c, c, categories[c]); }).join("") +
+          filterButton("category", "all", "전체", state.items.length, state.category) +
+          Object.keys(categories).map(function (c) { return filterButton("category", c, c, categories[c], state.category); }).join("") +
           "</div>" +
           '<div class="ps-list" id="list"></div>'
-        : '<p class="empty">아직 결과가 없어요. product-finder에서 <code>run.py</code>를 실행하면 여기에 올라와요.</p>');
+        : '<p class="empty">아직 결과가 없어요. <b>후보 입력</b> 탭에 키워드를 넣고 PC에서 <code>run.py</code>를 실행하세요.</p>');
 
-    if (!state.items.length) {
-      bindRefresh();
-      return;
-    }
+    if (!state.items.length) return;
     document.getElementById("query").addEventListener("input", function (e) {
       state.query = e.target.value;
       renderList();
@@ -249,140 +326,10 @@
       var btn = e.target.closest("[data-category]");
       if (!btn) return;
       state.category = btn.getAttribute("data-category");
-      document.querySelectorAll("#filters .filter-btn").forEach(function (b) {
-        b.classList.toggle("active", b === btn);
-      });
+      document.querySelectorAll("#filters .filter-btn").forEach(function (b) { b.classList.toggle("active", b === btn); });
       renderList();
     });
-    bindRefresh();
     renderList();
-  }
-
-  // —— 제조사 ——
-
-  function makerStatus(m) {
-    return String(m.status || "").trim() || "후보";
-  }
-
-  function renderMakers() {
-    var makers = state.data.makers || [];
-    var counts = {};
-    makers.forEach(function (m) {
-      var s = makerStatus(m);
-      counts[s] = (counts[s] || 0) + 1;
-    });
-    var statuses = MAKER_STATUSES.filter(function (s) { return counts[s]; })
-      .concat(Object.keys(counts).filter(function (s) { return MAKER_STATUSES.indexOf(s) === -1; }));
-
-    document.getElementById("tabBody").innerHTML =
-      '<div class="ps-summary">' +
-      '<span><strong>' + makers.length + "</strong>곳</span>" +
-      "<span>" + (demo ? "" : '<a class="ps-link" href="admin/#makers">관리 페이지에서 편집</a>') + "</span>" +
-      (demo ? "" : '<button type="button" class="ps-link" id="refresh">새로고침</button>') +
-      "</div>" +
-      (makers.length
-        ? '<div class="ps-controls">' +
-          '<input type="search" id="makerQuery" class="ps-search" placeholder="업체명·지역·제형·메모 검색" value="' + esc(state.makerQuery) + '">' +
-          "</div>" +
-          '<div class="filters" id="makerFilters">' +
-          makerFilter("all", "전체", makers.length) +
-          statuses.map(function (s) { return makerFilter(s, s, counts[s]); }).join("") +
-          "</div>" +
-          '<div class="ps-list" id="makerList"></div>'
-        : '<p class="empty">등록된 제조사가 없어요. 관리 페이지에서 추가하거나 시트의 <b>제조사</b> 탭에 적으세요.</p>');
-
-    bindRefresh();
-    if (!makers.length) return;
-    document.getElementById("makerQuery").addEventListener("input", function (e) {
-      state.makerQuery = e.target.value;
-      renderMakerList();
-    });
-    document.getElementById("makerFilters").addEventListener("click", function (e) {
-      var btn = e.target.closest("[data-status]");
-      if (!btn) return;
-      state.makerStatus = btn.getAttribute("data-status");
-      document.querySelectorAll("#makerFilters .filter-btn").forEach(function (b) {
-        b.classList.toggle("active", b === btn);
-      });
-      renderMakerList();
-    });
-    renderMakerList();
-  }
-
-  function makerFilter(id, label, count) {
-    return (
-      '<button type="button" class="filter-btn' + (state.makerStatus === id ? " active" : "") + '" data-status="' + esc(id) + '">' +
-      esc(label) + ' <span class="ps-count">' + count + "</span></button>"
-    );
-  }
-
-  function renderMakerList() {
-    var q = state.makerQuery.trim().toLowerCase();
-    var makers = (state.data.makers || []).filter(function (m) {
-      if (state.makerStatus !== "all" && makerStatus(m) !== state.makerStatus) return false;
-      if (!q) return true;
-      return [m.name, m.type, m.field, m.form, m.region, m.cert, m.products, m.memo, m.contact].join(" ").toLowerCase().indexOf(q) !== -1;
-    });
-    document.getElementById("makerList").innerHTML = makers.length
-      ? makers.map(makerCard).join("")
-      : '<p class="empty">조건에 맞는 제조사가 없어요.</p>';
-  }
-
-  function statusTone(status) {
-    if (status === "계약") return " is-done";
-    if (status === "견적받음" || status === "샘플") return " is-progress";
-    if (status === "문의함") return " is-asked";
-    if (status === "보류" || status === "제외") return " is-off";
-    return "";
-  }
-
-  function makerCard(m) {
-    var status = makerStatus(m);
-    var phone = String(m.phone || "").trim();
-    var tel = phone.replace(/[^\d+]/g, "");
-    var parts = [];
-    if (m.contact) parts.push(esc(m.contact));
-    if (phone) parts.push(tel ? '<a href="tel:' + esc(tel) + '">' + esc(phone) + "</a>" : esc(phone));
-    var contact = parts.join(" · ");
-    var url = /^https?:\/\//.test(m.url || "") ? m.url : "";
-
-    return (
-      '<article class="tool-card ps-card ps-maker">' +
-      '<div class="ps-card-head">' +
-      '<div class="ps-card-title">' +
-      "<h2>" + esc(m.name) + "</h2>" +
-      '<div class="ps-card-sub">' +
-      (m.type ? '<span class="tag">' + esc(m.type) + "</span>" : "") +
-      (m.field ? '<span class="tag">' + esc(m.field) + "</span>" : "") +
-      (m.region ? '<span class="ps-muted">' + esc(m.region) + "</span>" : "") +
-      "</div></div>" +
-      '<span class="ps-status-pill' + statusTone(status) + '">' + esc(status) + "</span>" +
-      "</div>" +
-      '<dl class="ps-metrics ps-maker-metrics">' +
-      metric("제형", esc(m.form)) +
-      metric("인증", esc(m.cert)) +
-      metric("최소주문", esc(m.moq)) +
-      metric("단가", esc(m.price)) +
-      metric("관련 제품", esc(m.products)) +
-      metric("최근 연락", esc(m.lastContact)) +
-      "</dl>" +
-      (contact ? '<p class="ps-buyer"><span>담당</span>' + contact + "</p>" : "") +
-      (m.memo ? '<p class="ps-memo">' + esc(m.memo) + "</p>" : "") +
-      (url ? '<p class="ps-maker-link"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">웹사이트 ↗</a></p>' : "") +
-      "</article>"
-    );
-  }
-
-  function bindRefresh() {
-    var refresh = document.getElementById("refresh");
-    if (refresh) refresh.addEventListener("click", function () { load(true); });
-  }
-
-  function filterButton(id, label, count) {
-    return (
-      '<button type="button" class="filter-btn' + (state.category === id ? " active" : "") + '" data-category="' + esc(id) + '">' +
-      esc(label) + ' <span class="ps-count">' + count + "</span></button>"
-    );
   }
 
   function sortValue(item) {
@@ -410,8 +357,7 @@
       if (vb == null) return -1;
       return vb - va;
     });
-    var list = document.getElementById("list");
-    list.innerHTML = items.length
+    document.getElementById("list").innerHTML = items.length
       ? items.map(card).join("")
       : '<p class="empty">조건에 맞는 후보가 없어요.</p>';
   }
@@ -430,14 +376,6 @@
     var arrow = s == null ? "" : s >= 4 ? "▲ " : s <= 2 ? "▼ " : "";
     var tone = s == null ? "" : s >= 4 ? "up" : s <= 2 ? "down" : "";
     return '<span class="ps-trend ' + tone + '">' + arrow + esc(r) + "</span>";
-  }
-
-  function metric(label, valueHtml, hint) {
-    if (!valueHtml) valueHtml = '<span class="ps-na">-</span>';
-    return (
-      '<div class="ps-metric"><dt>' + esc(label) + "</dt><dd>" + valueHtml +
-      (hint ? '<small>' + esc(hint) + "</small>" : "") + "</dd></div>"
-    );
   }
 
   function card(item) {
@@ -497,11 +435,408 @@
     );
   }
 
+  // —— 후보 입력 ——
+
+  function rankByKeyword() {
+    var map = {};
+    state.items.forEach(function (item) {
+      map[String(item["키워드"]).replace(/\s+/g, "").toUpperCase()] = item["순위"];
+    });
+    return map;
+  }
+
+  function candidateCell(row, col, i) {
+    var value = row[col.key] || "";
+    var attrs = ' data-row="' + i + '" data-key="' + esc(col.key) + '" aria-label="' + esc(col.label) + '"';
+    if (col.kind === "category") {
+      var options = CATEGORIES.indexOf(value) === -1 && value ? CATEGORIES.concat([value]) : CATEGORIES;
+      return (
+        "<select" + attrs + ">" +
+        (value ? "" : '<option value=""></option>') +
+        options.map(function (o) { return '<option value="' + esc(o) + '"' + (o === value ? " selected" : "") + ">" + esc(o) + "</option>"; }).join("") +
+        "</select>"
+      );
+    }
+    if (col.kind === "score") {
+      return (
+        "<select" + attrs + ' class="ps-score-select">' +
+        ["", "1", "2", "3", "4", "5"].map(function (o) {
+          return '<option value="' + o + '"' + (o === value ? " selected" : "") + ">" + (o || "-") + "</option>";
+        }).join("") +
+        "</select>"
+      );
+    }
+    return (
+      '<input type="text"' + attrs + (col.kind === "number" ? ' inputmode="numeric"' : "") +
+      ' value="' + esc(value) + '"' + (col.key === "키워드" ? ' placeholder="새 키워드"' : "") + ">"
+    );
+  }
+
+  function renderCandidates() {
+    var ranks = rankByKeyword();
+    document.getElementById("tabBody").innerHTML =
+      '<div class="ps-summary">' +
+      "<span><strong>" + state.cands.length + "</strong>개 후보</span>" +
+      '<span class="ps-muted">1~5점은 5가 좋은 쪽이에요 (규제 5 = 규제 적음, 물류 5 = 보관 쉬움). 비우면 3점으로 계산해요.</span>' +
+      "</div>" +
+      '<div class="ps-table-wrap"><table class="ps-table">' +
+      "<thead><tr><th>순위</th>" +
+      CANDIDATE_COLUMNS.map(function (c) {
+        return '<th class="' + (c.cls || "") + '">' + esc(c.label) + (c.hint ? "<small>" + esc(c.hint) + "</small>" : "") + "</th>";
+      }).join("") +
+      "<th></th></tr></thead><tbody>" +
+      state.cands.map(function (row, i) {
+        var rank = ranks[String(row["키워드"]).replace(/\s+/g, "").toUpperCase()];
+        return (
+          "<tr>" +
+          '<td class="ps-rank-cell">' + (rank ? esc(rank) : '<span class="ps-muted" title="run.py 실행 전">new</span>') + "</td>" +
+          CANDIDATE_COLUMNS.map(function (c) { return '<td class="' + (c.cls || "") + '">' + candidateCell(row, c, i) + "</td>"; }).join("") +
+          '<td><button type="button" class="ps-icon-btn ps-danger" data-remove-cand="' + i + '" aria-label="삭제">×</button></td>' +
+          "</tr>"
+        );
+      }).join("") +
+      "</tbody></table></div>" +
+      '<div class="ps-actions ps-sticky-actions">' +
+      '<button type="button" class="btn btn-secondary" id="addCand">+ 후보 추가</button>' +
+      '<span class="ps-spacer"></span>' +
+      '<span class="ps-muted ps-small">' + (state.candsDirty ? "저장 안 됨" : "저장 후 PC에서 run.py를 돌리면 순위에 반영돼요") + "</span>" +
+      '<button type="button" class="btn btn-primary" data-save id="saveCands">저장</button>' +
+      "</div>";
+
+    var body = document.getElementById("tabBody");
+    body.querySelectorAll("[data-row]").forEach(function (input) {
+      var handler = function () {
+        state.cands[Number(input.getAttribute("data-row"))][input.getAttribute("data-key")] = input.value;
+        if (!state.candsDirty) {
+          state.candsDirty = true;
+          var note = body.querySelector(".ps-sticky-actions .ps-muted");
+          if (note) note.textContent = "저장 안 됨";
+        }
+      };
+      input.addEventListener("input", handler);
+      input.addEventListener("change", handler);
+    });
+    body.querySelectorAll("[data-remove-cand]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = Number(btn.getAttribute("data-remove-cand"));
+        var name = state.cands[i]["키워드"] || "이 행";
+        if (state.cands[i]["키워드"] && !confirm(name + "을(를) 뺄까요? 저장해야 반영돼요.")) return;
+        state.cands.splice(i, 1);
+        state.candsDirty = true;
+        renderCandidates();
+      });
+    });
+    document.getElementById("addCand").addEventListener("click", function () {
+      var row = {};
+      CANDIDATE_FIELDS.forEach(function (f) { row[f] = ""; });
+      state.cands.push(row);
+      state.candsDirty = true;
+      renderCandidates();
+      var inputs = body.querySelectorAll('[data-key="키워드"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+    document.getElementById("saveCands").addEventListener("click", saveCandidates);
+  }
+
+  function saveCandidates() {
+    var seen = {};
+    var rows = [];
+    for (var i = 0; i < state.cands.length; i++) {
+      var row = {};
+      CANDIDATE_FIELDS.forEach(function (f) { row[f] = String(state.cands[i][f] || "").trim(); });
+      if (!row["키워드"]) continue;
+      var norm = row["키워드"].replace(/\s+/g, "").toUpperCase();
+      if (seen[norm]) {
+        PS.toast("키워드가 중복돼요: " + row["키워드"]);
+        return;
+      }
+      seen[norm] = true;
+      ["쿠팡리뷰수", "예상판매가", "예상원가"].forEach(function (k) { row[k] = row[k].replace(/[^\d.]/g, ""); });
+      rows.push(row);
+    }
+    save("/candidates", { candidates: rows }, function (res) {
+      state.data.candidates = res.candidates;
+      state.data.candidatesUpdatedAt = new Date().toISOString();
+      state.cands = copyCandidates(res.candidates);
+      state.candsDirty = false;
+      renderDashboard();
+    });
+  }
+
+  // —— 제조사 ——
+
+  function makerStatus(m) {
+    return String(m.status || "").trim() || "후보";
+  }
+
+  function renderMakers() {
+    if (state.makerEdit) {
+      renderMakerEditor();
+      return;
+    }
+    var makers = state.makers;
+    var counts = {};
+    makers.forEach(function (m) {
+      var s = makerStatus(m);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    var statuses = MAKER_STATUSES.filter(function (s) { return counts[s]; })
+      .concat(Object.keys(counts).filter(function (s) { return MAKER_STATUSES.indexOf(s) === -1; }));
+
+    document.getElementById("tabBody").innerHTML =
+      '<div class="ps-summary">' +
+      "<span><strong>" + makers.length + "</strong>곳</span>" +
+      '<button type="button" class="btn btn-secondary ps-summary-btn" id="editMakers">편집</button>' +
+      "</div>" +
+      (makers.length
+        ? '<div class="ps-controls">' +
+          '<input type="search" id="makerQuery" class="ps-search" placeholder="업체명·지역·제형·메모 검색" value="' + esc(state.makerQuery) + '">' +
+          "</div>" +
+          '<div class="filters" id="makerFilters">' +
+          filterButton("status", "all", "전체", makers.length, state.makerStatus) +
+          statuses.map(function (s) { return filterButton("status", s, s, counts[s], state.makerStatus); }).join("") +
+          "</div>" +
+          '<div class="ps-list" id="makerList"></div>'
+        : '<p class="empty">등록된 제조사가 없어요. <b>편집</b>을 눌러 추가하세요.</p>');
+
+    document.getElementById("editMakers").addEventListener("click", function () {
+      state.makerEdit = true;
+      renderMakers();
+    });
+    if (!makers.length) return;
+    document.getElementById("makerQuery").addEventListener("input", function (e) {
+      state.makerQuery = e.target.value;
+      renderMakerList();
+    });
+    document.getElementById("makerFilters").addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-status]");
+      if (!btn) return;
+      state.makerStatus = btn.getAttribute("data-status");
+      document.querySelectorAll("#makerFilters .filter-btn").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      renderMakerList();
+    });
+    renderMakerList();
+  }
+
+  function renderMakerList() {
+    var q = state.makerQuery.trim().toLowerCase();
+    var makers = state.makers.filter(function (m) {
+      if (state.makerStatus !== "all" && makerStatus(m) !== state.makerStatus) return false;
+      if (!q) return true;
+      return [m.name, m.type, m.field, m.form, m.region, m.cert, m.products, m.memo, m.contact].join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+    document.getElementById("makerList").innerHTML = makers.length
+      ? makers.map(makerCard).join("")
+      : '<p class="empty">조건에 맞는 제조사가 없어요.</p>';
+  }
+
+  function statusTone(status) {
+    if (status === "계약") return " is-done";
+    if (status === "견적받음" || status === "샘플") return " is-progress";
+    if (status === "문의함") return " is-asked";
+    if (status === "보류" || status === "제외") return " is-off";
+    return "";
+  }
+
+  function makerCard(m) {
+    var status = makerStatus(m);
+    var phone = String(m.phone || "").trim();
+    var tel = /^[\d\s()+-]+$/.test(phone) ? phone.replace(/[^\d+]/g, "") : "";
+    var parts = [];
+    if (m.contact) parts.push(esc(m.contact));
+    if (phone) parts.push(tel ? '<a href="tel:' + esc(tel) + '">' + esc(phone) + "</a>" : esc(phone));
+    var url = PS.safeUrl(m.url);
+
+    return (
+      '<article class="tool-card ps-card ps-maker">' +
+      '<div class="ps-card-head">' +
+      '<div class="ps-card-title">' +
+      "<h2>" + esc(m.name) + "</h2>" +
+      '<div class="ps-card-sub">' +
+      (m.type ? '<span class="tag">' + esc(m.type) + "</span>" : "") +
+      (m.field ? '<span class="tag">' + esc(m.field) + "</span>" : "") +
+      (m.region ? '<span class="ps-muted">' + esc(m.region) + "</span>" : "") +
+      "</div></div>" +
+      '<span class="ps-status-pill' + statusTone(status) + '">' + esc(status) + "</span>" +
+      "</div>" +
+      '<dl class="ps-metrics ps-maker-metrics">' +
+      metric("제형", esc(m.form)) +
+      metric("인증", esc(m.cert)) +
+      metric("최소주문", esc(m.moq)) +
+      metric("단가", esc(m.price)) +
+      metric("관련 제품", esc(m.products)) +
+      metric("최근 연락", esc(m.lastContact)) +
+      "</dl>" +
+      (parts.length ? '<p class="ps-buyer"><span>담당</span>' + parts.join(" · ") + "</p>" : "") +
+      (m.memo ? '<p class="ps-memo">' + esc(m.memo) + "</p>" : "") +
+      (url !== "#" ? '<p class="ps-maker-link"><a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">웹사이트 ↗</a></p>' : "") +
+      "</article>"
+    );
+  }
+
+  function makerInput(m, f) {
+    var key = f[0];
+    var input;
+    if (key === "status" || key === "type") {
+      var options = key === "status" ? MAKER_STATUSES : MAKER_TYPES;
+      if (m[key] && options.indexOf(m[key]) === -1) options = options.concat([m[key]]);
+      input =
+        '<select data-field="' + key + '">' +
+        options.map(function (o) {
+          return '<option value="' + esc(o) + '"' + (o === m[key] ? " selected" : "") + ">" + esc(o) + "</option>";
+        }).join("") +
+        "</select>";
+    } else {
+      input =
+        '<input type="' + (key === "url" ? "url" : "text") + '" data-field="' + key + '" maxlength="300"' +
+        ' placeholder="' + esc(f[2]) + '" value="' + esc(m[key]) + '">';
+    }
+    return '<label class="ps-field"><span>' + esc(f[1]) + "</span>" + input + "</label>";
+  }
+
+  function makerSummary(m) {
+    return [m.status, m.form, m.region].filter(Boolean).join(" · ");
+  }
+
+  function renderMakerEditor() {
+    var body = document.getElementById("tabBody");
+    body.innerHTML =
+      '<div class="ps-summary">' +
+      "<span><strong>" + state.makers.length + "</strong>곳 편집 중</span>" +
+      '<button type="button" class="ps-link ps-summary-btn" id="doneMakers">' + (state.makersDirty ? "취소" : "보기로 돌아가기") + "</button>" +
+      "</div>" +
+      '<div id="makerEditList" class="ps-link-list">' +
+      (state.makers.length
+        ? state.makers.map(function (m, i) {
+            return (
+              '<details class="ps-maker-row" data-index="' + i + '"' + (state.openMaker === i ? " open" : "") + ">" +
+              '<summary><span class="ps-maker-name">' + esc(m.name || "(이름 없음)") + "</span>" +
+              '<span class="ps-muted ps-small">' + esc(makerSummary(m)) + "</span></summary>" +
+              '<div class="ps-maker-fields">' +
+              MAKER_INPUTS.map(function (f) { return makerInput(m, f); }).join("") +
+              '<label class="ps-field ps-field-wide"><span>메모</span>' +
+              '<textarea data-field="memo" rows="3" maxlength="1000" placeholder="견적 조건, 통화 내용, 확인할 점">' + esc(m.memo) + "</textarea></label>" +
+              "</div>" +
+              '<div class="ps-actions">' +
+              '<button type="button" class="ps-icon-btn" data-move="-1" aria-label="위로"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+              '<button type="button" class="ps-icon-btn" data-move="1" aria-label="아래로"' + (i === state.makers.length - 1 ? " disabled" : "") + ">↓</button>" +
+              '<span class="ps-spacer"></span>' +
+              '<button type="button" class="btn btn-secondary ps-danger" data-remove>삭제</button>' +
+              "</div></details>"
+            );
+          }).join("")
+        : '<p class="empty">제조사를 추가하세요.</p>') +
+      "</div>" +
+      '<div class="ps-actions ps-sticky-actions">' +
+      '<button type="button" class="btn btn-secondary" id="addMaker">+ 제조사 추가</button>' +
+      '<span class="ps-spacer"></span>' +
+      '<span class="ps-muted ps-small" id="makersNote">' + (state.makersDirty ? "저장 안 됨" : "") + "</span>" +
+      '<button type="button" class="btn btn-primary" data-save id="saveMakers">저장</button>' +
+      "</div>";
+
+    var markDirty = function () {
+      state.makersDirty = true;
+      document.getElementById("makersNote").textContent = "저장 안 됨";
+      document.getElementById("doneMakers").textContent = "취소";
+    };
+
+    document.getElementById("doneMakers").addEventListener("click", function () {
+      if (state.makersDirty) {
+        if (!confirm("저장하지 않은 변경을 버릴까요?")) return;
+        state.makers = copyMakers(state.data.makers);
+        state.makersDirty = false;
+      }
+      state.makerEdit = false;
+      state.openMaker = -1;
+      renderDashboard();
+    });
+    body.querySelectorAll(".ps-maker-row").forEach(function (row) {
+      row.addEventListener("toggle", function () {
+        var i = Number(row.getAttribute("data-index"));
+        if (row.open) state.openMaker = i;
+        else if (state.openMaker === i) state.openMaker = -1;
+      });
+    });
+    body.querySelectorAll("[data-field]").forEach(function (input) {
+      var handler = function () {
+        var row = input.closest(".ps-maker-row");
+        var m = state.makers[Number(row.getAttribute("data-index"))];
+        m[input.getAttribute("data-field")] = input.value;
+        row.querySelector(".ps-maker-name").textContent = m.name || "(이름 없음)";
+        row.querySelector("summary .ps-muted").textContent = makerSummary(m);
+        markDirty();
+      };
+      input.addEventListener("input", handler);
+      input.addEventListener("change", handler);
+    });
+    body.querySelectorAll("[data-move]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = Number(btn.closest(".ps-maker-row").getAttribute("data-index"));
+        var j = i + Number(btn.getAttribute("data-move"));
+        state.makers.splice(j, 0, state.makers.splice(i, 1)[0]);
+        state.openMaker = j;
+        state.makersDirty = true;
+        renderMakerEditor();
+      });
+    });
+    body.querySelectorAll("[data-remove]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = Number(btn.closest(".ps-maker-row").getAttribute("data-index"));
+        if (!confirm((state.makers[i].name || "이 제조사") + "를 뺄까요? 저장해야 반영돼요.")) return;
+        state.makers.splice(i, 1);
+        state.openMaker = -1;
+        state.makersDirty = true;
+        renderMakerEditor();
+      });
+    });
+    document.getElementById("addMaker").addEventListener("click", function () {
+      state.makers.push(blankMaker());
+      state.openMaker = state.makers.length - 1;
+      state.makersDirty = true;
+      renderMakerEditor();
+      var input = body.querySelector('.ps-maker-row[open] [data-field="name"]');
+      if (input) input.focus();
+    });
+    document.getElementById("saveMakers").addEventListener("click", saveMakers);
+  }
+
+  function saveMakers() {
+    var makers = state.makers
+      .map(function (m) {
+        var clean = {};
+        MAKER_KEYS.forEach(function (k) { clean[k] = String(m[k] || "").trim(); });
+        return clean;
+      })
+      .filter(function (m) {
+        return MAKER_KEYS.some(function (k) { return k !== "type" && k !== "status" && m[k]; });
+      });
+    var noName = makers.find(function (m) { return !m.name; });
+    if (noName) {
+      PS.toast("업체명을 모두 넣어 주세요");
+      return;
+    }
+    var badUrl = makers.find(function (m) { return m.url && !/^https?:\/\/\S+$/.test(m.url); });
+    if (badUrl) {
+      PS.toast("웹사이트는 https:// 로 시작해야 해요: " + badUrl.name);
+      return;
+    }
+    save("/makers", { makers: makers }, function (res) {
+      state.data.makers = res.makers;
+      state.makers = copyMakers(res.makers);
+      state.makersDirty = false;
+      state.makerEdit = false;
+      state.openMaker = -1;
+      renderDashboard();
+    });
+  }
+
   // —— 불러오기 ——
 
   function show(data) {
     state.data = data;
     state.items = toItems(data);
+    if (!state.candsDirty) state.cands = copyCandidates(data.candidates);
+    if (!state.makersDirty) state.makers = copyMakers(data.makers);
     renderDashboard();
   }
 
@@ -510,31 +845,46 @@
       show(window.PRODUCT_SEARCH_DEMO);
       return;
     }
-    if (!PS.endpoint()) {
-      renderSetup();
+    if (!PS.getPassword()) {
+      renderLogin();
       return;
+    }
+    if (force) {
+      state.candsDirty = state.makersDirty = false;
+      state.makerEdit = false;
     }
     var cached = null;
     try {
       cached = JSON.parse(PS.read(PS.KEYS.cache) || "null");
     } catch (_) {}
-    if (cached && cached.endpoint === PS.endpoint() && !force) {
-      show(cached.data);
-    } else {
-      app.innerHTML = '<p class="loading">결과 불러오는 중…</p>';
-    }
-    PS.getJson({ action: "results", key: PS.read(PS.KEYS.viewKey) })
+    if (cached && !force) show(cached);
+    else app.innerHTML = '<p class="loading">불러오는 중…</p>';
+
+    PS.api("GET", "/data")
       .then(function (data) {
-        PS.write(PS.KEYS.cache, JSON.stringify({ endpoint: PS.endpoint(), data: data }));
+        PS.write(PS.KEYS.cache, JSON.stringify(data));
+        if (isDirty()) {
+          state.data = data;
+          state.items = toItems(data);
+          return;
+        }
         show(data);
-        if (force) PS.toast("최신 결과를 불러왔어요");
       })
       .catch(function (err) {
         PS.write(PS.KEYS.cache, "");
-        if (err.unauthorized) renderKeyPrompt(PS.read(PS.KEYS.viewKey) ? "열람 키가 맞지 않아요." : "");
-        else renderError(err.message || String(err));
+        if (err.unauthorized) {
+          PS.clearPassword();
+          renderLogin("비밀번호가 맞지 않아요.");
+        } else renderError(err.message || String(err));
       });
   }
+
+  window.addEventListener("beforeunload", function (e) {
+    if (isDirty()) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   load();
 })();
