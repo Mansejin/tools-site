@@ -758,6 +758,10 @@
   min-width: 14rem;
 }
 
+.ps-table select[data-key="분야"] {
+  min-width: 8.5rem;
+}
+
 .ps-table .ps-score-select {
   min-width: 3.4rem;
 }
