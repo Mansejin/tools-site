@@ -45,7 +45,7 @@
   // [결과 헤더, 화면 이름, 설명]
   var SCORE_FIELDS = [
     ["유튜브수요점수", "유튜브 조회수", "한국 롱폼 인기 영상 조회수가 높을수록"],
-    ["영상경쟁점수", "경쟁 영상 적음", "최근 90일 올라온 영상이 적을수록"],
+    ["영상경쟁점수", "경쟁 영상 적음", "최근 90일 한국 영상이 적을수록"],
     ["떡상점수", "작은 채널도 터짐", "구독자보다 조회수가 많이 나올수록"],
     ["검색수요점수", "네이버 검색량", "월 검색량이 많을수록"],
     ["검색추세점수", "검색 증가세", "작년보다 검색이 늘수록"],
@@ -503,11 +503,11 @@
       '<div class="ps-bar" aria-hidden="true"><span class="' + scoreTone(total).trim() + '" style="width:' + Math.max(0, Math.min(100, total || 0)) + '%"></span></div>' +
       '<dl class="ps-metrics">' +
       metric("조회수 중앙값", esc(fmtViews(item["조회수 중앙값"])), "90일 한국 롱폼 상위 10개") +
-      metric("영상 수", esc(fmtInt(item["유튜브 90일 영상수"])), recent ? "90일 · 인기영상 중 30일 내 " + recent + "개" : "90일 추정") +
+      metric("한국 영상 수", esc(fmtInt(item["유튜브 90일 영상수"])), recent ? "90일 추정 · 인기영상 중 30일 내 " + recent + "개" : "90일 추정") +
       metric("조회수/구독자", esc(fmtRatio(item["조회수/구독자(배)"])), "높을수록 작은 채널도 터짐") +
       metric("월검색량", esc(fmtInt(item["월검색량"])), "네이버") +
       metric("검색 추세", trendText(item["검색 전년대비(배)"], item["검색추세점수"]), "전년 대비") +
-      metric("쇼츠 비율", esc(fmtPercent(item["쇼츠 비율"])), "인기영상 중 3분 이하") +
+      metric("쇼츠 비율", esc(fmtPercent(item["쇼츠 비율"])), "한국 인기영상 중 3분 이하") +
       "</dl>" +
       (item["주 구매층"] ? '<p class="ps-buyer"><span>주 구매층</span>' + esc(item["주 구매층"]) + "</p>" : "") +
       (item["최고 조회 영상"]
