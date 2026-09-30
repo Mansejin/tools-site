@@ -221,6 +221,44 @@
   font-size: 0.875rem;
 }
 
+.its-chip[data-select-chip] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.its-chip[data-select-chip]:hover {
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--border));
+}
+
+.its-chip.selected {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #f4f7f8;
+}
+
+.its-chip.selected b,
+.its-chip.selected i,
+.its-chip.selected button {
+  color: inherit;
+}
+
+.its-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.2rem 0 0.5rem;
+}
+
+.its-toolbar .its-label {
+  margin: 0;
+}
+
+.its-toolbar .btn {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+}
+
 .its-chip b,
 .its-chip i {
   font-size: 0.7rem;

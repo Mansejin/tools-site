@@ -22,6 +22,7 @@
     sort: "score",
     open: {},
     cands: [],
+    selected: {},
     settings: { mode: "manual", autoCount: 40 },
     candsDirty: false,
     plans: [],
@@ -533,8 +534,11 @@
   }
 
   function chip(keyword, rank, index) {
+    var selectable = index != null;
+    var selected = selectable && !!state.selected[normKeyword(keyword)];
     return (
-      '<span class="its-chip">' +
+      '<span class="its-chip' + (selected ? " selected" : "") + '"' +
+      (selectable ? ' role="checkbox" tabindex="0" aria-checked="' + selected + '" data-select-chip="' + index + '"' : "") + ">" +
       (rank ? '<b title="지난 계산 순위">' + esc(rank) + "</b>" : '<i title="아직 계산 전">new</i>') +
       esc(keyword) +
       (index == null ? "" : '<button type="button" data-remove-chip="' + index + '" aria-label="' + esc(keyword) + ' 삭제">×</button>') +
@@ -548,6 +552,10 @@
       '<button type="button" role="radio" class="its-mode-btn' + (active ? " active" : "") + '" data-mode="' + id + '" aria-checked="' + active + '">' +
       "<strong>" + esc(label) + "</strong><small>" + esc(hint) + "</small></button>"
     );
+  }
+
+  function selectedCount() {
+    return state.cands.filter(function (k) { return state.selected[normKeyword(k)]; }).length;
   }
 
   function markCandsDirty() {
@@ -583,7 +591,15 @@
           '<input type="text" id="addInput" placeholder="키워드 입력 후 Enter · 쉼표로 여러 개" autocomplete="off" aria-label="키워드 추가">' +
           '<button type="submit" class="btn btn-secondary">추가</button>' +
           "</form>" +
-          '<p class="its-label">' + state.cands.length + "개 · 숫자는 지난 계산 순위, 분야는 자동 분류</p>" +
+          '<div class="its-toolbar">' +
+          '<p class="its-label">' + state.cands.length + "개 · 눌러서 선택 · 숫자는 지난 계산 순위</p>" +
+          '<span class="ps-spacer"></span>' +
+          (selectedCount()
+            ? '<button type="button" class="ps-link" id="clearSelection">선택 해제</button>' +
+              '<button type="button" class="btn btn-secondary ps-danger" id="removeSelected">선택 삭제 (' + selectedCount() + ")</button>"
+            : "") +
+          (state.cands.length ? '<button type="button" class="btn btn-secondary ps-danger" id="removeAll">전체 삭제</button>' : "") +
+          "</div>" +
           '<div class="its-chips">' +
           (state.cands.length
             ? state.cands.map(function (k, i) { return chip(k, ranks[normKeyword(k)], i); }).join("")
@@ -636,12 +652,56 @@
       });
     }
     body.querySelectorAll("[data-remove-chip]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        state.cands.splice(Number(btn.getAttribute("data-remove-chip")), 1);
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var i = Number(btn.getAttribute("data-remove-chip"));
+        delete state.selected[normKeyword(state.cands[i])];
+        state.cands.splice(i, 1);
         state.candsDirty = true;
         renderCandidates();
       });
     });
+    body.querySelectorAll("[data-select-chip]").forEach(function (el) {
+      var toggle = function () {
+        var key = normKeyword(state.cands[Number(el.getAttribute("data-select-chip"))]);
+        if (state.selected[key]) delete state.selected[key];
+        else state.selected[key] = true;
+        renderCandidates();
+      };
+      el.addEventListener("click", toggle);
+      el.addEventListener("keydown", function (e) {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+    var clearSel = document.getElementById("clearSelection");
+    if (clearSel) {
+      clearSel.addEventListener("click", function () {
+        state.selected = {};
+        renderCandidates();
+      });
+    }
+    var removeSel = document.getElementById("removeSelected");
+    if (removeSel) {
+      removeSel.addEventListener("click", function () {
+        state.cands = state.cands.filter(function (k) { return !state.selected[normKeyword(k)]; });
+        state.selected = {};
+        state.candsDirty = true;
+        renderCandidates();
+      });
+    }
+    var removeAll = document.getElementById("removeAll");
+    if (removeAll) {
+      removeAll.addEventListener("click", function () {
+        if (!confirm("키워드 " + state.cands.length + "개를 모두 지울까요? 저장해야 반영돼요.")) return;
+        state.cands = [];
+        state.selected = {};
+        state.candsDirty = true;
+        renderCandidates();
+      });
+    }
     document.getElementById("saveCands").addEventListener("click", saveCandidates);
   }
 
