@@ -292,13 +292,17 @@
       categories[c] = (categories[c] || 0) + 1;
     });
     var stale = data.candidatesUpdatedAt && data.updatedAt && new Date(data.candidatesUpdatedAt) > new Date(data.updatedAt);
+    var busy = runBusy();
 
     document.getElementById("tabBody").innerHTML =
       '<div class="ps-summary">' +
       "<span><strong>" + state.items.length + "</strong>개 후보</span>" +
       "<span>" + esc(updated) + "</span>" +
+      '<button type="button" class="btn btn-secondary ps-summary-btn" id="runNow"' + (busy ? " disabled" : "") + ">" +
+      (busy ? "계산 중…" : "지금 계산") + "</button>" +
       "</div>" +
-      (stale ? '<p class="ps-alert">후보 입력이 마지막 계산 이후에 바뀌었어요. PC에서 <code>run.py</code>를 실행하면 순위에 반영돼요.</p>' : "") +
+      runNotice() +
+      (stale && !busy ? '<p class="ps-alert">후보 입력이 마지막 계산 이후에 바뀌었어요. <b>지금 계산</b>을 누르면 순위에 반영돼요.</p>' : "") +
       (state.items.length
         ? '<div class="ps-controls">' +
           '<input type="search" id="query" class="ps-search" placeholder="키워드·메모 검색" value="' + esc(state.query) + '">' +
@@ -312,8 +316,9 @@
           Object.keys(categories).map(function (c) { return filterButton("category", c, c, categories[c], state.category); }).join("") +
           "</div>" +
           '<div class="ps-list" id="list"></div>'
-        : '<p class="empty">아직 결과가 없어요. <b>후보 입력</b> 탭에 키워드를 넣고 PC에서 <code>run.py</code>를 실행하세요.</p>');
+        : '<p class="empty">아직 결과가 없어요. <b>지금 계산</b>을 누르면 회사 NAS가 후보 입력 탭의 키워드로 계산해요. 매일 17시에도 자동으로 돌아요.</p>');
 
+    document.getElementById("runNow").addEventListener("click", requestRun);
     if (!state.items.length) return;
     document.getElementById("query").addEventListener("input", function (e) {
       state.query = e.target.value;
@@ -335,6 +340,56 @@
       if (btn) addPlanFor(btn.getAttribute("data-plan-from"));
     });
     renderList();
+  }
+
+  function runBusy() {
+    var run = state.data.run;
+    return !!run && (run.status === "requested" || run.status === "running");
+  }
+
+  function runNotice() {
+    var run = state.data.run;
+    if (!run) return "";
+    if (run.status === "requested") return '<p class="ps-alert">계산을 요청했어요. 회사 NAS가 5분 안에 시작해요.</p>';
+    if (run.status === "running") return '<p class="ps-alert">NAS에서 계산 중이에요 (' + esc(run.message || "") + "). 후보 40개 기준 5분쯤 걸려요.</p>";
+    if (run.status === "error") return '<p class="ps-alert">마지막 계산이 실패했어요 (' + esc(PS.formatDate(run.errorAt)) + "): " + esc(run.message) + "</p>";
+    if (run.status === "done" && run.message) return '<p class="ps-alert">일부 데이터를 못 가져왔어요: ' + esc(run.message) + "</p>";
+    return "";
+  }
+
+  function requestRun() {
+    if (demo) {
+      PS.toast("예시 화면에서는 계산하지 않아요");
+      return;
+    }
+    if (state.candsDirty && !confirm("후보 입력에 저장 안 된 변경이 있어요. 저장된 후보로 계산할까요?")) return;
+    PS.api("POST", "/run")
+      .then(function (res) {
+        state.data.run = res.run;
+        PS.toast("계산을 요청했어요");
+        renderDashboard();
+        schedulePoll();
+      })
+      .catch(function (err) { PS.toast(err.message || "요청하지 못했어요"); });
+  }
+
+  var pollTimer;
+  function schedulePoll() {
+    clearTimeout(pollTimer);
+    if (demo || !runBusy()) return;
+    pollTimer = setTimeout(function () {
+      PS.api("GET", "/data")
+        .then(function (data) {
+          PS.write(PS.KEYS.cache, JSON.stringify(data));
+          if (isDirty()) {
+            state.data = data;
+            state.items = toItems(data);
+          } else show(data);
+          if (!runBusy() && data.run) PS.toast(data.run.status === "done" ? "계산이 끝났어요" : "계산이 실패했어요");
+          schedulePoll();
+        })
+        .catch(function () { schedulePoll(); });
+    }, 30000);
   }
 
   function sortValue(item) {
@@ -498,7 +553,7 @@
         var rank = ranks[String(row["키워드"]).replace(/\s+/g, "").toUpperCase()];
         return (
           "<tr>" +
-          '<td class="ps-rank-cell">' + (rank ? esc(rank) : '<span class="ps-muted" title="run.py 실행 전">new</span>') + "</td>" +
+          '<td class="ps-rank-cell">' + (rank ? esc(rank) : '<span class="ps-muted" title="계산 전">new</span>') + "</td>" +
           CANDIDATE_COLUMNS.map(function (c) { return '<td class="' + (c.cls || "") + '">' + candidateCell(row, c, i) + "</td>"; }).join("") +
           '<td><button type="button" class="ps-icon-btn ps-danger" data-remove-cand="' + i + '" aria-label="삭제">×</button></td>' +
           "</tr>"
@@ -508,7 +563,7 @@
       '<div class="ps-actions ps-sticky-actions">' +
       '<button type="button" class="btn btn-secondary" id="addCand">+ 후보 추가</button>' +
       '<span class="ps-spacer"></span>' +
-      '<span class="ps-muted ps-small">' + (state.candsDirty ? "저장 안 됨" : "저장 후 PC에서 run.py를 돌리면 순위에 반영돼요") + "</span>" +
+      '<span class="ps-muted ps-small">' + (state.candsDirty ? "저장 안 됨" : "저장 후 순위 탭의 지금 계산을 누르면 반영돼요") + "</span>" +
       '<button type="button" class="btn btn-primary" data-save id="saveCands">저장</button>' +
       "</div>";
 
@@ -881,6 +936,7 @@
           return;
         }
         show(data);
+        schedulePoll();
       })
       .catch(function (err) {
         PS.write(PS.KEYS.cache, "");
