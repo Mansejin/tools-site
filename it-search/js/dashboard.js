@@ -8,7 +8,7 @@
 
   var TABS = [
     { id: "products", label: "순위" },
-    { id: "candidates", label: "후보 입력" },
+    { id: "candidates", label: "키워드" },
     { id: "plans", label: "영상 기획" },
   ];
 
@@ -17,9 +17,12 @@
     items: [],
     tab: tabFromHash(),
     category: "all",
+    minScore: 0,
     query: "",
     sort: "score",
+    open: {},
     cands: [],
+    settings: { mode: "manual", autoCount: 40 },
     candsDirty: false,
     plans: [],
     plansDirty: false,
@@ -38,31 +41,14 @@
     { id: "trend", label: "검색추세 좋은순" },
   ];
 
+  // [결과 헤더, 화면 이름, 설명]
   var SCORE_FIELDS = [
-    ["유튜브수요점수", "유튜브 수요"],
-    ["영상경쟁점수", "영상 경쟁"],
-    ["떡상점수", "떡상 가능성"],
-    ["검색수요점수", "검색 수요"],
-    ["검색추세점수", "검색 추세"],
-    ["쇼핑추세점수", "쇼핑 추세"],
-    ["입수", "입수"],
-    ["촬영거리", "촬영거리"],
-    ["채널적합", "채널 적합"],
-    ["제휴수익", "제휴 수익"],
-  ];
-
-  var CANDIDATE_FIELDS = ["키워드", "분야", "메모", "출시일", "가격", "입수", "촬영거리", "채널적합", "제휴", "쇼핑카테고리"];
-  var CATEGORIES = ["스마트폰", "노트북·태블릿", "오디오", "웨어러블", "스마트홈", "주변기기", "카메라·액션캠", "게이밍", "충전·액세서리"];
-  var CANDIDATE_COLUMNS = [
-    { key: "키워드", label: "키워드", kind: "text", cls: "col-keyword" },
-    { key: "분야", label: "분야", kind: "category" },
-    { key: "출시일", label: "출시일", kind: "text", hint: "2026-09" },
-    { key: "가격", label: "가격", kind: "number", hint: "원" },
-    { key: "입수", label: "입수", kind: "score" },
-    { key: "촬영거리", label: "촬영거리", kind: "score" },
-    { key: "채널적합", label: "채널적합", kind: "score" },
-    { key: "제휴", label: "제휴", kind: "score" },
-    { key: "메모", label: "메모", kind: "text", cls: "col-memo" },
+    ["유튜브수요점수", "유튜브 조회수", "한국 롱폼 인기 영상 조회수가 높을수록"],
+    ["영상경쟁점수", "경쟁 영상 적음", "최근 90일 올라온 영상이 적을수록"],
+    ["떡상점수", "작은 채널도 터짐", "구독자보다 조회수가 많이 나올수록"],
+    ["검색수요점수", "네이버 검색량", "월 검색량이 많을수록"],
+    ["검색추세점수", "검색 증가세", "작년보다 검색이 늘수록"],
+    ["쇼핑추세점수", "쇼핑 관심 증가", "작년보다 쇼핑 클릭이 늘수록"],
   ];
 
   var PLAN_STATUSES = ["아이디어", "제품확보", "촬영", "편집", "업로드", "보류"];
@@ -124,11 +110,13 @@
   }
 
   function copyCandidates(list) {
-    return (list || []).map(function (c) {
-      var row = {};
-      CANDIDATE_FIELDS.forEach(function (f) { row[f] = c[f] == null ? "" : String(c[f]); });
-      return row;
-    });
+    return (list || [])
+      .map(function (c) { return String(c["키워드"] || "").trim(); })
+      .filter(Boolean);
+  }
+
+  function normKeyword(k) {
+    return String(k).replace(/\s+/g, "").toUpperCase();
   }
 
   function blankPlan() {
@@ -194,7 +182,6 @@
 
   function renderDashboard() {
     var counts = { products: state.items.length, candidates: state.cands.length, plans: state.plans.length };
-    document.body.classList.toggle("ps-wide", state.tab === "candidates");
     app.innerHTML =
       (demo ? '<p class="preview-banner">예시 화면이에요. 숫자는 모두 지어낸 값이고 저장되지 않아요. <a href="./">실제 화면</a></p>' : "") +
       '<div class="ps-tabs" role="tablist">' +
@@ -302,10 +289,15 @@
       (busy ? "계산 중…" : "지금 계산") + "</button>" +
       "</div>" +
       runNotice() +
-      (stale && !busy ? '<p class="ps-alert">후보 입력이 마지막 계산 이후에 바뀌었어요. <b>지금 계산</b>을 누르면 순위에 반영돼요.</p>' : "") +
+      (stale && !busy ? '<p class="ps-alert">키워드가 마지막 계산 이후에 바뀌었어요. <b>지금 계산</b>을 누르면 순위에 반영돼요.</p>' : "") +
       (state.items.length
         ? '<div class="ps-controls">' +
-          '<input type="search" id="query" class="ps-search" placeholder="키워드·메모 검색" value="' + esc(state.query) + '">' +
+          '<input type="search" id="query" class="ps-search" placeholder="키워드 검색" value="' + esc(state.query) + '">' +
+          '<select id="minScore" class="ps-select" aria-label="총점 필터">' +
+          [[0, "총점 전체"], [70, "70점 이상"], [65, "65점 이상"], [60, "60점 이상"]].map(function (o) {
+            return '<option value="' + o[0] + '"' + (o[0] === state.minScore ? " selected" : "") + ">" + o[1] + "</option>";
+          }).join("") +
+          "</select>" +
           '<select id="sort" class="ps-select" aria-label="정렬">' +
           SORTS.map(function (s) {
             return '<option value="' + s.id + '"' + (s.id === state.sort ? " selected" : "") + ">" + s.label + "</option>";
@@ -315,13 +307,17 @@
           filterButton("category", "all", "전체", state.items.length, state.category) +
           Object.keys(categories).map(function (c) { return filterButton("category", c, c, categories[c], state.category); }).join("") +
           "</div>" +
-          '<div class="ps-list" id="list"></div>'
-        : '<p class="empty">아직 결과가 없어요. <b>지금 계산</b>을 누르면 회사 NAS가 후보 입력 탭의 키워드로 계산해요. 매일 17시에도 자동으로 돌아요.</p>');
+          '<div class="its-list" id="list"></div>'
+        : '<p class="empty">아직 결과가 없어요. <b>지금 계산</b>을 누르면 회사 NAS가 키워드 탭 설정대로 계산해요. 매일 17시에도 자동으로 돌아요.</p>');
 
     document.getElementById("runNow").addEventListener("click", requestRun);
     if (!state.items.length) return;
     document.getElementById("query").addEventListener("input", function (e) {
       state.query = e.target.value;
+      renderList();
+    });
+    document.getElementById("minScore").addEventListener("change", function (e) {
+      state.minScore = Number(e.target.value);
       renderList();
     });
     document.getElementById("sort").addEventListener("change", function (e) {
@@ -337,7 +333,15 @@
     });
     document.getElementById("list").addEventListener("click", function (e) {
       var btn = e.target.closest("[data-plan-from]");
-      if (btn) addPlanFor(btn.getAttribute("data-plan-from"));
+      if (btn) {
+        addPlanFor(btn.getAttribute("data-plan-from"));
+        return;
+      }
+      var row = e.target.closest("[data-open]");
+      if (!row) return;
+      var key = row.getAttribute("data-open");
+      state.open[key] = !state.open[key];
+      renderList();
     });
     renderList();
   }
@@ -362,7 +366,7 @@
       PS.toast("예시 화면에서는 계산하지 않아요");
       return;
     }
-    if (state.candsDirty && !confirm("후보 입력에 저장 안 된 변경이 있어요. 저장된 후보로 계산할까요?")) return;
+    if (state.candsDirty && !confirm("키워드 탭에 저장 안 된 변경이 있어요. 저장된 설정으로 계산할까요?")) return;
     PS.api("POST", "/run")
       .then(function (res) {
         state.data.run = res.run;
@@ -407,8 +411,9 @@
     var items = state.items.filter(function (item) {
       var c = String(item["분야"] || "").trim() || "미분류";
       if (state.category !== "all" && c !== state.category) return false;
+      if (state.minScore && (num(item["총점"]) || 0) < state.minScore) return false;
       if (!q) return true;
-      return [item["키워드"], item["메모"], item["분야"]].join(" ").toLowerCase().indexOf(q) !== -1;
+      return [item["키워드"], item["분야"]].join(" ").toLowerCase().indexOf(q) !== -1;
     });
     items.sort(function (a, b) {
       var va = sortValue(a), vb = sortValue(b);
@@ -418,8 +423,30 @@
       return vb - va;
     });
     document.getElementById("list").innerHTML = items.length
-      ? items.map(card).join("")
-      : '<p class="empty">조건에 맞는 후보가 없어요.</p>';
+      ? '<div class="its-head" aria-hidden="true"><span>순위</span><span>키워드</span><span>유튜브 조회수</span><span>경쟁 영상</span><span>네이버 검색</span><span>총점</span><span></span></div>' +
+        items.map(listRow).join("")
+      : '<p class="empty">조건에 맞는 키워드가 없어요.</p>';
+  }
+
+  function listRow(item) {
+    var key = normKeyword(item["키워드"]);
+    var open = !!state.open[key];
+    var total = num(item["총점"]);
+    return (
+      '<div class="its-item' + (open ? " open" : "") + '">' +
+      '<button type="button" class="its-row" data-open="' + esc(key) + '" aria-expanded="' + open + '">' +
+      '<span class="its-rank">' + esc(item["순위"] || "") + "</span>" +
+      '<span class="its-name"><strong>' + esc(item["키워드"]) + "</strong>" +
+      (item["분야"] ? '<small>' + esc(item["분야"]) + "</small>" : "") + "</span>" +
+      '<span class="its-num" data-label="유튜브 조회수">' + (esc(fmtViews(item["조회수 중앙값"])) || "-") + "</span>" +
+      '<span class="its-num" data-label="경쟁 영상">' + (esc(fmtInt(item["유튜브 90일 영상수"])) || "-") + "</span>" +
+      '<span class="its-num" data-label="네이버 검색">' + (esc(fmtInt(item["월검색량"])) || "-") + "</span>" +
+      '<span class="its-score' + scoreTone(total) + '">' + (total == null ? "-" : esc(total)) + "</span>" +
+      '<span class="its-more">' + (open ? "접기" : "자세히 보기") + "</span>" +
+      "</button>" +
+      (open ? '<div class="its-detail">' + card(item) + "</div>" : "") +
+      "</div>"
+    );
   }
 
   function scoreTone(score) {
@@ -441,15 +468,14 @@
   function card(item) {
     var total = num(item["총점"]);
     var peak = num(item["검색 최고점/최근(배)"]);
-    var memo = String(item["메모"] || "").trim();
     var topUrl = PS.safeUrl(item["최고 조회 링크"]);
     var recent = fmtInt(item["30일 내 인기영상"]);
 
     var scores = SCORE_FIELDS.map(function (f) {
       var v = num(item[f[0]]);
       return (
-        '<li class="ps-score"><span>' + esc(f[1]) + "</span>" +
-        '<span class="ps-dots" aria-label="' + (v == null ? "미입력(3점 취급)" : v + "점") + '">' +
+        '<li class="ps-score"><span title="' + esc(f[2]) + '">' + esc(f[1]) + "</span>" +
+        '<span class="ps-dots" aria-label="' + (v == null ? "데이터 없음(3점 취급)" : v + "점") + '">' +
         [1, 2, 3, 4, 5].map(function (i) {
           return '<i class="' + (v != null && i <= v ? "on" : v == null && i <= 3 ? "ghost" : "") + '"></i>';
         }).join("") +
@@ -458,8 +484,6 @@
     }).join("");
 
     var info = [];
-    if (item["출시일"]) info.push("출시 " + item["출시일"]);
-    if (fmtInt(item["가격"])) info.push(fmtInt(item["가격"]) + "원");
     if (fmtViews(item["최고 조회수"])) info.push("최고 조회수 " + fmtViews(item["최고 조회수"]));
 
     return (
@@ -477,21 +501,20 @@
       "</div>" +
       '<div class="ps-bar" aria-hidden="true"><span class="' + scoreTone(total).trim() + '" style="width:' + Math.max(0, Math.min(100, total || 0)) + '%"></span></div>' +
       '<dl class="ps-metrics">' +
-      metric("조회수 중앙값", esc(fmtViews(item["조회수 중앙값"])), "90일 롱폼 상위 10개") +
+      metric("조회수 중앙값", esc(fmtViews(item["조회수 중앙값"])), "90일 한국 롱폼 상위 10개") +
       metric("영상 수", esc(fmtInt(item["유튜브 90일 영상수"])), recent ? "90일 · 인기영상 중 30일 내 " + recent + "개" : "90일 추정") +
-      metric("조회수/구독자", esc(fmtRatio(item["조회수/구독자(배)"])), "롱폼 · 높을수록 작은 채널도 터짐") +
+      metric("조회수/구독자", esc(fmtRatio(item["조회수/구독자(배)"])), "높을수록 작은 채널도 터짐") +
       metric("월검색량", esc(fmtInt(item["월검색량"])), "네이버") +
       metric("검색 추세", trendText(item["검색 전년대비(배)"], item["검색추세점수"]), "전년 대비") +
       metric("쇼츠 비율", esc(fmtPercent(item["쇼츠 비율"])), "인기영상 중 3분 이하") +
       "</dl>" +
       (item["주 구매층"] ? '<p class="ps-buyer"><span>주 구매층</span>' + esc(item["주 구매층"]) + "</p>" : "") +
       (item["최고 조회 영상"]
-        ? '<p class="ps-buyer"><span>롱폼 최고</span>' +
+        ? '<p class="ps-buyer"><span>레퍼런스</span>' +
           (topUrl !== "#" ? '<a href="' + esc(topUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(item["최고 조회 영상"]) + " ↗</a>" : esc(item["최고 조회 영상"])) +
           "</p>"
         : "") +
-      (memo ? '<p class="ps-memo">' + esc(memo) + "</p>" : "") +
-      '<details class="ps-details"><summary>세부 점수</summary>' +
+      '<details class="ps-details" open><summary>세부 점수</summary>' +
       '<ul class="ps-scores">' + scores + "</ul>" +
       "</details>" +
       '<div class="ps-actions"><button type="button" class="btn btn-secondary" data-plan-from="' + esc(item["키워드"]) + '">+ 영상 기획에 추가</button></div>' +
@@ -499,7 +522,7 @@
     );
   }
 
-  // —— 후보 입력 ——
+  // —— 키워드 ——
 
   function rankByKeyword() {
     var map = {};
@@ -509,122 +532,145 @@
     return map;
   }
 
-  function candidateCell(row, col, i) {
-    var value = row[col.key] || "";
-    var attrs = ' data-row="' + i + '" data-key="' + esc(col.key) + '" aria-label="' + esc(col.label) + '"';
-    if (col.kind === "category") {
-      var options = CATEGORIES.indexOf(value) === -1 && value ? CATEGORIES.concat([value]) : CATEGORIES;
-      return (
-        "<select" + attrs + ">" +
-        (value ? "" : '<option value=""></option>') +
-        options.map(function (o) { return '<option value="' + esc(o) + '"' + (o === value ? " selected" : "") + ">" + esc(o) + "</option>"; }).join("") +
-        "</select>"
-      );
-    }
-    if (col.kind === "score") {
-      return (
-        "<select" + attrs + ' class="ps-score-select">' +
-        ["", "1", "2", "3", "4", "5"].map(function (o) {
-          return '<option value="' + o + '"' + (o === value ? " selected" : "") + ">" + (o || "-") + "</option>";
-        }).join("") +
-        "</select>"
-      );
-    }
+  function chip(keyword, rank, index) {
     return (
-      '<input type="text"' + attrs + (col.kind === "number" ? ' inputmode="numeric"' : "") +
-      ' value="' + esc(value) + '"' + (col.key === "키워드" ? ' placeholder="새 키워드"' : "") + ">"
+      '<span class="its-chip">' +
+      (rank ? '<b title="지난 계산 순위">' + esc(rank) + "</b>" : '<i title="아직 계산 전">new</i>') +
+      esc(keyword) +
+      (index == null ? "" : '<button type="button" data-remove-chip="' + index + '" aria-label="' + esc(keyword) + ' 삭제">×</button>') +
+      "</span>"
     );
+  }
+
+  function modeButton(id, label, hint) {
+    var active = state.settings.mode === id;
+    return (
+      '<button type="button" role="radio" class="its-mode-btn' + (active ? " active" : "") + '" data-mode="' + id + '" aria-checked="' + active + '">' +
+      "<strong>" + esc(label) + "</strong><small>" + esc(hint) + "</small></button>"
+    );
+  }
+
+  function markCandsDirty() {
+    state.candsDirty = true;
+    var note = document.getElementById("candNote");
+    if (note) note.textContent = "저장 안 됨";
   }
 
   function renderCandidates() {
     var ranks = rankByKeyword();
-    document.getElementById("tabBody").innerHTML =
-      '<div class="ps-summary">' +
-      "<span><strong>" + state.cands.length + "</strong>개 후보</span>" +
-      '<span class="ps-muted">1~5점은 5가 좋은 쪽이에요 (입수 5 = 구하기 쉬움, 촬영거리 5 = 보여줄 게 많음). 비우면 3점으로 계산해요.</span>' +
+    var auto = state.settings.mode === "auto";
+    var body = document.getElementById("tabBody");
+    var analyzed = state.items.map(function (item) { return String(item["키워드"]); });
+
+    body.innerHTML =
+      '<div class="its-mode" role="radiogroup" aria-label="키워드 정하는 방식">' +
+      modeButton("manual", "직접 고르기", "아래 목록의 키워드만 분석") +
+      modeButton("auto", "자동 추천", "분야별로 요즘 많이 찾는 키워드를 네이버에서 골라 분석") +
       "</div>" +
-      '<div class="ps-table-wrap"><table class="ps-table">' +
-      "<thead><tr><th>순위</th>" +
-      CANDIDATE_COLUMNS.map(function (c) {
-        return '<th class="' + (c.cls || "") + '">' + esc(c.label) + (c.hint ? "<small>" + esc(c.hint) + "</small>" : "") + "</th>";
-      }).join("") +
-      "<th></th></tr></thead><tbody>" +
-      state.cands.map(function (row, i) {
-        var rank = ranks[String(row["키워드"]).replace(/\s+/g, "").toUpperCase()];
-        return (
-          "<tr>" +
-          '<td class="ps-rank-cell">' + (rank ? esc(rank) : '<span class="ps-muted" title="계산 전">new</span>') + "</td>" +
-          CANDIDATE_COLUMNS.map(function (c) { return '<td class="' + (c.cls || "") + '">' + candidateCell(row, c, i) + "</td>"; }).join("") +
-          '<td><button type="button" class="ps-icon-btn ps-danger" data-remove-cand="' + i + '" aria-label="삭제">×</button></td>' +
-          "</tr>"
-        );
-      }).join("") +
-      "</tbody></table></div>" +
+      (auto
+        ? '<section class="ps-panel">' +
+          '<label class="ps-field its-count"><span>자동으로 고를 키워드 수</span>' +
+          '<input type="number" id="autoCount" min="5" max="80" inputmode="numeric" value="' + esc(state.settings.autoCount) + '"></label>' +
+          '<p class="ps-muted ps-small">스마트폰, 노트북·태블릿, 오디오, 웨어러블, PC 주변기기, 카메라, 게이밍, 스마트홈, 충전 분야에서 골고루 골라요. ' +
+          "키워드 1개에 하루 YouTube 할당량의 약 1%를 써서 80개까지만 돼요.</p>" +
+          (analyzed.length
+            ? '<p class="its-label">지난 계산에 쓴 키워드 ' + analyzed.length + "개</p>" +
+              '<div class="its-chips">' + analyzed.map(function (k) { return chip(k, ranks[normKeyword(k)]); }).join("") + "</div>"
+            : "") +
+          "</section>"
+        : '<section class="ps-panel">' +
+          '<form class="its-add" id="addForm">' +
+          '<input type="text" id="addInput" placeholder="키워드 입력 후 Enter · 쉼표로 여러 개" autocomplete="off" aria-label="키워드 추가">' +
+          '<button type="submit" class="btn btn-secondary">추가</button>' +
+          "</form>" +
+          '<p class="its-label">' + state.cands.length + "개 · 숫자는 지난 계산 순위, 분야는 자동 분류</p>" +
+          '<div class="its-chips">' +
+          (state.cands.length
+            ? state.cands.map(function (k, i) { return chip(k, ranks[normKeyword(k)], i); }).join("")
+            : '<p class="empty">키워드를 추가하세요.</p>') +
+          "</div></section>") +
       '<div class="ps-actions ps-sticky-actions">' +
-      '<button type="button" class="btn btn-secondary" id="addCand">+ 후보 추가</button>' +
+      '<span class="ps-muted ps-small" id="candNote">' + (state.candsDirty ? "저장 안 됨" : "저장하고 순위 탭에서 지금 계산을 누르면 반영돼요") + "</span>" +
       '<span class="ps-spacer"></span>' +
-      '<span class="ps-muted ps-small">' + (state.candsDirty ? "저장 안 됨" : "저장 후 순위 탭의 지금 계산을 누르면 반영돼요") + "</span>" +
       '<button type="button" class="btn btn-primary" data-save id="saveCands">저장</button>' +
       "</div>";
 
-    var body = document.getElementById("tabBody");
-    body.querySelectorAll("[data-row]").forEach(function (input) {
-      var handler = function () {
-        state.cands[Number(input.getAttribute("data-row"))][input.getAttribute("data-key")] = input.value;
-        if (!state.candsDirty) {
-          state.candsDirty = true;
-          var note = body.querySelector(".ps-sticky-actions .ps-muted");
-          if (note) note.textContent = "저장 안 됨";
-        }
-      };
-      input.addEventListener("input", handler);
-      input.addEventListener("change", handler);
-    });
-    body.querySelectorAll("[data-remove-cand]").forEach(function (btn) {
+    body.querySelectorAll("[data-mode]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        var i = Number(btn.getAttribute("data-remove-cand"));
-        var name = state.cands[i]["키워드"] || "이 행";
-        if (state.cands[i]["키워드"] && !confirm(name + "을(를) 뺄까요? 저장해야 반영돼요.")) return;
-        state.cands.splice(i, 1);
+        var mode = btn.getAttribute("data-mode");
+        if (mode === state.settings.mode) return;
+        state.settings.mode = mode;
         state.candsDirty = true;
         renderCandidates();
       });
     });
-    document.getElementById("addCand").addEventListener("click", function () {
-      var row = {};
-      CANDIDATE_FIELDS.forEach(function (f) { row[f] = ""; });
-      state.cands.push(row);
-      state.candsDirty = true;
-      renderCandidates();
-      var inputs = body.querySelectorAll('[data-key="키워드"]');
-      if (inputs.length) inputs[inputs.length - 1].focus();
+    var countInput = document.getElementById("autoCount");
+    if (countInput) {
+      countInput.addEventListener("input", function () {
+        state.settings.autoCount = countInput.value;
+        markCandsDirty();
+      });
+    }
+    var form = document.getElementById("addForm");
+    if (form) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var input = document.getElementById("addInput");
+        var existing = {};
+        state.cands.forEach(function (k) { existing[normKeyword(k)] = true; });
+        var added = 0;
+        input.value.split(/[,\n]/).forEach(function (raw) {
+          var k = raw.trim().slice(0, 50);
+          if (!k || existing[normKeyword(k)]) return;
+          existing[normKeyword(k)] = true;
+          state.cands.push(k);
+          added++;
+        });
+        if (!added) {
+          PS.toast(input.value.trim() ? "이미 있는 키워드예요" : "키워드를 입력하세요");
+          return;
+        }
+        state.candsDirty = true;
+        renderCandidates();
+        document.getElementById("addInput").focus();
+      });
+    }
+    body.querySelectorAll("[data-remove-chip]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.cands.splice(Number(btn.getAttribute("data-remove-chip")), 1);
+        state.candsDirty = true;
+        renderCandidates();
+      });
     });
     document.getElementById("saveCands").addEventListener("click", saveCandidates);
   }
 
   function saveCandidates() {
-    var seen = {};
-    var rows = [];
-    for (var i = 0; i < state.cands.length; i++) {
-      var row = {};
-      CANDIDATE_FIELDS.forEach(function (f) { row[f] = String(state.cands[i][f] || "").trim(); });
-      if (!row["키워드"]) continue;
-      var norm = row["키워드"].replace(/\s+/g, "").toUpperCase();
-      if (seen[norm]) {
-        PS.toast("키워드가 중복돼요: " + row["키워드"]);
-        return;
-      }
-      seen[norm] = true;
-      row["가격"] = row["가격"].replace(/[^\d.]/g, "");
-      rows.push(row);
+    var count = Math.round(Number(state.settings.autoCount) || 0);
+    if (state.settings.mode === "auto" && (count < 5 || count > 80)) {
+      PS.toast("자동 키워드 수는 5~80개로 정해 주세요");
+      return;
     }
-    save("/candidates", { candidates: rows }, function (res) {
-      state.data.candidates = res.candidates;
-      state.data.candidatesUpdatedAt = new Date().toISOString();
-      state.cands = copyCandidates(res.candidates);
-      state.candsDirty = false;
-      renderDashboard();
-    });
+    if (state.settings.mode === "manual" && !state.cands.length) {
+      PS.toast("키워드를 하나 이상 넣어 주세요");
+      return;
+    }
+    var settings = { mode: state.settings.mode, autoCount: count || 40 };
+    var candidates = state.cands.map(function (k) { return { "키워드": k }; });
+    var put = demo ? Promise.resolve({ settings: settings }) : PS.api("PUT", "/settings", settings);
+    put
+      .then(function (res) {
+        state.data.settings = res.settings;
+        save("/candidates", { candidates: candidates }, function (saved) {
+          state.data.candidates = saved.candidates;
+          state.data.candidatesUpdatedAt = new Date().toISOString();
+          state.cands = copyCandidates(saved.candidates);
+          state.settings = { mode: res.settings.mode, autoCount: res.settings.autoCount };
+          state.candsDirty = false;
+          renderDashboard();
+        });
+      })
+      .catch(function (err) { PS.toast(err.message || "저장하지 못했어요"); });
   }
 
   // —— 영상 기획 ——
@@ -902,7 +948,11 @@
   function show(data) {
     state.data = data;
     state.items = toItems(data);
-    if (!state.candsDirty) state.cands = copyCandidates(data.candidates);
+    if (!state.candsDirty) {
+      state.cands = copyCandidates(data.candidates);
+      var s = data.settings || {};
+      state.settings = { mode: s.mode === "auto" ? "auto" : "manual", autoCount: s.autoCount || 40 };
+    }
     if (!state.plansDirty) state.plans = copyPlans(data.plans);
     renderDashboard();
   }
