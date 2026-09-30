@@ -422,16 +422,16 @@
       "</div>" +
       '<div class="ps-bar" aria-hidden="true"><span class="' + scoreTone(total).trim() + '" style="width:' + Math.max(0, Math.min(100, total || 0)) + '%"></span></div>' +
       '<dl class="ps-metrics">' +
-      metric("조회수 중앙값", esc(fmtViews(item["조회수 중앙값"])), "90일 상위 10개") +
+      metric("조회수 중앙값", esc(fmtViews(item["조회수 중앙값"])), "90일 롱폼 상위 10개") +
       metric("영상 수", esc(fmtInt(item["유튜브 90일 영상수"])), recent ? "90일 · 인기영상 중 30일 내 " + recent + "개" : "90일 추정") +
-      metric("조회수/구독자", esc(fmtRatio(item["조회수/구독자(배)"])), "높을수록 작은 채널도 터짐") +
+      metric("조회수/구독자", esc(fmtRatio(item["조회수/구독자(배)"])), "롱폼 · 높을수록 작은 채널도 터짐") +
       metric("월검색량", esc(fmtInt(item["월검색량"])), "네이버") +
       metric("검색 추세", trendText(item["검색 전년대비(배)"], item["검색추세점수"]), "전년 대비") +
       metric("쇼츠 비율", esc(fmtPercent(item["쇼츠 비율"])), "인기영상 중 3분 이하") +
       "</dl>" +
       (item["주 구매층"] ? '<p class="ps-buyer"><span>주 구매층</span>' + esc(item["주 구매층"]) + "</p>" : "") +
       (item["최고 조회 영상"]
-        ? '<p class="ps-buyer"><span>최고 조회</span>' +
+        ? '<p class="ps-buyer"><span>롱폼 최고</span>' +
           (topUrl !== "#" ? '<a href="' + esc(topUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(item["최고 조회 영상"]) + " ↗</a>" : esc(item["최고 조회 영상"])) +
           "</p>"
         : "") +
