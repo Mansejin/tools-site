@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light">
+  <script>
+    (function () {
+      var d = localStorage.getItem("mansejin-theme") === "dark";
+      document.documentElement.setAttribute("data-theme", d ? "dark" : "light");
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>IT 제품 찾기 · 만세진</title>
+  <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../product-search/css/product-search.css?v=20260929e">
+</head>
+<body class="ps-body">
+  <div class="page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="back-link" href="../">← 도구함</a>
+        <div class="header-actions">
+          <label class="theme-switch">
+            <input type="checkbox" class="theme-switch-input" role="switch">
+            <span class="theme-switch-track">
+              <span class="theme-switch-thumb"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <section class="identity compact" aria-labelledby="brand">
+        <p id="brand" class="brand">IT 제품 찾기</p>
+        <h1 class="hero-lead">유튜브 영상 주제 점수표</h1>
+        <p class="purpose">최근 90일 유튜브 조회수·영상 경쟁·작은 채널 떡상 여부와 네이버 검색 추세를 합친 점수예요. 1차 거르기용이라 최종 주제는 유튜브 검색 결과를 직접 보고 정하세요.</p>
+        <div class="identity-rule" aria-hidden="true"></div>
+      </section>
+    </header>
+
+    <main id="app" aria-live="polite">
+      <p class="loading">불러오는 중…</p>
+    </main>
+
+    <footer class="site-footer">
+      <p><a href="../">도구함</a></p>
+      <p>yt-it-finder 결과 · 비공개 연구용</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="js/common.js?v=20260930a"></script>
+  <script src="js/demo.js?v=20260930a"></script>
+  <script src="js/dashboard.js?v=20260930a"></script>
+  <script src="../js/theme.js"></script>
+</body>
+</html>
