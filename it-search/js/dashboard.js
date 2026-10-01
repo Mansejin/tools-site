@@ -40,6 +40,7 @@
     { id: "outlier", label: "떡상(조회수/구독자) 높은순" },
     { id: "supply", label: "영상 적은순" },
     { id: "trend", label: "검색추세 좋은순" },
+    { id: "rise", label: "최근 2주 급상승순" },
   ];
 
   // [결과 헤더, 화면 이름, 설명]
@@ -403,6 +404,7 @@
       case "outlier": return num(item["조회수/구독자(배)"]);
       case "supply": return num(item["유튜브 90일 영상수"]) == null ? null : -num(item["유튜브 90일 영상수"]);
       case "trend": return num(item["검색추세점수"]) == null ? null : num(item["검색추세점수"]) * 100 + (num(item["검색 전년대비(배)"]) || 0);
+      case "rise": return num(item["최근 2주 검색 증가(배)"]);
       default: return num(item["총점"]);
     }
   }
@@ -471,6 +473,7 @@
     var peak = num(item["검색 최고점/최근(배)"]);
     var topUrl = PS.safeUrl(item["최고 조회 링크"]);
     var recent = fmtInt(item["30일 내 인기영상"]);
+    var rise = num(item["최근 2주 검색 증가(배)"]);
 
     var scores = SCORE_FIELDS.map(function (f) {
       var v = num(item[f[0]]);
@@ -496,6 +499,7 @@
       '<div class="ps-card-sub">' +
       (item["분야"] ? '<span class="tag">' + esc(item["분야"]) + "</span>" : "") +
       (info.length ? '<span class="ps-muted">' + esc(info.join(" · ")) + "</span>" : "") +
+      (rise != null ? '<span class="status status-stable">최근 2주 검색 ' + esc(fmtRatio(rise)) + "</span>" : "") +
       (peak != null && peak > 3 ? '<span class="status status-beta">반짝 관심 주의</span>' : "") +
       "</div></div>" +
       '<div class="ps-total' + scoreTone(total) + '"><strong>' + (total == null ? "-" : esc(total)) + "</strong><span>/100</span></div>" +
@@ -566,7 +570,8 @@
 
   function renderCandidates() {
     var ranks = rankByKeyword();
-    var auto = state.settings.mode === "auto";
+    var auto = state.settings.mode !== "manual";
+    var rising = state.settings.mode === "rising";
     var body = document.getElementById("tabBody");
     var analyzed = state.items.map(function (item) { return String(item["키워드"]); });
 
@@ -574,13 +579,17 @@
       '<div class="its-mode" role="radiogroup" aria-label="키워드 정하는 방식">' +
       modeButton("manual", "직접 고르기", "아래 목록의 키워드만 분석") +
       modeButton("auto", "자동 추천", "분야별로 요즘 많이 찾는 키워드를 네이버에서 골라 분석") +
+      modeButton("rising", "급상승만", "최근 2주 검색이 평소보다 크게 는 IT 제품만 골라 분석") +
       "</div>" +
       (auto
         ? '<section class="ps-panel">' +
-          '<label class="ps-field its-count"><span>자동으로 고를 키워드 수</span>' +
+          '<label class="ps-field its-count"><span>' + (rising ? "최대 키워드 수" : "자동으로 고를 키워드 수") + "</span>" +
           '<input type="number" id="autoCount" min="5" max="80" inputmode="numeric" value="' + esc(state.settings.autoCount) + '"></label>' +
-          '<p class="ps-muted ps-small">스마트폰, 노트북·태블릿, 오디오, 웨어러블, PC 주변기기, 카메라, 게이밍, 스마트홈, 충전 분야에서 골고루 골라요. ' +
-          "키워드 1개에 하루 YouTube 할당량의 약 1%를 써서 80개까지만 돼요.</p>" +
+          (rising
+            ? '<p class="ps-muted ps-small">분야별 인기 IT 키워드(월 검색 1,000회 이상) 중 최근 2주 네이버 검색이 그 전 10주 평균보다 1.2배 이상, ' +
+              "그리고 전체 시장 평균보다도 확실히 는 키워드만 골라요. 기준을 넘는 게 적으면 그만큼만 분석해요.</p>"
+            : '<p class="ps-muted ps-small">스마트폰, 노트북·태블릿, 오디오, 웨어러블, PC 주변기기, 카메라, 게이밍, 스마트홈, 충전 분야에서 골고루 골라요. ') +
+          (rising ? "" : "키워드 1개에 하루 YouTube 할당량의 약 1%를 써서 80개까지만 돼요.</p>") +
           (analyzed.length
             ? '<p class="its-label">지난 계산에 쓴 키워드 ' + analyzed.length + "개</p>" +
               '<div class="its-chips">' + analyzed.map(function (k) { return chip(k, ranks[normKeyword(k)]); }).join("") + "</div>"
@@ -707,7 +716,7 @@
 
   function saveCandidates() {
     var count = Math.round(Number(state.settings.autoCount) || 0);
-    if (state.settings.mode === "auto" && (count < 5 || count > 80)) {
+    if (state.settings.mode !== "manual" && (count < 5 || count > 80)) {
       PS.toast("자동 키워드 수는 5~80개로 정해 주세요");
       return;
     }
@@ -1011,7 +1020,7 @@
     if (!state.candsDirty) {
       state.cands = copyCandidates(data.candidates);
       var s = data.settings || {};
-      state.settings = { mode: s.mode === "auto" ? "auto" : "manual", autoCount: s.autoCount || 40 };
+      state.settings = { mode: s.mode === "auto" || s.mode === "rising" ? s.mode : "manual", autoCount: s.autoCount || 40 };
     }
     if (!state.plansDirty) state.plans = copyPlans(data.plans);
     renderDashboard();
