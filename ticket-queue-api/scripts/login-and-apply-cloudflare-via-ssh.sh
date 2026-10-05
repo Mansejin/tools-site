@@ -1,7 +1,7 @@
 #!/bin/sh
 # Cloud Agent helper: browser Cloudflare login → upload credentials to NAS → compose up.
 #
-# Prerequisites: Tailscale SOCKS SSH already working (see docs/nas-ssh-via-tailscale.md)
+# Prerequisites: Tailscale SOCKS SSH already working (see Mansejin/ohola-nas README)
 #   Host alias `nas` in ~/.ssh/config, SSHPASS or key auth.
 #
 #   sh ticket-queue-api/scripts/login-and-apply-cloudflare-via-ssh.sh

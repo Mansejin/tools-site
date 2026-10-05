@@ -5,7 +5,7 @@ SSH/Tailscale 시크릿이 주입된 **새 에이전트**에서 이 문서를 �
 
 관련 문서:
 - [NAS 자동 배포](../ticket-queue-api/docs/deploy-nas-auto.md)
-- [Cloud Agent → NAS SSH (Tailscale)](../ticket-queue-api/docs/nas-ssh-via-tailscale.md)
+- NAS 접속 방법(PC·Cloud Agent·Actions): 비공개 저장소 `Mansejin/ohola-nas` README
 - [Cloudflare Tunnel](../ticket-queue-api/docs/deploy-cloudflare-tunnel.md)
 - works-site 개념: https://github.com/Mansejin/works-site/blob/main/docs/nas-auto-deploy-explained.md
 
@@ -160,7 +160,6 @@ ticket-queue-api/
   docker-compose.cloudflare-login.yml  # credentials-file tunnel (+ Synology user 0:0)
   docker-compose.cloudflare.yml        # TUNNEL_TOKEN 대안
   docs/deploy-nas-auto.md
-  docs/nas-ssh-via-tailscale.md
   docs/deploy-cloudflare-tunnel.md
   scripts/nas-docker-update.sh
   scripts/nas-dsm-task.sh

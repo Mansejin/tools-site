@@ -138,6 +138,6 @@ sh ticket-queue-api/scripts/nas-docker-update.sh --full-build
 - `ticket-queue-api/scripts/nas-docker-update.sh` — pull + 조건부 docker rebuild
 - `ticket-queue-api/scripts/nas-dsm-task.sh` — DSM 스케줄러용
 - `.github/workflows/deploy-ticket-queue-nas.yml` — Actions (Tailscale + SSH)
-- [`nas-ssh-via-tailscale.md`](./nas-ssh-via-tailscale.md) — Cloud Agent에서 NAS SSH 접속 방법 (userspace Tailscale + SOCKS5)
+- NAS 접속 방법(PC·Cloud Agent userspace Tailscale·Actions): 비공개 저장소 `Mansejin/ohola-nas` README
 - [`deploy-cloudflare-tunnel.md`](./deploy-cloudflare-tunnel.md) — HTTPS 공개 (`ticket-queue-api.mansejin.com`)
 - [`deploy-cloudflare-tunnel.md`](./deploy-cloudflare-tunnel.md) — HTTPS 공개 (`ticket-queue-api.mansejin.com`)

@@ -38,7 +38,7 @@ docker compose up --build
 ```
 
 NAS 자동 배포(works-site와 동일 패턴): [`docs/deploy-nas-auto.md`](docs/deploy-nas-auto.md)  
-Cloud Agent → NAS SSH: [`docs/nas-ssh-via-tailscale.md`](docs/nas-ssh-via-tailscale.md)  
+NAS 접속 방법(PC·Cloud Agent·Actions): 비공개 저장소 `Mansejin/ohola-nas` README  
 HTTPS Tunnel: [`docs/deploy-cloudflare-tunnel.md`](docs/deploy-cloudflare-tunnel.md)
 
 ## API
